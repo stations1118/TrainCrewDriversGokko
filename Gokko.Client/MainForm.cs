@@ -272,15 +272,19 @@ public sealed class MainForm : Form
 
     /// <summary>
     /// 在線共有モードの間は、「他列車の非表示」と「進路の手動」を常に入れる
-    /// （TRAIN CREW に接続したとき、メニュー・読み込み画面・運転画面に入ったときに送る）。
+    /// （TRAIN CREW に接続したとき、メニュー・読み込み画面に入ったとき、読み込みが終わって運転画面に入ったときに送る）。
     /// </summary>
     private async Task ApplyGameModesAsync(GameState? game, bool connected)
     {
         // サーバーへの接続を待たない（シナリオを始める前に他列車を消すため）
         var shared = _mode == ShareMode.Shared;
         var screen = connected ? game?.Screen ?? "" : "";
-        // 運転画面への切り替わり（一時停止からの再開など）では送らない。route_manual を送り直すと、ゲームは設定済みの進路を消すため
-        var screenChanged = screen != _lastScreen && screen is "Menu" or "MainGame_Loading";
+        // メニュー・読み込み画面に入ったときと、そこから運転画面に入ったとき（シナリオの読み込みが終わったとき）に送る。
+        // シナリオを読み込むと、ゲームが進路の自動に戻っていることがあるため。
+        // 一時停止からの再開では送らない。route_manual を送り直すと、ゲームは設定済みの進路を消すため
+        var screenChanged = screen != _lastScreen
+                            && (screen is "Menu" or "MainGame_Loading"
+                                || screen == "MainGame" && _lastScreen is not ("MainGame_Pause" or ""));
         var reconnected = connected && !_wasGameConnected;
         _wasGameConnected = connected;
         _lastScreen = screen;

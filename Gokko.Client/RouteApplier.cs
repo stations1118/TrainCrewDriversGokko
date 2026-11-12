@@ -44,7 +44,8 @@ public sealed class RouteApplier
             if (_sentAt.TryGetValue(r.Id, out var at) && now - at < Resend) continue;
             try
             {
-                var train = r.TrainNumber.Length > 0 ? r.TrainNumber : trainNumber;
+                // 列車番号は、ゲームの列車名（ダイヤ名）を送る。列番を手入力していても、ゲームの中でその進路を走るのはゲームの列車のため
+                var train = game.DiaName.Length > 0 ? game.DiaName : r.TrainNumber.Length > 0 ? r.TrainNumber : trainNumber;
                 // 列選: サーバーがダイヤの種別表記から作った文字があればそれ（手入力の列番がシナリオと違っても正しく出す）、なければゲームの種別から
                 var indicator = r.UseTrainType ? (r.Indicator.Length > 0 ? r.Indicator : TrainTypeIndicator(game.TrainClass)) : r.Indicator;
                 await link.SendCommandAsync("SetRoute", [r.Interlocking, r.RouteName, indicator, train, r.StopType]);
@@ -105,7 +106,8 @@ public sealed class RouteApplier
     {
         var game = link.Latest;
         if (!link.IsConnected || game?.Routes == null) return;
-        var mine = game.Routes.Where(r => r.Train == trainNumber || trainNumber.Length == 0).ToList();
+        // 自列車の進路: ゲームの列車名（ダイヤ名）か、入力した列番で設定したもの
+        var mine = game.Routes.Where(r => r.Train == trainNumber || r.Train == game.DiaName || trainNumber.Length == 0).ToList();
         foreach (var r in mine)
         {
             try

@@ -20,6 +20,12 @@ public sealed class RouteEngine
 {
     private static readonly TimeSpan LeftoverDelay = TimeSpan.FromSeconds(20);
 
+    /// <summary>要求した進路がこの時間たっても開通しなければ、ゲームに残っている「要求していない進路」を消す。</summary>
+    private static readonly TimeSpan StuckDelay = TimeSpan.FromSeconds(5);
+
+    /// <summary>「残っていた進路を取消」を記録に出したもの（同じ進路を何度も記録しないため）。</summary>
+    private readonly HashSet<(string Conn, string Interlock, string Route)> _orphanLogged = new();
+
     private readonly RailData _data;
     private readonly RunTimeModel _model;
     private readonly CentralControl _central;
@@ -1554,6 +1560,21 @@ public sealed class RouteEngine
                 .Where(r => run.Player.GameRoutes.Contains((r.Def.Interlock, r.Def.Name)))
                 .Select(r => new RouteKey { Interlocking = r.Def.Interlock, RouteName = r.Def.Name })
                 .ToList();
+
+            // 要求した進路が5秒たっても開通しないとき、同じ連動装置に「サーバーが要求していない進路」がゲームに残っていれば消す
+            // （列番の変更・つなぎ直し・サーバーの再起動の前に開通させた進路が残っていると、新しい進路が競合で開通しないため）。
+            // 列車がもう入っている進路は消さない
+            var wanted = run.Requests.Where(r => !r.Released).Select(r => (r.Def.Interlock, r.Def.Name)).ToHashSet();
+            var stuck = run.Requests.Where(r => !r.Released && r.CancelledUtc == null && !r.Seen && now - r.RequestedUtc > StuckDelay)
+                .Select(r => r.Def.Interlock).ToHashSet();
+            foreach (var g in run.Player.GameRoutes.Where(g => stuck.Contains(g.Interlock) && !wanted.Contains(g)))
+            {
+                if (_data.Routes.TryGetValue(g, out var def) && def.Circuits.Any(run.Player.TrackCircuits.Contains)) continue;
+                deletes.Add(new RouteKey { Interlocking = g.Interlock, RouteName = g.Route });
+                if (_orphanLogged.Add((run.ConnId, g.Interlock, g.Route)))
+                    _log.Note($"残っていた進路を取消: {run.Train} {g.Interlock} {g.Route}（要求していない進路が、新しい進路の開通をふさいでいたため）");
+            }
+
             routes.RemoveAll(r => deletes.Any(d => d.Interlocking == r.Interlocking && d.RouteName == r.RouteName));
 
             var plan = run.Stations.Where(s => !s.Done).Select(s => new StationPlanView
