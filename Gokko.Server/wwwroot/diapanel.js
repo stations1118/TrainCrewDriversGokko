@@ -143,10 +143,9 @@
           <div class="row" style="margin:4px 0 0">${m.manual.map((x) =>
             `<button data-manual="${esc(x.action)}" data-label="${esc(x.label)}">${esc(x.label)}</button>`).join("")}</div></div>` : ""}
         <div class="row" ${sep}>
-          <button data-hold="arrive" class="${m.holdArrive ? "danger" : ""}" title="場内の進路を取らない">${m.holdArrive ? "場内抑止中（解除）" : "場内抑止"}</button>
-          <button data-hold="depart" class="${m.holdDepart ? "danger" : ""}" title="出発の進路を取らない">${m.holdDepart ? "出発抑止中（解除）" : "出発抑止"}</button>
-          <button class="danger" data-act="cancel" title="開通している進路を取り消して抑止にする">進路取消</button>
-          <button class="primary" data-act="force" title="抑止を外し、安全を確認でき次第開通">開通</button>
+          <button data-hold="arrive" class="${m.holdArrive ? "danger" : ""}" title="場内信号を出させない。開通済みでも、列車がまだ接近していなければ取り消す">${m.holdArrive ? "場内抑止中（解除）" : "場内抑止"}</button>
+          <button data-hold="depart" class="${m.holdDepart ? "danger" : ""}" title="出発信号を出させない。開通済みでも、列車がまだ接近していなければ取り消す">${m.holdDepart ? "出発抑止中（解除）" : "出発抑止"}</button>
+          <button class="primary" data-act="force" title="抑止を外し、安全を確認でき次第、自動で開通させる">自動開通</button>
           <button data-close="1">閉じる</button></div>
         ${ord ? `<div ${sep}>${stationOrderHtml(ord, ctx.seq)}</div>` : ""}
         ${sec ? `<div ${sep}>${sectionOrderHtml(sec, ctx.sseq)}</div>` : ""}`;
@@ -163,8 +162,7 @@
       if (await handleOrderEvent(ev, ctx)) { if (!popup) onClose && onClose(); return; }
       const body = { train, station: m.stationId };
       closePopup();
-      if (btn.dataset.act === "cancel") await act("POST", "/route/cancel", body);
-      else if (btn.dataset.act === "force") await act("POST", "/route/force", body);
+      if (btn.dataset.act === "force") await act("POST", "/route/force", body);
       else if (btn.dataset.hold) {
         const on = btn.dataset.hold === "arrive" ? m.holdArrive : m.holdDepart;
         await act("POST", "/route/hold", { ...body, hold: !on, kind: btn.dataset.hold });

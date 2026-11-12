@@ -175,29 +175,6 @@ public sealed class CentralControl
 
     private readonly HashSet<(string Train, string Station)> _cancels = new();
 
-    /// <summary>
-    /// 進路取消: その駅の開通済み（または要求中）の進路を取り消し、抑止にする（自動で開き直さない）。
-    /// 実際の取り消しは進路の判断（RouteEngine）が次の周期で行う。列車がもう進路に入っていれば取り消さない。
-    /// </summary>
-    public void RequestCancel(string train, string station)
-    {
-        lock (_lock)
-        {
-            _cancels.Add((train, station));
-            _holds[(train, station)] = HoldKind.Both;
-            _forces.Remove((train, station));
-            _manual.Remove((train, station));
-        }
-
-        Changed?.Invoke($"集中扱い: {train} {station} 進路取消");
-    }
-
-    /// <summary>進路取消の指示を受け取る（1回だけ true）。</summary>
-    public bool TakeCancel(string train, string station)
-    {
-        lock (_lock) return _cancels.Remove((train, station));
-    }
-
     public void Force(string train, string station)
     {
         lock (_lock)

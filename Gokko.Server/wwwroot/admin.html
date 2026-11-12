@@ -127,14 +127,15 @@
   <section class="wide">
     <h2>進路・集中扱い <span id="trainCount" class="muted"></span></h2>
     <div class="muted" style="margin-bottom:8px">在線共有モードの列車の、この先の駅ごとの番線と状態です。番線はダイヤ（列車一覧）を基本にし、ダイヤにない列車は種別ごとの所定です。番線を選ぶと集中扱いの指定になり、列車扱い（ユーザーの選択・ダイヤ・所定・待避）より優先されます。
-      「場内抑止」「出発抑止」はその駅のその進路を開通させません。「開通」は手前の駅に着いていなくても、安全を確認でき次第開通させます。
+      「場内抑止」「出発抑止」はその駅のその信号を出させません。すでに開通している進路は、列車がまだ接近していなければ取り消します（運転士の目の前で信号が急に変わる範囲に来ていれば、取り消さずに残します）。
+      「自動開通」は抑止を外し、手前の駅に着いていなくても、安全を確認でき次第開通させます。
       「駅扱い」は選んだ進路を、連動に問題がなければ（進路に他の列車がいない・他の列車の進路と重ならない）抑止や待ちを無視して開通させます。</div>
     <div id="routeTrains"></div>
   </section>
 
   <section class="wide">
     <h2>手動進路（管理者）</h2>
-    <div class="muted" style="margin-bottom:8px">進路名を直接選んで、その列車のゲームに開通・取消させます。連動の確認はしません（運営中に詰んだとき用）。取り消した駅は、自動で開き直さないように抑止になります。</div>
+    <div class="muted" style="margin-bottom:8px">進路名を直接選んで、その列車のゲームに開通・取消させます。連動の確認も、列車が接近しているかの確認もしません（運営中に詰んだとき用の強制の操作）。取り消した駅は、自動で開き直さないように抑止になります。</div>
     <div class="row">
       <label>列車 <select id="mrTrain"></select></label>
       <label>駅 <select id="mrStation"></select></label>
@@ -148,7 +149,7 @@
 
   <section>
     <h2>駅の扱い</h2>
-    <div class="muted" style="margin-bottom:8px">集中扱いの駅は、列車ごとに「開通」を押すまで自動では開通させません。</div>
+    <div class="muted" style="margin-bottom:8px">集中扱いの駅は、列車ごとに「自動開通」を押すまで自動では開通させません。</div>
     <div id="stationModes" class="row"></div>
   </section>
 
@@ -279,8 +280,7 @@
                 <td style="white-space:nowrap">
                   <button data-hold-train="${train}" data-station="${st}" data-kind="arrive" data-on="${s.holdArrive ? 1 : 0}" class="${s.holdArrive ? "danger" : ""}">${s.holdArrive ? "場内抑止中" : "場内抑止"}</button>
                   <button data-hold-train="${train}" data-station="${st}" data-kind="depart" data-on="${s.holdDepart ? 1 : 0}" class="${s.holdDepart ? "danger" : ""}">${s.holdDepart ? "出発抑止中" : "出発抑止"}</button>
-                  <button class="danger" data-cancel-train="${train}" data-station="${st}" title="開通している進路を取り消して抑止にする">進路取消</button>
-                  <button class="primary" data-force-train="${train}" data-station="${st}">開通</button>
+                  <button class="primary" data-force-train="${train}" data-station="${st}" title="抑止を外し、安全を確認でき次第、自動で開通させる">自動開通</button>
                   ${manual}
                 </td></tr>`;
             }).join("")}</tbody>
@@ -491,7 +491,6 @@
     const b = ev.target.closest("button");
     if (!b) return;
     if (b.dataset.holdTrain) act("POST", "/route/hold", { train: b.dataset.holdTrain, station: b.dataset.station, hold: b.dataset.on !== "1", kind: b.dataset.kind });
-    else if (b.dataset.cancelTrain) act("POST", "/route/cancel", { train: b.dataset.cancelTrain, station: b.dataset.station });
     else if (b.dataset.forceTrain) act("POST", "/route/force", { train: b.dataset.forceTrain, station: b.dataset.station });
   });
   $("routeTrains").addEventListener("change", (ev) => {

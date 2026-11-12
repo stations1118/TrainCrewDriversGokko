@@ -26,6 +26,9 @@ public sealed class RouteEngine
     /// <summary>「残っていた進路を取消」を記録に出したもの（同じ進路を何度も記録しないため）。</summary>
     private readonly HashSet<(string Conn, string Interlock, string Route)> _orphanLogged = new();
 
+    /// <summary>「接近しているため取り消しません」を記録に出したもの（同じことを何度も記録しないため）。</summary>
+    private readonly HashSet<(string Conn, string Station, bool Departure)> _holdLogged = new();
+
     private readonly RailData _data;
     private readonly RunTimeModel _model;
     private readonly CentralControl _central;
@@ -107,6 +110,9 @@ public sealed class RouteEngine
         public bool ForceArrive { get; set; }
         public bool ForceDepart { get; set; }
         public bool ForceShunt { get; set; }
+
+        /// <summary>抑止をかけたが、列車が接近していて取り消さなかった進路（"場内"・"出発"・"場内出発"。なければ空）。</summary>
+        public string HoldKept { get; set; } = "";
 
         /// <summary>駅扱いで開通させた進路がある（後続に譲るための自動の取消をしない）。</summary>
         public bool ManualUsed { get; set; }
@@ -467,8 +473,8 @@ public sealed class RouteEngine
                 continue;
             }
 
-            if (_central.TakeCancel(run.Train, st.St.Id)) CancelStation(run, st, now);
             if (_central.TakeManual(run.Train, st.St.Id) is { } manual) ApplyManual(run, st, manual, now);
+            ApplyHold(run, st, now);
 
             // 駅に着いた時刻（先頭が構内に入った。始発は認識した時刻）
             if (st.HereUtc == null && (st.IsStart || (run.Front - st.Zone) * step >= 0)) st.HereUtc = now;
@@ -694,26 +700,55 @@ public sealed class RouteEngine
     }
 
     /// <summary>
-    /// 進路取消（集中扱い）: その駅の開通済み・要求中の進路をゲームから取り消す。抑止は CentralControl が付けるので、自動では開き直さない
-    /// （開き直すときは「抑止解除」か「開通」）。列車がもう進路に入っていれば取り消さない。
+    /// 抑止（場内・出発）: その進路を開通させない。すでに開通している（要求している）進路は、
+    /// 運転士の目の前で信号が急に変わらない範囲なら取り消す。列車がもう接近していれば、取り消さずに残す。
+    /// 駅扱い・手動進路で開通させた進路は、抑止では取り消さない。
     /// </summary>
-    private void CancelStation(TrainRun run, StationRun st, DateTime now)
+    private void ApplyHold(TrainRun run, StationRun st, DateTime now)
     {
-        var active = run.Requests.Where(r => r.Station == st && !r.Released && r.CancelledUtc == null).ToList();
-        var entered = active.Where(r => r.Def.Circuits.Any(run.Player.TrackCircuits.Contains)).ToList();
-        foreach (var r in active.Except(entered)) r.CancelledUtc = now;
-
-        if (active.Except(entered).Any(r => !r.Departure)) (st.Arrive, st.ArriveWait) = (GroupState.None, "");
-        if (active.Except(entered).Any(r => r.Departure)) (st.Depart, st.DepartWait) = (GroupState.None, "");
-        if (st.IsStart)
+        st.HoldKept = "";
+        var hold = _central.Hold(run.Train, st.St.Id);
+        if (hold == HoldKind.None || st.ManualUsed) return;
+        foreach (var departure in new[] { false, true })
         {
-            st.DepartureRequested = false;
-            if (!entered.Any(r => !r.Departure)) { st.ShuntRequested = false; st.Shunt = GroupState.None; }
-        }
+            if ((hold & (departure ? HoldKind.Depart : HoldKind.Arrive)) == 0) continue;
+            var label = departure ? "出発" : "場内";
+            var active = run.Requests
+                .Where(r => r.Station == st && r.Departure == departure && !r.Manual && !r.Released && r.CancelledUtc == null).ToList();
+            if (active.Count == 0) continue;
+            var names = string.Join("・", active.Select(r => r.Def.Name));
+            if (active.Any(r => !CanCancelQuietly(run, st, r.Def)))
+            {
+                st.HoldKept += label;
+                if (_holdLogged.Add((run.ConnId, st.St.Id, departure)))
+                    _log.Note($"{label}抑止: {run.Train} {st.St.Name} の {names} は、列車が接近しているため取り消しません");
+                continue;
+            }
 
-        _log.Note($"進路取消: {run.Train} {st.St.Name} " + (active.Count == 0 ? "（開通中の進路なし。抑止のみ）"
-            : $"{string.Join("・", active.Except(entered).Select(r => r.Def.Name))} を取消"
-              + (entered.Count > 0 ? $"（{string.Join("・", entered.Select(r => r.Def.Name))} は列車が進入済みのため残す）" : "")));
+            foreach (var r in active) r.CancelledUtc = now;
+            if (departure) (st.Depart, st.DepartWait) = (GroupState.None, "");
+            else
+            {
+                (st.Arrive, st.ArriveWait) = (GroupState.None, "");
+                if (st.IsStart && st.ShuntFrom != null) st.Shunt = GroupState.None;
+            }
+
+            _holdLogged.Remove((run.ConnId, st.St.Id, departure));
+            _log.Note($"{label}抑止: {run.Train} {st.St.Name} の {names} を取消（列車はまだ接近していない）");
+        }
+    }
+
+    /// <summary>
+    /// その進路を、運転士に急な信号の変化を見せずに取り消せるか。
+    /// 列車が進路の中にいる、または接近鎖錠の区間（連動表）にいれば、取り消せない。
+    /// 接近鎖錠の区間が分からない進路は、列車が手前の駅より先に来ていたら取り消せないものとする。
+    /// </summary>
+    private static bool CanCancelQuietly(TrainRun run, StationRun st, RouteDef def)
+    {
+        var on = run.Player.TrackCircuits;
+        if (def.Circuits.Any(on.Contains)) return false;
+        if (def.Approach.Count > 0) return !def.Approach.Any(on.Contains);
+        return (st.Zone - run.Front) * run.Dir.Step() >= 3;
     }
 
     // ---- 駅扱い（強制進路） ----
@@ -1624,6 +1659,7 @@ public sealed class RouteEngine
             Group(s.Depart, s.DepartWait, s.DepartPath, "出発"),
             Group(s.Arrive, s.ArriveWait, s.ArrivePath, s.Track == null ? "通過" : "場内")
         }.Where(x => x.Length > 0).ToList();
+        if (s.HoldKept.Length > 0) parts.Add($"{s.HoldKept}抑止は列車が接近中のため取り消さず");
         if (s.Terminal) parts.Add("終着");
         else if (IsTurnbackTrack(run, s)) parts.Add("打ち切り（折り返し）");
         return parts.Count > 0 ? string.Join("／", parts) : "待機";

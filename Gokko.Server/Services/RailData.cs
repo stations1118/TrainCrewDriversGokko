@@ -30,8 +30,12 @@ public sealed record RouteDef(
     string To,
     IReadOnlyList<string> Circuits,
     string Kind,
-    string Indicator)
+    string Indicator,
+    IReadOnlyList<string> Approach)
 {
+    // Approach: 接近鎖錠の区間（連動表の「接近鎖錠」の欄の軌道回路）。列車がここにいる間は、進路を取り消すと
+    // 運転士の目の前で信号が変わるので、抑止では取り消さない。書かれていない進路は空
+
     /// <summary>出発信号機の進路か。出発の進路の LED は、進路表示ではなく列車の種別（列選）を出す。</summary>
     public bool IsDepartureSignal => Kind.Contains("出発");
 }
@@ -184,7 +188,7 @@ public sealed class RailData
                 foreach (var r in il.GetProperty("routes").EnumerateArray())
                 {
                     var def = new RouteDef(sid, name, Str(r, "name"), Str(r, "category"), Str(r, "signal"),
-                        List(r, "related"), Str(r, "from"), Str(r, "to"), List(r, "circuits"), Str(r, "kind"), Str(r, "indicator"));
+                        List(r, "related"), Str(r, "from"), Str(r, "to"), List(r, "circuits"), Str(r, "kind"), Str(r, "indicator"), List(r, "approach"));
                     data.Routes[(name, def.Name)] = def;
                 }
             }

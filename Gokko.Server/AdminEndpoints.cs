@@ -265,12 +265,6 @@ public static class AdminEndpoints
             return Results.Ok(new { ok = true });
         });
 
-        g.MapPost("/route/cancel", (TrainStationRequest req, CentralControl central) =>
-        {
-            central.RequestCancel(req.Train, req.Station);
-            return Results.Ok(new { ok = true });
-        });
-
         g.MapPost("/route/force", (TrainStationRequest req, CentralControl central) =>
         {
             central.Force(req.Train, req.Station);

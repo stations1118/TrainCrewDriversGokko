@@ -12,6 +12,9 @@
             "TH76_22T",
             "TH76_26ロT"
           ],
+          "approach": [
+            "TH76_5LAT"
+          ],
           "kind": "出発信号機",
           "name": "1R",
           "category": "上り出発",
@@ -26,6 +29,9 @@
             "TH76_26イT",
             "TH76_26ロT"
           ],
+          "approach": [
+            "TH76_5LBT"
+          ],
           "kind": "出発信号機",
           "name": "2R",
           "category": "上り出発",
@@ -39,6 +45,9 @@
             "TH76_25T",
             "TH76_26イT",
             "TH76_26ロT"
+          ],
+          "approach": [
+            "TH76_5LCT"
           ],
           "kind": "出発信号機",
           "name": "3R",
@@ -56,6 +65,9 @@
             "TH76_26イT",
             "TH76_26ロT"
           ],
+          "approach": [
+            "TH76_5LDT"
+          ],
           "kind": "出発信号機",
           "name": "4R",
           "category": "上り出発",
@@ -70,6 +82,16 @@
             "TH76_25T",
             "TH76_22T",
             "TH76_5LAT"
+          ],
+          "approach": [
+            "TH75_9LT",
+            "TH75_50ロT",
+            "TH75_9LCT",
+            "TH75_6LT",
+            "TH75_41イT",
+            "TH75_TST",
+            "下り9T",
+            "下り7T"
           ],
           "kind": "場内信号機",
           "indicator": "1",
@@ -87,6 +109,16 @@
             "TH76_23T",
             "TH76_5LBT"
           ],
+          "approach": [
+            "TH75_9LT",
+            "TH75_50ロT",
+            "TH75_9LCT",
+            "TH75_6LT",
+            "TH75_41イT",
+            "TH75_TST",
+            "下り9T",
+            "下り7T"
+          ],
           "kind": "場内信号機",
           "indicator": "2",
           "name": "5LB",
@@ -103,6 +135,16 @@
             "TH76_21イT",
             "TH76_5LCT"
           ],
+          "approach": [
+            "TH75_9LT",
+            "TH75_50ロT",
+            "TH75_9LCT",
+            "TH75_6LT",
+            "TH75_41イT",
+            "TH75_TST",
+            "下り9T",
+            "下り7T"
+          ],
           "kind": "場内信号機",
           "indicator": "3",
           "name": "5LC",
@@ -117,6 +159,16 @@
             "TH76_24T",
             "TH76_21ロT",
             "TH76_5LDT"
+          ],
+          "approach": [
+            "TH75_9LT",
+            "TH75_50ロT",
+            "TH75_9LCT",
+            "TH75_6LT",
+            "TH75_41イT",
+            "TH75_TST",
+            "下り9T",
+            "下り7T"
           ],
           "kind": "場内信号機",
           "indicator": "4",
@@ -140,6 +192,11 @@
             "TH75_43イT",
             "TH75_1RET"
           ],
+          "approach": [
+            "TH76_26ロT",
+            "上り6T",
+            "上り8T"
+          ],
           "kind": "場内信号機",
           "name": "1RE",
           "category": "上り場内",
@@ -155,6 +212,11 @@
             "TH75_45T",
             "TH75_44T",
             "TH75_5T"
+          ],
+          "approach": [
+            "TH76_26ロT",
+            "上り6T",
+            "上り8T"
           ],
           "kind": "場内信号機",
           "indicator": "5",
@@ -172,6 +234,11 @@
             "TH75_45T",
             "TH75_6T"
           ],
+          "approach": [
+            "TH76_26ロT",
+            "上り6T",
+            "上り8T"
+          ],
           "kind": "場内信号機",
           "indicator": "6",
           "name": "1RD6",
@@ -185,6 +252,15 @@
             "TH75_46イT",
             "TH75_5RBT"
           ],
+          "approach": [
+            "TH76_26ロT",
+            "上り6T",
+            "上り8T",
+            "TH75_1RT",
+            "TH75_41ロT",
+            "TH75_43イT",
+            "TH75_1RET"
+          ],
           "kind": "場内信号機",
           "name": "5RB",
           "category": "上り場内",
@@ -197,6 +273,15 @@
             "TH75_46イT",
             "TH75_46ロT",
             "TH75_5RAT"
+          ],
+          "approach": [
+            "TH76_26ロT",
+            "上り6T",
+            "上り8T",
+            "TH75_1RT",
+            "TH75_41ロT",
+            "TH75_43イT",
+            "TH75_1RET"
           ],
           "kind": "場内信号機",
           "name": "5RA",
@@ -212,6 +297,9 @@
             "TH75_50イT",
             "TH75_SST"
           ],
+          "approach": [
+            "TH75_5RAT"
+          ],
           "kind": "出発信号機",
           "name": "7R",
           "category": "上り出発",
@@ -225,6 +313,15 @@
             "TH75_50イT",
             "TH75_SST"
           ],
+          "approach": [
+            "上り8T",
+            "TH75_1RT",
+            "TH75_41ロT",
+            "TH75_43イT",
+            "TH75_1RET",
+            "TH75_46イT",
+            "TH75_5RBT"
+          ],
           "kind": "出発信号機",
           "name": "8R",
           "category": "上り出発",
@@ -237,6 +334,11 @@
             "TH75_9LT",
             "TH75_50ロT",
             "TH75_9LCT"
+          ],
+          "approach": [
+            "下り41T",
+            "下り35T",
+            "下り27T"
           ],
           "kind": "場内信号機",
           "name": "9LC",
@@ -254,6 +356,11 @@
             "TH75_49イT",
             "TH75_5RAT"
           ],
+          "approach": [
+            "下り41T",
+            "下り35T",
+            "下り27T"
+          ],
           "kind": "場内信号機",
           "indicator": "1",
           "name": "9LA",
@@ -270,6 +377,11 @@
             "TH75_49ロT",
             "TH75_5RBT"
           ],
+          "approach": [
+            "下り41T",
+            "下り35T",
+            "下り27T"
+          ],
           "kind": "場内信号機",
           "indicator": "2",
           "name": "9LB",
@@ -280,6 +392,15 @@
           "to": "6LT",
           "circuits": [
             "TH75_6LT"
+          ],
+          "approach": [
+            "下り45T",
+            "下り41T",
+            "下り35T",
+            "下り27T",
+            "TH75_9LT",
+            "TH75_50ロT",
+            "TH75_9LCT"
           ],
           "kind": "出発信号機",
           "name": "6L",
@@ -292,6 +413,15 @@
           "circuits": [
             "TH75_41イT",
             "TH75_TST"
+          ],
+          "approach": [
+            "下り41T",
+            "下り35T",
+            "下り27T",
+            "TH75_9LT",
+            "TH75_50ロT",
+            "TH75_9LCT",
+            "TH75_6LT"
           ],
           "kind": "出発信号機",
           "name": "2L",
@@ -308,6 +438,9 @@
             "TH75_41ロT",
             "TH75_41イT",
             "TH75_TST"
+          ],
+          "approach": [
+            "TH75_6T"
           ],
           "kind": "出発信号機",
           "name": "4L",
@@ -326,6 +459,9 @@
             "TH75_41イT",
             "TH75_TST"
           ],
+          "approach": [
+            "TH75_5T"
+          ],
           "kind": "出発信号機",
           "name": "3L",
           "category": "下り出発",
@@ -338,6 +474,10 @@
             "TH75_48T",
             "TH75_46ロT",
             "TH75_5RAT"
+          ],
+          "approach": [
+            "TH75_34LT",
+            "TH75_4T"
           ],
           "kind": "入換信号機",
           "name": "24R",
@@ -352,6 +492,9 @@
             "TH75_46ロT",
             "TH75_5RAT"
           ],
+          "approach": [
+            "TH75_5T"
+          ],
           "kind": "入換信号機",
           "name": "25R",
           "signal": "駒野入換25R"
@@ -364,6 +507,9 @@
             "TH75_46ロT",
             "TH75_5RAT"
           ],
+          "approach": [
+            "TH75_6T"
+          ],
           "kind": "入換信号機",
           "name": "26R",
           "signal": "駒野入換26R"
@@ -375,6 +521,9 @@
             "TH75_46ロT",
             "TH75_48T",
             "TH75_4T"
+          ],
+          "approach": [
+            "TH75_5RAT"
           ],
           "kind": "入換信号機",
           "indicator": "4",
@@ -390,6 +539,9 @@
             "TH75_48T",
             "TH75_5T"
           ],
+          "approach": [
+            "TH75_5RAT"
+          ],
           "kind": "入換信号機",
           "indicator": "5",
           "name": "15LD5",
@@ -403,6 +555,9 @@
             "TH75_46ロT",
             "TH75_48T",
             "TH75_6T"
+          ],
+          "approach": [
+            "TH75_5RAT"
           ],
           "kind": "入換信号機",
           "indicator": "6",
@@ -425,6 +580,11 @@
             "TH71_21T",
             "TH71_1RBT"
           ],
+          "approach": [
+            "上り62T",
+            "上り68T",
+            "上り74T"
+          ],
           "kind": "場内信号機",
           "name": "1RB",
           "category": "上り場内",
@@ -438,6 +598,11 @@
             "TH71_21T",
             "TH71_1RAT"
           ],
+          "approach": [
+            "上り62T",
+            "上り68T",
+            "上り74T"
+          ],
           "kind": "場内信号機",
           "name": "1RA",
           "category": "上り場内",
@@ -450,6 +615,9 @@
             "TH71_23T",
             "TH71_SST"
           ],
+          "approach": [
+            "TH71_1RAT"
+          ],
           "kind": "出発信号機",
           "name": "4R",
           "category": "上り出発",
@@ -461,6 +629,13 @@
           "circuits": [
             "TH71_23T",
             "TH71_SST"
+          ],
+          "approach": [
+            "上り68T",
+            "上り74T",
+            "TH71_1RT",
+            "TH71_21T",
+            "TH71_1RBT"
           ],
           "kind": "出発信号機",
           "name": "5R",
@@ -475,6 +650,13 @@
             "TH71_24T",
             "TH71_6LCT"
           ],
+          "approach": [
+            "TH70_5LT",
+            "TH70_21イT",
+            "TH70_5LBT",
+            "TH70_2LT",
+            "下り89T"
+          ],
           "kind": "場内信号機",
           "name": "6LC",
           "category": "下り場内",
@@ -488,6 +670,13 @@
             "TH71_24T",
             "TH71_6LDT"
           ],
+          "approach": [
+            "TH70_5LT",
+            "TH70_21イT",
+            "TH70_5LBT",
+            "TH70_2LT",
+            "下り89T"
+          ],
           "kind": "場内信号機",
           "name": "6LD",
           "category": "下り場内",
@@ -500,6 +689,14 @@
             "TH71_22T",
             "TH71_TST"
           ],
+          "approach": [
+            "TH70_5LBT",
+            "TH70_2LT",
+            "下り89T",
+            "TH71_6LT",
+            "TH71_24T",
+            "TH71_6LCT"
+          ],
           "kind": "出発信号機",
           "name": "2L",
           "category": "下り出発",
@@ -511,6 +708,9 @@
           "circuits": [
             "TH71_22T",
             "TH71_TST"
+          ],
+          "approach": [
+            "TH71_6LDT"
           ],
           "kind": "出発信号機",
           "name": "3L",
@@ -530,6 +730,13 @@
           "circuits": [
             "TH70_1RAT"
           ],
+          "approach": [
+            "TH71_23T",
+            "TH71_SST",
+            "TH67_SST",
+            "上り86T",
+            "上り92T"
+          ],
           "kind": "場内信号機",
           "name": "1R",
           "category": "上り場内",
@@ -541,6 +748,14 @@
           "circuits": [
             "TH70_21ロT",
             "TH70_SST"
+          ],
+          "approach": [
+            "TH71_23T",
+            "TH71_SST",
+            "TH67_SST",
+            "上り86T",
+            "上り92T",
+            "TH70_1RAT"
           ],
           "kind": "出発信号機",
           "name": "3R",
@@ -555,6 +770,9 @@
             "TH70_21ロT",
             "TH70_SST"
           ],
+          "approach": [
+            "TH70_5LBT"
+          ],
           "kind": "出発信号機",
           "name": "4R",
           "category": "上り出発",
@@ -568,6 +786,12 @@
             "TH70_21イT",
             "TH70_5LBT"
           ],
+          "approach": [
+            "下り117T",
+            "下り111T",
+            "下り105T",
+            "下り103T"
+          ],
           "kind": "場内信号機",
           "name": "5L",
           "category": "下り場内",
@@ -578,6 +802,14 @@
           "to": "館浜方",
           "circuits": [
             "TH70_2LT"
+          ],
+          "approach": [
+            "下り111T",
+            "下り105T",
+            "下り103T",
+            "TH70_5LT",
+            "TH70_21イT",
+            "TH70_5LBT"
           ],
           "kind": "出発信号機",
           "name": "2L",
@@ -591,6 +823,9 @@
             "TH70_21ロT",
             "TH70_SST"
           ],
+          "approach": [
+            "TH70_1RAT"
+          ],
           "kind": "入換信号機",
           "name": "11R",
           "category": "入換上り出発",
@@ -603,6 +838,9 @@
             "TH70_21ロT",
             "TH70_21イT",
             "TH70_5LBT"
+          ],
+          "approach": [
+            "TH70_SST"
           ],
           "kind": "入換信号機",
           "name": "12L",
@@ -624,6 +862,11 @@
             "TH67_32T",
             "TH67_1RBT"
           ],
+          "approach": [
+            "上り114T",
+            "上り120T",
+            "上り124T"
+          ],
           "kind": "場内信号機",
           "name": "1RB",
           "category": "上り場内",
@@ -636,6 +879,11 @@
             "TH67_1RT",
             "TH67_32T",
             "TH67_1RAT"
+          ],
+          "approach": [
+            "上り114T",
+            "上り120T",
+            "上り124T"
           ],
           "kind": "場内信号機",
           "name": "1RA",
@@ -652,6 +900,9 @@
             "TH67_36イT",
             "TH67_SST"
           ],
+          "approach": [
+            "TH67_1RAT"
+          ],
           "kind": "出発信号機",
           "name": "8R",
           "category": "上り出発",
@@ -665,6 +916,14 @@
             "TH67_35ロT",
             "TH67_36イT",
             "TH67_SST"
+          ],
+          "approach": [
+            "上り114T",
+            "上り120T",
+            "上り124T",
+            "TH67_1RT",
+            "TH67_32T",
+            "TH67_1RBT"
           ],
           "kind": "出発信号機",
           "name": "9R",
@@ -681,6 +940,9 @@
             "TH67_36イT",
             "TH67_SST"
           ],
+          "approach": [
+            "TH67_4LT"
+          ],
           "kind": "出発信号機",
           "name": "6R",
           "category": "上り出発",
@@ -696,6 +958,9 @@
             "TH67_36イT",
             "TH67_SST"
           ],
+          "approach": [
+            "TH67_5LT"
+          ],
           "kind": "出発信号機",
           "name": "7R",
           "category": "上り出発",
@@ -708,6 +973,11 @@
             "TH67_10LT",
             "TH67_35イT",
             "TH67_34T"
+          ],
+          "approach": [
+            "下り145T",
+            "下り143T",
+            "下り137T"
           ],
           "kind": "場内信号機",
           "name": "10LC",
@@ -725,6 +995,11 @@
             "TH67_35イT",
             "TH67_34T"
           ],
+          "approach": [
+            "下り145T",
+            "下り143T",
+            "下り137T"
+          ],
           "kind": "場内信号機",
           "name": "10LD",
           "category": "下り場内",
@@ -740,6 +1015,14 @@
             "TH67_31T",
             "TH67_TST"
           ],
+          "approach": [
+            "下り143T",
+            "下り137T",
+            "TH67_10LT",
+            "TH67_35イT",
+            "TH67_34T",
+            "TH67_4LT"
+          ],
           "kind": "出発信号機",
           "name": "2L",
           "category": "下り出発",
@@ -751,6 +1034,9 @@
           "circuits": [
             "TH67_31T",
             "TH67_TST"
+          ],
+          "approach": [
+            "TH67_5LT"
           ],
           "kind": "出発信号機",
           "name": "3L",
@@ -764,6 +1050,9 @@
             "TH67_33イT",
             "TH67_36ロT",
             "TH67_23RT"
+          ],
+          "approach": [
+            "TH67_1RAT"
           ],
           "kind": "入換信号機",
           "name": "23R",
@@ -780,6 +1069,9 @@
             "TH67_36ロT",
             "TH67_23RT"
           ],
+          "approach": [
+            "TH67_1RBT"
+          ],
           "kind": "入換信号機",
           "name": "24R",
           "category": "入換上り出発",
@@ -795,6 +1087,9 @@
             "TH67_35イT",
             "TH67_34T",
             "TH67_4LT"
+          ],
+          "approach": [
+            "TH67_23RT"
           ],
           "kind": "入換信号機",
           "indicator": "3",
@@ -816,6 +1111,9 @@
             "TH67_34T",
             "TH67_5LT"
           ],
+          "approach": [
+            "TH67_23RT"
+          ],
           "kind": "入換信号機",
           "indicator": "4",
           "name": "25LD",
@@ -831,6 +1129,14 @@
           "circuits": [
             "TH67_4LT"
           ],
+          "approach": [
+            "TH67_23RT",
+            "TH67_36ロT",
+            "TH67_36イT",
+            "TH67_35ロT",
+            "TH67_35イT",
+            "TH67_34T"
+          ],
           "kind": "入換信号機",
           "name": "21L",
           "signal": "新野崎入換21L"
@@ -840,6 +1146,13 @@
           "to": "3番線",
           "circuits": [
             "TH67_4LT"
+          ],
+          "approach": [
+            "下り143T",
+            "下り137T",
+            "TH67_10LT",
+            "TH67_35イT",
+            "TH67_34T"
           ],
           "kind": "場内信号機",
           "name": "4L",
@@ -852,6 +1165,14 @@
           "circuits": [
             "TH67_5LT"
           ],
+          "approach": [
+            "TH67_23RT",
+            "TH67_36ロT",
+            "TH67_36イT",
+            "TH67_35ロT",
+            "TH67_35イT",
+            "TH67_34T"
+          ],
           "kind": "入換信号機",
           "name": "22L",
           "category": "入換下り場内",
@@ -862,6 +1183,13 @@
           "to": "4番線",
           "circuits": [
             "TH67_5LT"
+          ],
+          "approach": [
+            "下り143T",
+            "下り137T",
+            "TH67_10LT",
+            "TH67_35イT",
+            "TH67_34T"
           ],
           "kind": "場内信号機",
           "name": "5L",
@@ -885,6 +1213,11 @@
             "TH66S_55T",
             "TH66S_1RCT"
           ],
+          "approach": [
+            "上り136T",
+            "上り142T",
+            "上り146T"
+          ],
           "kind": "場内信号機",
           "name": "1RC",
           "category": "上り出発",
@@ -901,6 +1234,11 @@
             "TH66S_54T",
             "TH66S_57T",
             "TH66S_1RBT"
+          ],
+          "approach": [
+            "上り136T",
+            "上り142T",
+            "上り146T"
           ],
           "kind": "場内信号機",
           "name": "1RB",
@@ -920,6 +1258,11 @@
             "TH66S_56T",
             "TH66S_1RAT"
           ],
+          "approach": [
+            "上り136T",
+            "上り142T",
+            "上り146T"
+          ],
           "kind": "場内信号機",
           "name": "1RA",
           "category": "上り出発",
@@ -933,6 +1276,9 @@
             "TH66S_55T",
             "TH66S_1RCT"
           ],
+          "approach": [
+            "TH66S_13T"
+          ],
           "kind": "出発信号機",
           "name": "2R",
           "category": "上り出発",
@@ -945,6 +1291,14 @@
             "TH66S_5LT",
             "TH66S_53T",
             "TH66S_5LET"
+          ],
+          "approach": [
+            "TH65_11LT",
+            "TH65_12LT",
+            "TH65_42ロT",
+            "TH65_42イT",
+            "TH67_TST",
+            "TH65_TST"
           ],
           "kind": "場内信号機",
           "name": "5LE",
@@ -962,6 +1316,14 @@
             "TH66S_51イT",
             "TH66S_5LDT"
           ],
+          "approach": [
+            "TH65_11LT",
+            "TH65_12LT",
+            "TH65_42ロT",
+            "TH65_42イT",
+            "TH67_TST",
+            "TH65_TST"
+          ],
           "kind": "場内信号機",
           "name": "5LD",
           "category": "下り出発",
@@ -977,6 +1339,9 @@
             "TH66S_52T",
             "TH66S_53T",
             "TH66S_5LET"
+          ],
+          "approach": [
+            "TH66S_1RBT"
           ],
           "kind": "出発信号機",
           "name": "4L",
@@ -995,6 +1360,9 @@
             "TH66S_53T",
             "TH66S_5LET"
           ],
+          "approach": [
+            "TH66S_1RAT"
+          ],
           "kind": "出発信号機",
           "name": "3L",
           "category": "下り出発",
@@ -1007,6 +1375,9 @@
             "TH66S_51イT",
             "TH66S_13T"
           ],
+          "approach": [
+            "TH66S_5LDT"
+          ],
           "kind": "入換信号機",
           "name": "11R",
           "category": "入換構内",
@@ -1018,6 +1389,12 @@
           "circuits": [
             "TH66S_51イT",
             "TH66S_5LDT"
+          ],
+          "approach": [
+            "TH66S_54T",
+            "TH66S_57T",
+            "TH66S_56T",
+            "TH66S_13T"
           ],
           "kind": "入換信号機",
           "name": "12L",
@@ -1033,6 +1410,11 @@
             "TH66S_56T",
             "TH66S_1RAT"
           ],
+          "approach": [
+            "TH66S_5LDT",
+            "TH66S_51イT",
+            "TH66S_13T"
+          ],
           "kind": "入換信号機",
           "name": "13RA",
           "category": "入換構内",
@@ -1045,6 +1427,11 @@
             "TH66S_54T",
             "TH66S_57T",
             "TH66S_1RBT"
+          ],
+          "approach": [
+            "TH66S_5LDT",
+            "TH66S_51イT",
+            "TH66S_13T"
           ],
           "kind": "入換信号機",
           "name": "13RB",
@@ -1059,6 +1446,9 @@
             "TH66S_57T",
             "TH66S_54T",
             "TH66S_13T"
+          ],
+          "approach": [
+            "TH66S_1RAT"
           ],
           "kind": "入換信号機",
           "indicator": "13",
@@ -1075,6 +1465,9 @@
             "TH66S_57T",
             "TH66S_54T",
             "TH66S_13T"
+          ],
+          "approach": [
+            "TH66S_1RBT"
           ],
           "kind": "入換信号機",
           "indicator": "13",
@@ -1096,6 +1489,17 @@
             "TH65_1RT",
             "TH65_41T"
           ],
+          "approach": [
+            "上り142T",
+            "上り146T",
+            "TH66S_1RT",
+            "TH66S_51ロT",
+            "TH66S_52T",
+            "TH66S_54T",
+            "TH66S_55T",
+            "TH66S_1RCT",
+            "上り156T"
+          ],
           "kind": "場内信号機",
           "indicator": "1",
           "name": "1RA",
@@ -1111,6 +1515,18 @@
           "circuits": [
             "TH65_2RT"
           ],
+          "approach": [
+            "上り146T",
+            "TH66S_1RT",
+            "TH66S_51ロT",
+            "TH66S_52T",
+            "TH66S_54T",
+            "TH66S_55T",
+            "TH66S_1RCT",
+            "上り156T",
+            "TH65_1RT",
+            "TH65_41T"
+          ],
           "kind": "場内信号機",
           "name": "2R",
           "category": "上り場内",
@@ -1122,6 +1538,17 @@
           "circuits": [
             "TH65_1RT",
             "TH65_41T"
+          ],
+          "approach": [
+            "上り142T",
+            "上り146T",
+            "TH66S_1RT",
+            "TH66S_51ロT",
+            "TH66S_52T",
+            "TH66S_54T",
+            "TH66S_55T",
+            "TH66S_1RCT",
+            "上り156T"
           ],
           "kind": "場内信号機",
           "indicator": "2",
@@ -1138,6 +1565,18 @@
           "circuits": [
             "TH65_3RT"
           ],
+          "approach": [
+            "上り146T",
+            "TH66S_1RT",
+            "TH66S_51ロT",
+            "TH66S_52T",
+            "TH66S_54T",
+            "TH66S_55T",
+            "TH66S_1RCT",
+            "上り156T",
+            "TH65_1RT",
+            "TH65_41T"
+          ],
           "kind": "場内信号機",
           "name": "3R",
           "category": "上り場内",
@@ -1150,6 +1589,17 @@
             "TH65_1RT",
             "TH65_41T",
             "TH65_42ロT"
+          ],
+          "approach": [
+            "上り142T",
+            "上り146T",
+            "TH66S_1RT",
+            "TH66S_51ロT",
+            "TH66S_52T",
+            "TH66S_54T",
+            "TH66S_55T",
+            "TH66S_1RCT",
+            "上り156T"
           ],
           "kind": "場内信号機",
           "indicator": "3",
@@ -1166,6 +1616,19 @@
           "circuits": [
             "TH65_11LT"
           ],
+          "approach": [
+            "上り146T",
+            "TH66S_1RT",
+            "TH66S_51ロT",
+            "TH66S_52T",
+            "TH66S_54T",
+            "TH66S_55T",
+            "TH66S_1RCT",
+            "上り156T",
+            "TH65_1RT",
+            "TH65_41T",
+            "TH65_42ロT"
+          ],
           "kind": "場内信号機",
           "name": "4R",
           "category": "上り場内",
@@ -1178,6 +1641,18 @@
             "TH65_49T",
             "TH65_50イT",
             "TH65_XT"
+          ],
+          "approach": [
+            "上り146T",
+            "TH66S_1RT",
+            "TH66S_51ロT",
+            "TH66S_52T",
+            "TH66S_55T",
+            "TH66S_1RCT",
+            "上り156T",
+            "TH65_1RT",
+            "TH65_41T",
+            "TH65_2RT"
           ],
           "kind": "出発信号機",
           "name": "7R",
@@ -1194,6 +1669,9 @@
             "TH65_50イT",
             "TH65_XT"
           ],
+          "approach": [
+            "TH65_3RT"
+          ],
           "kind": "出発信号機",
           "name": "8R",
           "category": "上り出発",
@@ -1208,6 +1686,9 @@
             "TH65_49T",
             "TH65_50イT",
             "TH65_XT"
+          ],
+          "approach": [
+            "TH65_11LT"
           ],
           "kind": "出発信号機",
           "name": "9R",
@@ -1225,6 +1706,9 @@
             "TH65_50イT",
             "TH65_XT"
           ],
+          "approach": [
+            "TH65_12LT"
+          ],
           "kind": "出発信号機",
           "name": "10R",
           "category": "上り出発",
@@ -1238,6 +1722,9 @@
             "TH65_42イT",
             "TH65_TST"
           ],
+          "approach": [
+            "TH65_11LT"
+          ],
           "kind": "出発信号機",
           "name": "5L",
           "category": "下り出発",
@@ -1249,6 +1736,21 @@
           "circuits": [
             "TH65_42イT",
             "TH65_TST"
+          ],
+          "approach": [
+            "TH64_12LT",
+            "TH64_13LT",
+            "TH66S_21T",
+            "TH64_21T",
+            "DF2T",
+            "DF1T",
+            "TH65_XT",
+            "TH65_50イT",
+            "TH65_49T",
+            "TH65_47T",
+            "TH65_48T",
+            "TH65_44T",
+            "TH65_12LT"
           ],
           "kind": "出発信号機",
           "name": "6L",
@@ -1265,6 +1767,14 @@
             "TH65_47T",
             "TH65_48T",
             "TH65_44T"
+          ],
+          "approach": [
+            "TH64_12LT",
+            "TH64_13LT",
+            "TH66S_21T",
+            "TH64_21T",
+            "DF2T",
+            "DF1T"
           ],
           "kind": "場内信号機",
           "name": "13LD",
@@ -1284,6 +1794,14 @@
             "TH65_47T",
             "TH65_45T"
           ],
+          "approach": [
+            "TH64_12LT",
+            "TH64_13LT",
+            "TH66S_21T",
+            "TH64_21T",
+            "DF2T",
+            "DF1T"
+          ],
           "kind": "場内信号機",
           "name": "13LC",
           "category": "下り場内",
@@ -1300,6 +1818,9 @@
             "TH65_50イT",
             "TH65_XT"
           ],
+          "approach": [
+            "TH65_2RT"
+          ],
           "kind": "入換信号機",
           "indicator": "X",
           "name": "21RX",
@@ -1313,6 +1834,9 @@
             "TH65_50イT",
             "TH65_50ロT",
             "TH65_YT"
+          ],
+          "approach": [
+            "TH65_2RT"
           ],
           "kind": "入換信号機",
           "indicator": "Y",
@@ -1330,6 +1854,9 @@
             "TH65_50イT",
             "TH65_XT"
           ],
+          "approach": [
+            "TH65_3RT"
+          ],
           "kind": "入換信号機",
           "indicator": "X",
           "name": "22RX",
@@ -1344,6 +1871,9 @@
             "TH65_48T",
             "TH65_ET",
             "TH65_50ロT"
+          ],
+          "approach": [
+            "TH65_3RT"
           ],
           "kind": "入換信号機",
           "indicator": "E",
@@ -1362,6 +1892,9 @@
             "TH65_50ロT",
             "TH65_YT"
           ],
+          "approach": [
+            "TH65_3RT"
+          ],
           "kind": "入換信号機",
           "indicator": "Y",
           "name": "22RY",
@@ -1378,6 +1911,9 @@
             "TH65_50イT",
             "TH65_XT"
           ],
+          "approach": [
+            "TH65_11LT"
+          ],
           "kind": "入換信号機",
           "indicator": "X",
           "name": "23RX",
@@ -1393,6 +1929,9 @@
             "TH65_48T",
             "TH65_ET",
             "TH65_50ロT"
+          ],
+          "approach": [
+            "TH65_11LT"
           ],
           "kind": "入換信号機",
           "indicator": "E",
@@ -1411,6 +1950,9 @@
             "TH65_50ロT",
             "TH65_YT"
           ],
+          "approach": [
+            "TH65_11LT"
+          ],
           "kind": "入換信号機",
           "indicator": "Y",
           "name": "23RY",
@@ -1428,6 +1970,9 @@
             "TH65_50イT",
             "TH65_XT"
           ],
+          "approach": [
+            "TH65_12LT"
+          ],
           "kind": "入換信号機",
           "indicator": "X",
           "name": "24RX",
@@ -1442,6 +1987,9 @@
             "TH65_48T",
             "TH65_ET",
             "TH65_50ロT"
+          ],
+          "approach": [
+            "TH65_12LT"
           ],
           "kind": "入換信号機",
           "indicator": "E",
@@ -1461,6 +2009,9 @@
             "TH65_50ロT",
             "TH65_YT"
           ],
+          "approach": [
+            "TH65_12LT"
+          ],
           "kind": "入換信号機",
           "indicator": "Y",
           "name": "24RY",
@@ -1474,6 +2025,13 @@
             "TH65_50ロT",
             "TH65_YT"
           ],
+          "approach": [
+            "TH65_45T",
+            "TH65_47T",
+            "TH65_44T",
+            "TH65_48T",
+            "TH65_ET"
+          ],
           "kind": "入換信号機",
           "name": "30R",
           "category": "入換上り出発",
@@ -1486,6 +2044,9 @@
             "TH65_50イT",
             "TH65_49T",
             "TH65_2RT"
+          ],
+          "approach": [
+            "TH65_XT"
           ],
           "kind": "入換信号機",
           "indicator": "1",
@@ -1503,6 +2064,9 @@
             "TH65_45T",
             "TH65_3RT"
           ],
+          "approach": [
+            "TH65_XT"
+          ],
           "kind": "入換信号機",
           "indicator": "2",
           "name": "31LB",
@@ -1517,6 +2081,9 @@
             "TH65_49T",
             "TH65_47T",
             "TH65_45T"
+          ],
+          "approach": [
+            "TH65_XT"
           ],
           "kind": "入換信号機",
           "indicator": "3",
@@ -1536,6 +2103,9 @@
             "TH65_47T",
             "TH65_48T",
             "TH65_44T"
+          ],
+          "approach": [
+            "TH65_XT"
           ],
           "kind": "入換信号機",
           "indicator": "4",
@@ -1557,6 +2127,9 @@
             "TH65_44T",
             "TH65_5T"
           ],
+          "approach": [
+            "TH65_XT"
+          ],
           "kind": "入換信号機",
           "indicator": "5",
           "name": "31L5",
@@ -1574,6 +2147,9 @@
             "TH65_44T",
             "TH65_6T"
           ],
+          "approach": [
+            "TH65_XT"
+          ],
           "kind": "入換信号機",
           "indicator": "6",
           "name": "31L6",
@@ -1587,6 +2163,9 @@
             "TH65_50ロT",
             "TH65_ET",
             "TH65_48T"
+          ],
+          "approach": [
+            "TH65_YT"
           ],
           "kind": "入換信号機",
           "indicator": "E",
@@ -1602,6 +2181,9 @@
             "TH65_50イT",
             "TH65_49T",
             "TH65_2RT"
+          ],
+          "approach": [
+            "TH65_YT"
           ],
           "kind": "入換信号機",
           "indicator": "1",
@@ -1620,6 +2202,9 @@
             "TH65_45T",
             "TH65_3RT"
           ],
+          "approach": [
+            "TH65_YT"
+          ],
           "kind": "入換信号機",
           "indicator": "2",
           "name": "32LB",
@@ -1634,6 +2219,9 @@
             "TH65_49T",
             "TH65_47T",
             "TH65_45T"
+          ],
+          "approach": [
+            "TH65_YT"
           ],
           "kind": "入換信号機",
           "indicator": "3",
@@ -1654,6 +2242,9 @@
             "TH65_47T",
             "TH65_48T",
             "TH65_44T"
+          ],
+          "approach": [
+            "TH65_YT"
           ],
           "kind": "入換信号機",
           "indicator": "4",
@@ -1676,6 +2267,9 @@
             "TH65_44T",
             "TH65_5T"
           ],
+          "approach": [
+            "TH65_YT"
+          ],
           "kind": "入換信号機",
           "indicator": "5",
           "name": "32L5",
@@ -1693,6 +2287,9 @@
             "TH65_44T",
             "TH65_6T"
           ],
+          "approach": [
+            "TH65_YT"
+          ],
           "kind": "入換信号機",
           "indicator": "6",
           "name": "32L6",
@@ -1707,6 +2304,11 @@
             "TH65_45T",
             "TH65_3RT"
           ],
+          "approach": [
+            "TH65_YT",
+            "TH65_50ロT",
+            "TH65_ET"
+          ],
           "kind": "入換信号機",
           "indicator": "2",
           "name": "29LB",
@@ -1719,6 +2321,11 @@
             "TH65_48T",
             "TH65_47T",
             "TH65_45T"
+          ],
+          "approach": [
+            "TH65_YT",
+            "TH65_50ロT",
+            "TH65_ET"
           ],
           "kind": "入換信号機",
           "indicator": "3",
@@ -1735,6 +2342,11 @@
           "circuits": [
             "TH65_48T",
             "TH65_44T"
+          ],
+          "approach": [
+            "TH65_YT",
+            "TH65_50ロT",
+            "TH65_ET"
           ],
           "kind": "入換信号機",
           "indicator": "4",
@@ -1753,6 +2365,11 @@
             "TH65_44T",
             "TH65_5T"
           ],
+          "approach": [
+            "TH65_YT",
+            "TH65_50ロT",
+            "TH65_ET"
+          ],
           "kind": "入換信号機",
           "indicator": "5",
           "name": "29L5",
@@ -1766,6 +2383,11 @@
             "TH65_44T",
             "TH65_6T"
           ],
+          "approach": [
+            "TH65_YT",
+            "TH65_50ロT",
+            "TH65_ET"
+          ],
           "kind": "入換信号機",
           "indicator": "6",
           "name": "29L6",
@@ -1776,6 +2398,15 @@
           "to": "3番線",
           "circuits": [
             "TH65_11LT"
+          ],
+          "approach": [
+            "DF2T",
+            "DF1T",
+            "TH65_XT",
+            "TH65_50イT",
+            "TH65_49T",
+            "TH65_47T",
+            "TH65_45T"
           ],
           "kind": "場内信号機",
           "name": "11L",
@@ -1788,6 +2419,16 @@
           "circuits": [
             "TH65_12LT"
           ],
+          "approach": [
+            "DF2T",
+            "DF1T",
+            "TH65_XT",
+            "TH65_50イT",
+            "TH65_49T",
+            "TH65_47T",
+            "TH65_48T",
+            "TH65_44T"
+          ],
           "kind": "場内信号機",
           "name": "12L",
           "category": "下り場内",
@@ -1799,6 +2440,12 @@
           "circuits": [
             "TH65_11LT"
           ],
+          "approach": [
+            "TH65_48T",
+            "TH65_49T",
+            "TH65_47T",
+            "TH65_45T"
+          ],
           "kind": "入換信号機",
           "name": "27L",
           "category": "入換下り場内",
@@ -1809,6 +2456,12 @@
           "to": "4番線",
           "circuits": [
             "TH65_12LT"
+          ],
+          "approach": [
+            "TH65_47T",
+            "TH65_49T",
+            "TH65_48T",
+            "TH65_44T"
           ],
           "kind": "入換信号機",
           "name": "28L",
@@ -1825,6 +2478,9 @@
             "TH65_49T",
             "TH65_50イT",
             "TH65_XT"
+          ],
+          "approach": [
+            "TH65_5T"
           ],
           "kind": "入換信号機",
           "indicator": "X",
@@ -1844,6 +2500,9 @@
             "TH65_50ロT",
             "TH65_YT"
           ],
+          "approach": [
+            "TH65_5T"
+          ],
           "kind": "入換信号機",
           "indicator": "Y",
           "name": "25RY",
@@ -1859,6 +2518,9 @@
             "TH65_ET",
             "TH65_50ロT"
           ],
+          "approach": [
+            "TH65_5T"
+          ],
           "kind": "入換信号機",
           "indicator": "E",
           "name": "25RE",
@@ -1873,6 +2535,9 @@
             "TH65_48T",
             "TH65_ET",
             "TH65_50ロT"
+          ],
+          "approach": [
+            "TH65_6T"
           ],
           "kind": "入換信号機",
           "indicator": "E",
@@ -1891,6 +2556,9 @@
             "TH65_50イT",
             "TH65_XT"
           ],
+          "approach": [
+            "TH65_6T"
+          ],
           "kind": "入換信号機",
           "indicator": "X",
           "name": "26RX",
@@ -1908,6 +2576,9 @@
             "TH65_50イT",
             "TH65_50ロT",
             "TH65_YT"
+          ],
+          "approach": [
+            "TH65_6T"
           ],
           "kind": "入換信号機",
           "indicator": "Y",
@@ -1930,6 +2601,13 @@
             "TH64_13LT",
             "TH64_15LT"
           ],
+          "approach": [
+            "TH65_49T",
+            "TH65_50イT",
+            "TH65_XT",
+            "DF1T",
+            "DF2T"
+          ],
           "kind": "場内信号機",
           "name": "13R",
           "category": "上り場内",
@@ -1943,6 +2621,13 @@
             "TH64_12LT",
             "TH64_12RT"
           ],
+          "approach": [
+            "TH65_49T",
+            "TH65_50イT",
+            "TH65_XT",
+            "DF1T",
+            "DF2T"
+          ],
           "kind": "場内信号機",
           "name": "12R",
           "category": "上り場内",
@@ -1955,6 +2640,12 @@
             "TH64_14RT",
             "TH64_22T"
           ],
+          "approach": [
+            "DF2T",
+            "TH64_21T",
+            "TH64_12LT",
+            "TH64_12RT"
+          ],
           "kind": "出発信号機",
           "name": "14R",
           "category": "上り出発",
@@ -1966,6 +2657,12 @@
           "circuits": [
             "TH64_15RT",
             "TH64_22T"
+          ],
+          "approach": [
+            "DF2T",
+            "TH64_21T",
+            "TH64_13LT",
+            "TH64_15LT"
           ],
           "kind": "出発信号機",
           "name": "15R",
@@ -1980,6 +2677,13 @@
             "TH64_15RT",
             "TH64_15LT"
           ],
+          "approach": [
+            "TH63_22ロT",
+            "TH63_15LT",
+            "TH63_21ロT",
+            "TH63_21イT",
+            "FMT"
+          ],
           "kind": "場内信号機",
           "name": "15L",
           "category": "下り場内",
@@ -1993,6 +2697,13 @@
             "TH64_14RT",
             "TH64_12RT"
           ],
+          "approach": [
+            "TH63_22ロT",
+            "TH63_15LT",
+            "TH63_21ロT",
+            "TH63_21イT",
+            "FMT"
+          ],
           "kind": "場内信号機",
           "name": "14L",
           "category": "下り場内",
@@ -2005,6 +2716,14 @@
             "TH64_12LT",
             "TH64_21T"
           ],
+          "approach": [
+            "TH63_21ロT",
+            "TH63_21イT",
+            "FMT",
+            "TH64_22T",
+            "TH64_14RT",
+            "TH64_12RT"
+          ],
           "kind": "出発信号機",
           "name": "12L",
           "category": "下り出発",
@@ -2016,6 +2735,14 @@
           "circuits": [
             "TH64_13LT",
             "TH64_21T"
+          ],
+          "approach": [
+            "TH63_21ロT",
+            "TH63_21イT",
+            "FMT",
+            "TH64_22T",
+            "TH64_15RT",
+            "TH64_15LT"
           ],
           "kind": "出発信号機",
           "name": "13L",
@@ -2037,6 +2764,21 @@
             "TH63_21ロT",
             "TH63_15LT"
           ],
+          "approach": [
+            "TH64_21T",
+            "TH62_21T",
+            "TH64_13LT",
+            "TH62_13LT",
+            "TH64_15LT",
+            "TH62_15LT",
+            "TH64_14RT",
+            "TH62_14RT",
+            "TH64_15RT",
+            "TH62_15RT",
+            "TH64_22T",
+            "TH62_22T",
+            "FMT"
+          ],
           "kind": "場内信号機",
           "name": "13R",
           "category": "上り場内",
@@ -2050,6 +2792,21 @@
             "TH63_12RT",
             "TH63_21ロT"
           ],
+          "approach": [
+            "TH64_21T",
+            "TH62_21T",
+            "TH64_13LT",
+            "TH62_13LT",
+            "TH64_15LT",
+            "TH62_15LT",
+            "TH64_14RT",
+            "TH62_14RT",
+            "TH64_15RT",
+            "TH62_15RT",
+            "TH64_22T",
+            "TH62_22T",
+            "FMT"
+          ],
           "kind": "場内信号機",
           "name": "12R",
           "category": "上り場内",
@@ -2062,6 +2819,17 @@
             "TH63_22イT",
             "TH63_22ロT"
           ],
+          "approach": [
+            "TH64_14RT",
+            "TH62_14RT",
+            "TH64_15RT",
+            "TH62_15RT",
+            "TH64_22T",
+            "TH62_22T",
+            "FMT",
+            "TH63_21イT",
+            "TH63_12RT"
+          ],
           "kind": "出発信号機",
           "name": "14R",
           "category": "上り出発",
@@ -2072,6 +2840,18 @@
           "to": "新大路方",
           "circuits": [
             "TH63_22ロT"
+          ],
+          "approach": [
+            "TH64_14RT",
+            "TH62_14RT",
+            "TH64_15RT",
+            "TH62_15RT",
+            "TH64_22T",
+            "TH62_22T",
+            "FMT",
+            "TH63_21イT",
+            "TH63_21ロT",
+            "TH63_15LT"
           ],
           "kind": "出発信号機",
           "name": "15R",
@@ -2084,6 +2864,16 @@
           "circuits": [
             "TH63_22ロT",
             "TH63_15LT"
+          ],
+          "approach": [
+            "TH64_12LT",
+            "TH62_12LT",
+            "TH64_13LT",
+            "TH62_13LT",
+            "TH64_21T",
+            "TH62_21T",
+            "MT1T",
+            "MT2T"
           ],
           "kind": "場内信号機",
           "name": "15L",
@@ -2098,6 +2888,16 @@
             "TH63_22イT",
             "TH63_12RT"
           ],
+          "approach": [
+            "TH64_12LT",
+            "TH62_12LT",
+            "TH64_13LT",
+            "TH62_13LT",
+            "TH64_21T",
+            "TH62_21T",
+            "MT1T",
+            "MT2T"
+          ],
           "kind": "場内信号機",
           "name": "14L",
           "category": "下り場内",
@@ -2110,6 +2910,13 @@
             "TH63_21イT",
             "TH63_21ロT"
           ],
+          "approach": [
+            "MT2T",
+            "MT1T",
+            "TH63_22ロT",
+            "TH63_22イT",
+            "TH63_12RT"
+          ],
           "kind": "出発信号機",
           "name": "12L",
           "category": "下り出発",
@@ -2121,6 +2928,12 @@
           "circuits": [
             "TH63_21ロT",
             "TH63_21イT"
+          ],
+          "approach": [
+            "MT2T",
+            "MT1T",
+            "TH63_22ロT",
+            "TH63_15LT"
           ],
           "kind": "出発信号機",
           "name": "13L",
@@ -2142,6 +2955,10 @@
             "TH62_12LT",
             "TH62_12RT"
           ],
+          "approach": [
+            "MT1T",
+            "MT2T"
+          ],
           "kind": "場内信号機",
           "name": "12R",
           "category": "上り場内",
@@ -2155,6 +2972,10 @@
             "TH62_13LT",
             "TH62_15LT"
           ],
+          "approach": [
+            "MT1T",
+            "MT2T"
+          ],
           "kind": "場内信号機",
           "name": "13R",
           "category": "上り場内",
@@ -2167,6 +2988,13 @@
             "TH62_14RT",
             "TH62_22T"
           ],
+          "approach": [
+            "MT1T",
+            "MT2T",
+            "TH62_21T",
+            "TH62_12LT",
+            "TH62_12RT"
+          ],
           "kind": "出発信号機",
           "name": "14R",
           "category": "上り出発",
@@ -2178,6 +3006,13 @@
           "circuits": [
             "TH62_15RT",
             "TH62_22T"
+          ],
+          "approach": [
+            "MT1T",
+            "MT2T",
+            "TH62_21T",
+            "TH62_13LT",
+            "TH62_15LT"
           ],
           "kind": "出発信号機",
           "name": "15R",
@@ -2192,6 +3027,11 @@
             "TH62_14RT",
             "TH62_12RT"
           ],
+          "approach": [
+            "TH61_2RT",
+            "TH1T",
+            "TH2T"
+          ],
           "kind": "場内信号機",
           "name": "14L",
           "category": "下り場内",
@@ -2205,6 +3045,11 @@
             "TH62_15RT",
             "TH62_15LT"
           ],
+          "approach": [
+            "TH61_2RT",
+            "TH1T",
+            "TH2T"
+          ],
           "kind": "場内信号機",
           "name": "15L",
           "category": "下り場内",
@@ -2217,6 +3062,13 @@
             "TH62_12LT",
             "TH62_21T"
           ],
+          "approach": [
+            "TH1T",
+            "TH2T",
+            "TH62_22T",
+            "TH62_14RT",
+            "TH62_12RT"
+          ],
           "kind": "出発信号機",
           "name": "12L",
           "category": "下り出発",
@@ -2228,6 +3080,13 @@
           "circuits": [
             "TH62_13LT",
             "TH62_21T"
+          ],
+          "approach": [
+            "TH1T",
+            "TH2T",
+            "TH62_22T",
+            "TH62_15RT",
+            "TH62_15LT"
           ],
           "kind": "出発信号機",
           "name": "13L",
@@ -2250,6 +3109,13 @@
             "TH61_22T",
             "TH61_2RBT"
           ],
+          "approach": [
+            "TH62_14RT",
+            "TH62_15RT",
+            "TH62_22T",
+            "TH1T",
+            "TH2T"
+          ],
           "kind": "場内信号機",
           "name": "2RB",
           "category": "上り場内",
@@ -2264,6 +3130,13 @@
             "TH61_22T",
             "TH61_2RAT"
           ],
+          "approach": [
+            "TH62_14RT",
+            "TH62_15RT",
+            "TH62_22T",
+            "TH1T",
+            "TH2T"
+          ],
           "kind": "場内信号機",
           "name": "2RA",
           "category": "上り場内",
@@ -2274,6 +3147,14 @@
           "to": "新大路方",
           "circuits": [
             "TH61_5RT"
+          ],
+          "approach": [
+            "TH1T",
+            "TH2T",
+            "TH61_2RT",
+            "TH61_21イT",
+            "TH61_22T",
+            "TH61_2RBT"
           ],
           "kind": "出発信号機",
           "name": "5R",
@@ -2289,6 +3170,13 @@
             "TH61_2RT",
             "TH61_22T"
           ],
+          "approach": [
+            "下り249T",
+            "下り245T",
+            "下り241T",
+            "下り237T",
+            "TH61_6LT"
+          ],
           "kind": "出発信号機",
           "name": "4L",
           "category": "下り出発",
@@ -2302,6 +3190,9 @@
             "TH61_21イT",
             "TH61_2RT"
           ],
+          "approach": [
+            "TH61_2RAT"
+          ],
           "kind": "出発信号機",
           "name": "3L",
           "category": "下り出発",
@@ -2312,6 +3203,12 @@
           "to": "3番線",
           "circuits": [
             "TH61_6LT"
+          ],
+          "approach": [
+            "下り249T",
+            "下り245T",
+            "下り241T",
+            "下り237T"
           ],
           "kind": "場内信号機",
           "name": "6L",
@@ -2332,6 +3229,13 @@
             "TH59_21イT",
             "TH59_21ロT"
           ],
+          "approach": [
+            "上り238T",
+            "上り242T",
+            "上り246T",
+            "上り250T",
+            "TH59_11RT"
+          ],
           "kind": "出発信号機",
           "name": "13R",
           "category": "上り出発",
@@ -2342,6 +3246,12 @@
           "to": "1番線",
           "circuits": [
             "TH59_11RT"
+          ],
+          "approach": [
+            "上り238T",
+            "上り242T",
+            "上り246T",
+            "上り250T"
           ],
           "kind": "場内信号機",
           "name": "11R",
@@ -2355,6 +3265,12 @@
             "TH59_21ロT",
             "TH59_13LT"
           ],
+          "approach": [
+            "TH61_2RT",
+            "TH58_2RT",
+            "NA2T",
+            "NA1T"
+          ],
           "kind": "場内信号機",
           "name": "13L",
           "category": "下り場内",
@@ -2365,6 +3281,12 @@
           "to": "館浜方",
           "circuits": [
             "TH59_12LT"
+          ],
+          "approach": [
+            "NA2T",
+            "NA1T",
+            "TH59_21ロT",
+            "TH59_13LT"
           ],
           "kind": "出発信号機",
           "name": "12L",
@@ -2387,6 +3309,12 @@
             "TH58_22イT",
             "TH58_2RAT"
           ],
+          "approach": [
+            "TH59_21イT",
+            "TH59_21ロT",
+            "NA1T",
+            "NA2T"
+          ],
           "kind": "場内信号機",
           "indicator": "1",
           "name": "2RA",
@@ -2402,6 +3330,12 @@
             "TH58_22イT",
             "TH58_2RBT",
             "TH58_23ロT"
+          ],
+          "approach": [
+            "TH59_21イT",
+            "TH59_21ロT",
+            "NA1T",
+            "NA2T"
           ],
           "kind": "場内信号機",
           "indicator": "2",
@@ -2419,6 +3353,12 @@
             "TH58_22ロT",
             "TH58_9LCT"
           ],
+          "approach": [
+            "TH59_21イT",
+            "TH59_21ロT",
+            "NA1T",
+            "NA2T"
+          ],
           "kind": "場内信号機",
           "indicator": "3",
           "name": "2RC",
@@ -2434,6 +3374,13 @@
             "TH58_25T",
             "TH58_9LT"
           ],
+          "approach": [
+            "NA1T",
+            "NA2T",
+            "TH58_2RT",
+            "TH58_21T",
+            "TH58_2RAT"
+          ],
           "kind": "出発信号機",
           "name": "6R",
           "category": "上り出発",
@@ -2446,6 +3393,14 @@
             "TH58_25T",
             "TH58_9LT"
           ],
+          "approach": [
+            "NA1T",
+            "NA2T",
+            "TH58_2RT",
+            "TH58_21T",
+            "TH58_22イT",
+            "TH58_2RBT"
+          ],
           "kind": "出発信号機",
           "name": "7R",
           "category": "上り出発",
@@ -2457,6 +3412,15 @@
           "circuits": [
             "TH58_25T",
             "TH58_9LT"
+          ],
+          "approach": [
+            "NA1T",
+            "NA2T",
+            "TH58_2RT",
+            "TH58_21T",
+            "TH58_22イT",
+            "TH58_22ロT",
+            "TH58_9LCT"
           ],
           "kind": "出発信号機",
           "name": "8R",
@@ -2473,6 +3437,10 @@
             "TH58_23イT",
             "TH58_2RAT"
           ],
+          "approach": [
+            "AS2T",
+            "AS1T"
+          ],
           "kind": "場内信号機",
           "indicator": "1",
           "name": "9LA",
@@ -2488,6 +3456,10 @@
             "TH58_23ロT",
             "TH58_2RBT"
           ],
+          "approach": [
+            "AS2T",
+            "AS1T"
+          ],
           "kind": "場内信号機",
           "indicator": "2",
           "name": "9LB",
@@ -2501,6 +3473,10 @@
             "TH58_9LT",
             "TH58_25T",
             "TH58_9LCT"
+          ],
+          "approach": [
+            "AS2T",
+            "AS1T"
           ],
           "kind": "場内信号機",
           "indicator": "3",
@@ -2516,6 +3492,15 @@
             "TH58_2RT",
             "TH58_22イT"
           ],
+          "approach": [
+            "AS2T",
+            "AS1T",
+            "TH58_9LT",
+            "TH58_25T",
+            "TH58_23ロT",
+            "TH58_23イT",
+            "TH58_2RAT"
+          ],
           "kind": "出発信号機",
           "name": "3L",
           "category": "下り出発",
@@ -2528,6 +3513,14 @@
             "TH58_22イT",
             "TH58_21T",
             "TH58_2RT"
+          ],
+          "approach": [
+            "AS2T",
+            "AS1T",
+            "TH58_9LT",
+            "TH58_25T",
+            "TH58_23ロT",
+            "TH58_2RBT"
           ],
           "kind": "出発信号機",
           "name": "4L",
@@ -2542,6 +3535,13 @@
             "TH58_22イT",
             "TH58_21T",
             "TH58_2RT"
+          ],
+          "approach": [
+            "AS2T",
+            "AS1T",
+            "TH58_9LT",
+            "TH58_25T",
+            "TH58_9LCT"
           ],
           "kind": "出発信号機",
           "name": "5L",
