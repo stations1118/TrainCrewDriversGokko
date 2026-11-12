@@ -230,6 +230,14 @@ public sealed class MainForm : Form
         {
             if (_planGrid.IsCurrentCellDirty) _planGrid.CommitEdit(DataGridViewDataErrorContexts.Commit);
         };
+        // 番線の欄の上でマウスのホイールを回しても、番線が変わらないようにする
+        // （クリックして選択中になった欄は、ホイールで値が変わり、そのまま「選んだ番線」として送られてしまうため）
+        _planGrid.EditingControlShowing += (_, e) =>
+        {
+            if (e.Control is not ComboBox combo) return;
+            combo.MouseWheel -= IgnoreWheel;
+            combo.MouseWheel += IgnoreWheel;
+        };
         _planGrid.CellValueChanged += (_, e) =>
         {
             if (_updatingPlan || e.RowIndex < 0 || _planGrid.Columns[e.ColumnIndex].Name != "Track") return;
@@ -560,6 +568,11 @@ public sealed class MainForm : Form
         if (DateTime.UtcNow > _messageUntil) _messageLabel.Text = "";
     }
 
+    private static void IgnoreWheel(object? sender, MouseEventArgs e)
+    {
+        if (e is HandledMouseEventArgs h) h.Handled = true;
+    }
+
     private void UpdatePlan(List<StationPlanView> plan)
     {
         _updatingPlan = true;
@@ -590,6 +603,10 @@ public sealed class MainForm : Form
                 row.Cells[_planGrid.Columns["Track"]!.Index].ReadOnly = p.Locked || p.TrackOptions.Count == 0 || p.Track == null;
                 _planGrid.Rows.Add(row);
             }
+
+            // 作り直したあとは、どの欄も選択中にしない（選択中の欄が残ると、その欄にサーバーの番線を表示できず、
+            // 空のままの欄から意図しない番線が送られることがある）
+            _planGrid.CurrentCell = null;
         }
 
         for (var i = 0; i < plan.Count && i < _planGrid.Rows.Count; i++)
