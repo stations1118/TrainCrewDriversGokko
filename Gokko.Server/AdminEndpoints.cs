@@ -72,6 +72,17 @@ public static class AdminEndpoints
         MapDiagramControls(admin);
         MapDiagramControls(dia);
 
+        // 在線位置の画面（tid.html）。見るだけで、操作はできない。合言葉なしで誰でも見られる
+        var view = app.MapGroup("/api/tid");
+
+        view.MapGet("/state", (RouteEngine engine, GameClock clock) => Results.Ok(new
+        {
+            gameTime = clock.NowText,
+            tid = engine.TidView(),
+            orders = engine.OrdersView(),
+            sections = engine.SectionsView()
+        }));
+
         admin.MapGet("/state", (GameData data, IncidentManager incidents, PlayerRegistry players, GameClock clock, RandomOptions random) =>
         {
             var now = DateTime.UtcNow;

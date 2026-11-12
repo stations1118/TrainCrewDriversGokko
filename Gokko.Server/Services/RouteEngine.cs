@@ -883,11 +883,13 @@ public sealed class RouteEngine
     /// <summary>
     /// 自動の待避。番線の確定時に、後ろから来る「自分より強い種別」の列車を、この駅を通る見込みの早い順に見ていき、
     /// 次の駅までに追いつかれる見込みの列車を待つ（待つたびに自分の発車見込みを遅らせて判断を続ける。最大 MaxPassingWaits 本）。
-    /// 集中扱いの番線指定・発車順があれば、自動では判断しない。
+    /// 集中扱いの番線指定・発車順があれば、自動では判断しない。その駅を通過する列車は、自動では待避させない。
     /// </summary>
     private void DecidePassing(TrainRun run, StationRun st, DateTime now)
     {
         if (!_data.PassingStations.TryGetValue(st.St.Id, out var ps) || st.Terminal) return;
+        // 自動の待避は、その駅に停車する列車だけ（通過列車を待避のために止めない。通過列車は、次の停車する待避駅で待つ）
+        if (st.StopType == "通過" && !st.IsStart) return;
         if (_central.TrackOverride(run.Train, st.St.Id) != null) return;
         if (_central.Order(st.St.Id)?.Contains(run.Train) == true) return;
         var loop = ps.TrackFor(run.Dir);
@@ -1833,6 +1835,37 @@ public sealed class RouteEngine
             }
 
             return list;
+        }
+    }
+
+    /// <summary>
+    /// 在線位置の画面（tid.html）用。列車が踏んでいる軌道回路と、開通させている進路のうち、まだ使う軌道回路を返す。
+    /// </summary>
+    public object TidView()
+    {
+        lock (_lock)
+        {
+            var runs = _runs.Values.Where(r => r.HasPosition).ToList();
+            return new
+            {
+                trains = runs.Select(r => new
+                {
+                    train = r.Train,
+                    type = r.Type,
+                    direction = r.Dir.Label(),
+                    circuits = r.Player.TrackCircuits.ToList()
+                }).ToList(),
+                routes = runs.SelectMany(r => r.Requests
+                    .Where(q => !q.Released && q.CancelledUtc == null)
+                    .Select(q => new
+                    {
+                        train = r.Train,
+                        station = q.Station.St.Id,
+                        route = q.Def.Name,
+                        open = q.Seen, // ゲームで開通を確認できたか（まだなら要求中）
+                        circuits = LiveCircuits(r, q).ToList()
+                    })).ToList()
+            };
         }
     }
 
