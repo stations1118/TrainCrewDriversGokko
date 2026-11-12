@@ -24,6 +24,11 @@
   #scroll { overflow-x: auto; padding: 8px 0 16px; }
   #outside { padding: 0 16px 12px; font-size: 12px; }
   #error { color: var(--danger); }
+  #tt { position: fixed; z-index: 5; background: #fff; border: 1px solid var(--track); box-shadow: 0 4px 16px rgba(0,0,0,.18); padding: 8px 10px; font-size: 13px; max-height: 70vh; overflow-y: auto; }
+  #tt table { border-collapse: collapse; }
+  #tt td { padding: 1px 8px 1px 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #tt .ctl { font-weight: 700; }
+  #tt .pass { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -41,6 +46,7 @@
 
 <div id="scroll"><div id="map"></div></div>
 <div id="outside" class="muted"></div>
+<div id="tt" hidden></div>
 
 <script>
 (() => {
@@ -53,22 +59,21 @@
     return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  const CHIP = { w: 66, h: 18, row: 20, stair: 14, max: 5 };
+  // 駅の到着・出発の順序の表の大きさ（px）。札5つぶんの枠を段々にずらして並べ、上に題を置く
+  const BOX = { w: CHIP.w + CHIP.stair * (CHIP.max - 1), title: 16, h: CHIP.row * CHIP.max };
+
   let minX = 0, minY = 0, maxY = 0; // 図の範囲（マス目）。回路・駅名・順序の表が収まるように決める
   const X = (x) => (x - minX + PAD.left) * layout.unit;
   const Y = (y) => (y - minY + PAD.top) * layout.unitY; // 縦は横より広く取る（線とホームの間を空けるため）
   const pts = (line) => line.map((p) => `${X(p[0])},${Y(p[1])}`).join(" ");
-
-  function drawCircuit(name, cls) {
-    const lines = layout.circuits[name];
-    if (!lines) return "";
-    return lines.map((l) => `<polyline class="${cls}" points="${pts(l)}"/>`).join("");
-  }
+  const poly = (cls, lines) => lines.map((l) => `<polyline class="${cls}" points="${pts(l)}"/>`).join("");
 
   // ---- 配線のデータ（tid-layout.json）を、図全体の座標に並べる ----
   // データは左（館浜）から順に「駅（yard）」と「駅間（gap）」を並べたもの。駅の中の座標は、その駅の左端を 0 とする。
   // 駅間は長さ（gap）と線ごとの回路の並びだけを書き、回路の長さは重み（閉塞の長さの比）で割り振る。
   function expand(src) {
-    const L = { unit: src.unit, unitY: src.unitY || src.unit, circuits: {}, platforms: [], labels: [], stations: [], stops: [], departures: [], arrivals: [], sections: [] };
+    const L = { unit: src.unit, unitY: src.unitY || src.unit, circuits: {}, platforms: [], labels: [], stations: [], stops: [], boxes: [], sections: [] };
     const add = (name, line) => (L.circuits[name] = L.circuits[name] || []).push(line);
     let cx = 0;
     for (const e of src.sequence) {
@@ -77,8 +82,19 @@
         for (const f of e.platforms || []) L.platforms.push({ x: f[0] + cx, y: f[1], w: f[2] });
         for (const t of e.labels || []) L.labels.push({ x: t[0] + cx, y: t[1], text: t[2] });
         L.stations.push({ id: e.yard, name: e.name, x: e.nameAt[0] + cx, y: e.nameAt[1] });
-        for (const d of e.departures || []) L.departures.push({ station: e.yard, direction: d[0], x: d[1] + cx, y: d[2] });
-        for (const d of e.arrivals || []) L.arrivals.push({ station: e.yard, direction: d[0], x: d[1] + cx, y: d[2] });
+        // 駅の到着・出発の順序の表。上りは配線と駅名より上、下りは配線より下に置く。
+        // 上りは右へ進むので「到着」を左・「出発」を右、下りは左へ進むので「出発」を左・「到着」を右
+        if (e.orders && e.orders.length) {
+          const ys = Object.values(e.circuits).flat(2).map((p) => p[1]);
+          const top = Math.min(...ys, e.nameAt[1] - 0.6) - 0.9;
+          const bottom = Math.max(...ys, ...(e.platforms || []).map((f) => f[1])) + 0.9;
+          const w = BOX.w / L.unit, h = BOX.h / L.unitY, t = BOX.title / L.unitY;
+          for (const kind of e.orders) {
+            const dir = kind.slice(0, 2), what = kind.slice(2);
+            const right = (dir === "上り") === (what === "出発");
+            L.boxes.push({ station: e.yard, name: e.name, dir, what, x: cx + 0.3 + (right ? w + 0.8 : 0), y: dir === "上り" ? top - h : bottom + t });
+          }
+        }
         cx += e.width;
         continue;
       }
@@ -97,10 +113,9 @@
         });
       }
       // 途中の駅（連動のない駅）: [駅名, 上りの回路, 下りの回路, "island"（島式のときだけ）]
-      // 対面式は、上り線の上と下り線の下にホームを置く。ホームは、それぞれの回路の中ほどに、回路からはみ出さない幅で置く
+      // 対面式は、上り線の上と下り線の下に、同じ位置でホームを向かい合わせる
       for (const [name, upName, downName, kind] of e.stops || []) {
         const up = span[upName], down = span[downName];
-        // 上りと下りの回路が重なっている範囲の中ほどを、駅の位置にする（上下のホームを同じ位置で向かい合わせる）
         const from = Math.max(up.from, down.from), to = Math.min(up.to, down.to);
         const cxm = to > from ? (from + to) / 2 : (up.from + up.to + down.from + down.to) / 4;
         const w = to > from ? Math.min(4, to - from - 1) : 4;
@@ -121,19 +136,19 @@
     return L;
   }
 
-  // ---- 進路が通る枝だけを塗るための準備 ----
-  // 回路ごとに、線を「点と、点どうしをつなぐ辺」に分ける。ほかの線の点が線の途中にあれば、そこで辺を切る（分岐の付け根）
+  // ---- 回路ごとの線を「点と、点どうしをつなぐ辺」に分ける ----
+  // ほかの線の点が線の途中にあれば、そこで辺を切る（分岐の付け根・交差の中心）
   const K = (p) => `${Math.round(p[0] * 100)},${Math.round(p[1] * 100)}`;
   let graphs = null; // 回路名 → { nodes: Map(key → [x,y]), adj: Map(key → [key...]) }
 
   function buildGraphs() {
     const allPoints = Object.values(layout.circuits).flat(2);
     minX = Math.min(...allPoints.map((p) => p[0]));
-    const boxes = [...layout.departures, ...layout.arrivals, ...layout.sections];
-    const boxH = (6 + CHIP.row * CHIP.max) / layout.unitY; // 順序の表の高さ（マス目）
-    const above = (b) => b.direction === "上り" && layout.departures.includes(b); // 上へ積む表
-    minY = Math.min(...allPoints.map((p) => p[1]), ...boxes.map((b) => (above(b) ? b.y - boxH : b.y) - 1), ...layout.stations.map((s) => s.y - 1.2));
-    maxY = Math.max(...allPoints.map((p) => p[1]), ...boxes.map((b) => (above(b) ? b.y : b.y + boxH)));
+    const secH = (6 + CHIP.row * CHIP.max) / layout.unitY;
+    const boxH = BOX.h / layout.unitY;
+    minY = Math.min(...allPoints.map((p) => p[1]), ...layout.sections.map((b) => b.y - 1), ...layout.stations.map((s) => s.y - 1.2),
+      ...layout.boxes.map((b) => b.y - BOX.title / layout.unitY - 0.2));
+    maxY = Math.max(...allPoints.map((p) => p[1]), ...layout.sections.map((b) => b.y + secH), ...layout.boxes.map((b) => b.y + boxH));
     const onSegment = (p, a, b) => {
       const cross = (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
       if (Math.abs(cross) > 1e-6) return false;
@@ -159,13 +174,18 @@
     }
   }
 
-  // 軌道回路の区切り: 回路の線の端が、ほかの回路とつながっている所に、線を横切る細い切れ目を入れる
+  // 軌道回路の区切り: 回路の線の端が、ほかの回路とつながっている所に、線を横切る細い切れ目を入れる。
+  // 渡り線が交差する所（4本以上の線の端が集まる点）は、区切りではないので入れない
   let cuts = []; // [x1, y1, x2, y2]（画面の座標）
   function buildCuts() {
+    const ends = new Map();
+    for (const lines of Object.values(layout.circuits)) for (const l of lines)
+      for (const p of [l[0], l[l.length - 1]]) ends.set(K(p), (ends.get(K(p)) || 0) + 1);
     const seen = new Set();
     cuts = [];
     for (const [name, lines] of Object.entries(layout.circuits)) for (const l of lines) {
       for (const [p, q] of [[l[0], l[1]], [l[l.length - 1], l[l.length - 2]]]) {
+        if ((ends.get(K(p)) || 0) >= 4) continue;
         const others = Object.keys(graphs).filter((o) => o !== name && graphs[o].nodes.has(K(p)));
         if (others.length === 0) continue;
         // 相手の回路でも線の端なら、端どうしの境目。相手の線の途中につながるなら、少し手前で切る（相手の線は切らない）
@@ -181,57 +201,68 @@
     }
   }
 
-  // 回路 name の点のうち、others のどれかの回路にもある点（＝つながっている所）
-  function sharedNodes(name, others) {
-    const g = graphs[name];
-    if (!g) return [];
-    return [...g.nodes.keys()].filter((k) => others.some((o) => o !== name && graphs[o] && graphs[o].nodes.has(k)));
-  }
-
-  // 進路1本ぶんの線。回路ごとに、入口（前の回路とつながる点）から出口（次の回路とつながる点）までの枝だけを返す。
-  // 進路の端の回路は、同じ列車がいる回路・同じ列車のほかの進路とつながる点を入口・出口にする。分からなければ回路全体。
-  function routeLines(route, known) {
-    const out = [];
-    const cs = route.circuits.filter((c) => graphs[c]);
-    cs.forEach((c, i) => {
+  // ---- 進路・在線を、実際に通る枝だけで描く ----
+  // 回路の集まり（進路の回路、または列車がいる回路）の線をつないだ中で、急に向きを変えずに一筆で通れる道のうち、
+  // 「同じ列車のほかの回路につながる端の数」「通る回路の数」「長さ」の順に大きいものを選ぶ。
+  // 進路のデータには、分岐の反対側の回路（側面防護）も入っているので、それは描かない。結果は 回路名 → 線の並び
+  function smoothPath(circuits, known) {
+    const cs = [...new Set(circuits)].filter((c) => graphs[c]);
+    const result = new Map();
+    if (cs.length === 0) return result;
+    const nodes = new Map();
+    const node = (k, p) => { let n = nodes.get(k); if (!n) { n = { p, edges: [] }; nodes.set(k, n); } return n; };
+    for (const c of cs) {
       const g = graphs[c];
-      const rest = known.filter((k) => k !== c && k !== cs[i - 1] && k !== cs[i + 1]);
-      let entry = i > 0 ? sharedNodes(c, [cs[i - 1]]) : sharedNodes(c, rest);
-      let exit = i + 1 < cs.length ? sharedNodes(c, [cs[i + 1]]) : sharedNodes(c, rest).filter((k) => !entry.includes(k) || i > 0);
-      const whole = () => layout.circuits[c].forEach((l) => out.push(l));
-      // 片方しか分からないときは、分かっている側からいちばん遠い「ほかの回路とつながる点」を反対側とみなす
-      // （分岐は片側にまとまっているので、進路はその反対側へ抜ける）
-      const farFrom = (from) => {
-        const x0 = g.nodes.get(from[0])[0];
-        const edge = sharedNodes(c, Object.keys(graphs)).filter((k) => !from.includes(k));
-        edge.sort((a, b) => Math.abs(g.nodes.get(b)[0] - x0) - Math.abs(g.nodes.get(a)[0] - x0));
-        return edge.slice(0, 1);
-      };
-      if (entry.length > 0 && exit.length === 0) exit = farFrom(entry);
-      else if (exit.length > 0 && entry.length === 0) entry = farFrom(exit);
-      if (entry.length === 0 || exit.length === 0) { whole(); return; }
-      // 入口から出口まで、幅優先でたどる
-      const prev = new Map(entry.map((k) => [k, null]));
-      const queue = [...entry];
-      let goal = null;
-      while (queue.length && goal == null) {
-        const k = queue.shift();
-        if (exit.includes(k) && !entry.includes(k)) { goal = k; break; }
-        for (const n of g.adj.get(k) || []) if (!prev.has(n)) { prev.set(n, k); queue.push(n); }
+      for (const [k, list] of g.adj) {
+        const n = node(k, g.nodes.get(k));
+        for (const t of list) { node(t, g.nodes.get(t)); n.edges.push({ to: t, c }); }
       }
-      if (goal == null) { whole(); return; }
-      const path = [];
-      for (let k = goal; k != null; k = prev.get(k)) path.push(g.nodes.get(k));
-      out.push(path);
-    });
-    return out;
+    }
+    const knownCs = (known || []).filter((k) => graphs[k] && !cs.includes(k));
+    const touches = (k) => knownCs.some((kc) => graphs[kc].nodes.has(k));
+    const better = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] > b[i]; return false; };
+    let best = null;
+    const segs = [], count = new Map(), visited = new Set();
+    const visit = (k, dir, startTouch, len) => {
+      if (segs.length > 0) {
+        const score = [startTouch + (touches(k) ? 1 : 0), count.size, len];
+        if (!best || better(score, best.score)) best = { score, segs: segs.slice() };
+      }
+      const here = nodes.get(k);
+      for (const e of here.edges) {
+        if (visited.has(e.to)) continue;
+        const b = nodes.get(e.to).p;
+        const dx = b[0] - here.p[0], dy = b[1] - here.p[1], l = Math.hypot(dx, dy);
+        if (!l) continue;
+        const u = [dx / l, dy / l];
+        if (dir && u[0] * dir[0] + u[1] * dir[1] < 0.6) continue; // 急に向きを変えない（分岐で折り返さない・交差で乗り移らない）
+        visited.add(e.to);
+        segs.push({ a: here.p, b, c: e.c });
+        count.set(e.c, (count.get(e.c) || 0) + 1);
+        visit(e.to, u, startTouch, len + l);
+        segs.pop();
+        const n = count.get(e.c) - 1;
+        if (n) count.set(e.c, n); else count.delete(e.c);
+        visited.delete(e.to);
+      }
+    };
+    for (const k of nodes.keys()) { visited.add(k); visit(k, null, touches(k) ? 1 : 0, 0); visited.delete(k); }
+    if (!best) return result;
+    // 同じ回路が続く所は1本の線にまとめる
+    let cur = null;
+    for (const s of best.segs) {
+      if (cur && cur.c === s.c) { cur.line.push(s.b); continue; }
+      cur = { c: s.c, line: [s.a, s.b] };
+      if (!result.has(s.c)) result.set(s.c, []);
+      result.get(s.c).push(cur.line);
+    }
+    return result;
   }
 
-  // 列車の名札を置く位置: 踏んでいる回路の線の、中ほどの点
-  function trainAnchor(circuits) {
+  // 列車の名札を置く位置: 列車を描いた線の、中ほどの点
+  function trainAnchor(lines) {
     const all = [];
-    for (const c of circuits) for (const l of layout.circuits[c] || []) for (let i = 0; i + 1 < l.length; i++)
-      all.push([(l[i][0] + l[i + 1][0]) / 2, (l[i][1] + l[i + 1][1]) / 2]);
+    for (const l of lines) for (let i = 0; i + 1 < l.length; i++) all.push([(l[i][0] + l[i + 1][0]) / 2, (l[i][1] + l[i + 1][1]) / 2]);
     if (all.length === 0) return null;
     const cx = all.reduce((a, p) => a + p[0], 0) / all.length;
     all.sort((a, b) => Math.abs(a[0] - cx) - Math.abs(b[0] - cx));
@@ -253,27 +284,27 @@
 
   const stationName = (id) => (layout.stations.find((s) => s.id === id) || {}).name || "";
 
-  const CHIP = { w: 66, h: 18, row: 20, stair: 14, max: 5 };
-
-  // 列番の札（種別の色・角は丸めない）。左上が (px, py)
+  // 列番の札（種別の色・角は丸めない）。左上が (px, py)。押すと時刻表
   function chip(px, py, train) {
     const c = typeColor(train);
-    return `<rect x="${px}" y="${py}" width="${CHIP.w}" height="${CHIP.h}" fill="${c.bg}" stroke="#30363f" stroke-width="1"/>`
-      + `<text x="${px + CHIP.w / 2}" y="${py + 13}" class="chip" fill="${c.fg}">${esc(train)}</text>`;
+    return `<g class="chipg" data-train="${esc(train)}"><rect x="${px}" y="${py}" width="${CHIP.w}" height="${CHIP.h}" fill="${c.bg}" stroke="#30363f" stroke-width="1"/>`
+      + `<text x="${px + CHIP.w / 2}" y="${py + 13}" class="chip" fill="${c.fg}">${esc(train)}</text></g>`;
   }
 
-  // 順序の表。上から順番に1列車1行（最大5件）。
+  // 順序の札の並び（最大5件）。左上が (px, py)。
   // stair = "下り" / "上り"（複線の発車・到着の順序）: 1行ごとにずらす。先の列車ほど、進む向きの側に出る
   //   （下り＝左へ進むので、1本目が左で下へ行くほど右。上り＝右へ進むので、1本目が右で下へ行くほど左）
   // stair = null（単線の走行順）: 札はそろえて並べ、向きは札の外に ◁（下り・札の左）▷（上り・札の右）で示す
-  // bottom = true: y を表の下端として、上へ積む（上り線の上に置く表。列車が少ないときも線のそばに出る）
-  function orderBox(x, y, title, rows, stair, bottom) {
+  // slots = true: 列車がいなくても5つぶんの枠を出す（どこに出るか分かるように）
+  function chipList(px, py, rows, stair, slots) {
     const shown = rows.slice(0, CHIP.max);
-    const px = X(x), py = bottom ? Y(y) - 6 - CHIP.row * shown.length : Y(y);
-    const out = [`<text x="${px}" y="${py}" class="boxTitle">${esc(title)}</text>`];
+    const out = [];
+    const n = slots ? CHIP.max : shown.length;
+    if (slots) for (let i = shown.length; i < CHIP.max; i++)
+      out.push(`<rect x="${px + CHIP.stair * (stair === "上り" ? n - 1 - i : i)}" y="${py + CHIP.row * i}" width="${CHIP.w}" height="${CHIP.h}" class="slot"/>`);
     shown.forEach((r, i) => {
-      const top = py + 6 + CHIP.row * i;
-      if (stair) { out.push(chip(px + CHIP.stair * (stair === "上り" ? shown.length - 1 - i : i), top, r.train)); return; }
+      const top = py + CHIP.row * i;
+      if (stair) { out.push(chip(px + CHIP.stair * (stair === "上り" ? n - 1 - i : i), top, r.train)); return; }
       const cx = px + 16;
       out.push(chip(cx, top, r.train));
       out.push(r.direction === "下り"
@@ -283,8 +314,27 @@
     return out.join("");
   }
 
+  // 単線区間の走行順の表
+  function sectionBox(x, y, title, rows) {
+    const px = X(x), py = Y(y);
+    return `<text x="${px}" y="${py}" class="boxTitle">${esc(title)}</text>` + chipList(px, py + 6, rows, null);
+  }
+
+  // 駅の順序の表: 上り・下りの列ごとに、到着順序（まだ着いていない列車を、着く見込みの順）と出発順序（その駅で終わる列車は除く）。
+  // 列車がいなくても枠は出す
+  function stationBox(b, o) {
+    const px = X(b.x), py = Y(b.y);
+    const time = (t) => (t ? Date.parse(t) : Infinity);
+    const trains = o ? o.trains.filter((t) => t.direction === b.dir) : [];
+    const rows = b.what === "到着"
+      ? trains.filter((t) => !t.arrived).sort((a, c) => time(a.arrive) - time(c.arrive))
+      : trains.filter((t) => !t.ends);
+    return `<text x="${px}" y="${py - 4}" class="boxTitle">${esc(b.name)} ${b.dir}${b.what}</text>` + chipList(px, py, rows, b.dir, true);
+  }
+
   function render(s) {
-    const maxX = Math.max(...Object.values(layout.circuits).flat(2).map((p) => p[0]));
+    const maxX = Math.max(...Object.values(layout.circuits).flat(2).map((p) => p[0]),
+      ...layout.boxes.map((b) => b.x + BOX.w / layout.unit));
     const w = (maxX - minX + PAD.left + PAD.right) * layout.unit, h = (maxY - minY + PAD.top + PAD.bottom) * layout.unitY;
     const p = [];
     p.push(`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">`);
@@ -294,6 +344,7 @@
       .wait { fill: none; stroke: var(--wait); stroke-width: 7; stroke-dasharray: 9 5; stroke-linecap: butt; stroke-linejoin: miter; }
       .occ { fill: none; stroke: var(--occupied); stroke-width: 7; stroke-linecap: butt; stroke-linejoin: miter; }
       .cut { stroke: var(--bg); stroke-width: 2.5; stroke-linecap: butt; }
+      .slot { fill: none; stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 2; }
       .name { font-size: 15px; font-weight: 700; fill: var(--text); text-anchor: middle; }
       .stop { font-size: 12px; fill: var(--text); text-anchor: middle; }
       .num { font-size: 11px; fill: var(--muted); text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
@@ -302,47 +353,53 @@
       .lever.on { fill: var(--route); font-weight: 700; }
       .arrow { font-size: 14px; fill: var(--text); text-anchor: middle; }
       .chip { font-size: 12px; font-weight: 700; text-anchor: middle; }
+      .chipg { cursor: pointer; }
     </style>`);
 
     for (const f of layout.platforms) p.push(`<rect x="${X(f.x)}" y="${Y(f.y) - 6}" width="${f.w * layout.unit}" height="12" rx="2" fill="var(--platform)"/>`);
-    for (const name of Object.keys(layout.circuits)) p.push(drawCircuit(name, "track"));
+    for (const lines of Object.values(layout.circuits)) p.push(poly("track", lines));
 
-    // 進路（開通・要求中）→ 在線 の順に重ねる
-    for (const r of s.tid.routes) {
+    // 進路（開通・要求中）: 実際に通る枝だけ
+    const routeMaps = s.tid.routes.map((r) => {
       // 同じ列車がいる回路と、同じ列車のほかの進路の回路（進路の端がどちらへつながるかを知るため）
       const known = [...(s.tid.trains.find((t) => t.train === r.train)?.circuits || []),
         ...s.tid.routes.filter((x) => x.train === r.train && x !== r).flatMap((x) => x.circuits)];
-      for (const l of routeLines(r, known)) p.push(`<polyline class="${r.open ? "route" : "wait"}" points="${pts(l)}"/>`);
+      return { r, map: smoothPath(r.circuits, known) };
+    });
+    for (const { r, map } of routeMaps) for (const lines of map.values()) p.push(poly(r.open ? "route" : "wait", lines));
+
+    // 在線: その列車の進路が通る回路は、進路の枝で塗る。そうでない回路は、列車がいる回路どうしをつなぐ枝で塗る。
+    // 列車が1つの回路にしかいなくて、進路もなければ、回路全体を塗る（どの枝にいるか分からないため）
+    const trainLines = new Map();
+    for (const t of s.tid.trains) {
+      const mine = routeMaps.filter((x) => x.r.train === t.train);
+      const occ = t.circuits.filter((c) => graphs[c]);
+      const occMap = occ.length > 1 ? smoothPath(occ, mine.flatMap((x) => x.r.circuits)) : new Map();
+      const lines = [];
+      for (const c of occ) {
+        const fromRoute = mine.find((x) => x.map.has(c));
+        lines.push(...(fromRoute ? fromRoute.map.get(c) : occMap.get(c) || layout.circuits[c]));
+      }
+      trainLines.set(t.train, lines);
+      p.push(poly("occ", lines));
     }
-    for (const t of s.tid.trains) for (const c of t.circuits) p.push(drawCircuit(c, "occ"));
     for (const c of cuts) p.push(`<line class="cut" x1="${c[0]}" y1="${c[1]}" x2="${c[2]}" y2="${c[3]}"/>`);
 
     for (const l of layout.labels) p.push(`<text x="${X(l.x)}" y="${Y(l.y) - 7}" class="num">${esc(l.text)}</text>`);
     for (const st of layout.stations) p.push(`<text x="${X(st.x)}" y="${Y(st.y)}" class="name">${esc(st.name)}</text>`);
     for (const st of layout.stops) p.push(`<text x="${X(st.x)}" y="${Y(st.y)}" class="stop">${esc(st.name)}</text>`);
 
-    // 列車の名札
+    // 列車の名札（列車がいる線の真上に重ねる）
     const outside = [];
     for (const t of s.tid.trains) {
-      const a = trainAnchor(t.circuits);
+      const a = trainAnchor(trainLines.get(t.train) || []);
       if (!a) { outside.push(`${t.train}（${t.circuits.join("・") || "位置不明"}）`); continue; }
-      // 名札は、列車がいる線の真上に重ねる（上下の線のどちらの列車か、迷わないように）。進む向きの側に矢印を付ける
       p.push(chip(X(a[0]) - CHIP.w / 2, Y(a[1]) - CHIP.h / 2, t.train));
     }
 
-    // 駅の出発順序・単線区間の走行順
-    // 複線区間へ出る側: その駅・その向きの発車順序（駅の出発順序から、その向きの列車だけを取り出す）
-    for (const d of layout.departures) {
-      const o = s.orders.find((x) => x.station === d.station);
-      const rows = o ? o.trains.filter((t) => t.direction === d.direction) : [];
-      p.push(orderBox(d.x, d.y, `${stationName(d.station)}${d.direction}出発`, rows, d.direction, d.direction === "上り"));
-    }
-    // 終着駅へ入る側: その駅・その向きの到着順序（同じく駅の順序から取り出す。着く見込みの早い順）
-    for (const d of layout.arrivals || []) {
-      const o = s.orders.find((x) => x.station === d.station);
-      const rows = o ? o.trains.filter((t) => t.direction === d.direction) : [];
-      p.push(orderBox(d.x, d.y, `${stationName(d.station)}${d.direction}到着`, rows, d.direction));
-    }
+    // 駅の到着・出発の順序（上り・下り）
+    for (const b of layout.boxes) p.push(stationBox(b, s.orders.find((x) => x.station === b.station)));
+
     // 単線区間の方向てこ: 下り（左向き）は「◀ 区間方向」、上り（右向き）は「区間方向 ▶」。
     // いま使われている（鎖錠されている）ときは濃い色と塗りつぶしの矢印、使われていないときは薄い色と白抜きの矢印
     for (const sec of layout.sections) {
@@ -354,7 +411,7 @@
     // 単線区間: 上下まとめた走行順
     for (const sec of layout.sections) {
       const o = s.sections.find((x) => (x.a === sec.a && x.b === sec.b) || (x.a === sec.b && x.b === sec.a));
-      p.push(orderBox(sec.x, sec.y, `${stationName(sec.a)}～${stationName(sec.b)}`, o ? o.trains : [], null));
+      p.push(sectionBox(sec.x, sec.y, `${stationName(sec.a)}～${stationName(sec.b)}`, o ? o.trains : []));
     }
 
     p.push(`</svg>`);
@@ -363,6 +420,44 @@
     $("gameTime").textContent = s.gameTime || "--:--:--";
     $("outside").textContent = outside.length ? "図の範囲外にいる列車: " + outside.join("、") : "";
   }
+
+  // ---- 時刻表（列番の札を押したとき） ----
+  async function showTimetable(train, x, y) {
+    const box = $("tt");
+    box.hidden = false;
+    box.innerHTML = `<b>${esc(train)}</b> <span class="muted">読み込み中…</span>`;
+    place(box, x, y);
+    try {
+      const res = await fetch("/api/tid/timetable?train=" + encodeURIComponent(train), { cache: "no-store" });
+      const t = await res.json();
+      if (!res.ok) throw new Error(t.message || ("HTTP " + res.status));
+      const rows = t.stops.map((s) => {
+        const pass = s.stop === "通";
+        return `<tr class="${s.control ? "ctl" : ""} ${pass ? "pass" : ""}"><td>${esc(s.name)}</td>
+          <td>${pass ? "" : esc(s.arr || "")}</td><td>${esc(s.dep || "")}${pass ? " 通" : s.stop === "運停" ? " 運停" : ""}</td></tr>`;
+      }).join("");
+      box.innerHTML = `<div style="margin-bottom:4px"><b>${esc(t.train)}</b> ${esc(t.label || "")}
+          <span class="muted">（${esc(t.source)}）</span> <button data-close style="padding:0 6px;margin-left:8px">×</button></div>
+        <table><tr class="muted"><td>駅</td><td>着</td><td>発（通過）</td></tr>${rows}</table>`;
+      place(box, x, y);
+    } catch (e) {
+      box.innerHTML = `<b>${esc(train)}</b> <span class="ng">${esc(e.message)}</span> <button data-close style="padding:0 6px">×</button>`;
+    }
+  }
+
+  function place(box, x, y) {
+    const r = box.getBoundingClientRect();
+    box.style.left = Math.max(8, Math.min(x + 8, window.innerWidth - r.width - 8)) + "px";
+    box.style.top = Math.max(8, Math.min(y + 8, window.innerHeight - r.height - 8)) + "px";
+  }
+
+  $("map").addEventListener("click", (ev) => {
+    const g = ev.target.closest("[data-train]");
+    if (g) { ev.stopPropagation(); showTimetable(g.dataset.train, ev.clientX, ev.clientY); }
+  });
+  document.addEventListener("click", (ev) => {
+    if (ev.target.closest("[data-close]") || !ev.target.closest("#tt")) $("tt").hidden = true;
+  });
 
   async function refresh() {
     try {
@@ -379,7 +474,6 @@
       $("error").textContent = e.message;
     }
   }
-
 
   refresh();
   setInterval(refresh, 1000);

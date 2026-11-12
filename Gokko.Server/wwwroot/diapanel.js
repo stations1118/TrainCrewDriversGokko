@@ -249,7 +249,9 @@
                 `<option value="${esc(x.action)}">${esc(x.label)}</option>`).join("")}</select>` : "";
           return `<tr>
             <td>${esc(s.name)}</td>
-            <td class="muted">${esc(s.stopType)}</td>
+            <td style="white-space:nowrap">${esc(s.stopType)} <select data-stop-station="${st}" title="臨時停車・臨時通過・打ち切り（サーバーの扱いだけ。ゲームの停車駅は変わりません）">${
+              [["", "所定"], ["停車", "臨時停車"], ["通過", "臨時通過"], ["打ち切り", "打ち切り"]].map(([v, l]) =>
+                `<option value="${v}" ${(s.stopOverride || "") === v ? "selected" : ""}>${l}</option>`).join("")}</select></td>
             <td>${s.track ?? "-"} ${s.options.length > 0 ? `<select data-track-station="${st}">${opts}</select>` : ""}</td>
             <td class="muted">${esc(s.source)}${s.locked ? "・確定" : ""}</td>
             <td>${esc(s.status)}</td>
@@ -279,6 +281,8 @@
       if (!pick) return;
       if (s.dataset.manualStation && s.value) {
         await act("POST", "/route/manual", { train: pick, station: s.dataset.manualStation, action: s.value, label: s.options[s.selectedIndex].text });
+      } else if (s.dataset.stopStation) {
+        await act("POST", "/route/stop", { train: pick, station: s.dataset.stopStation, kind: s.value || null });
       } else if (s.dataset.trackStation) {
         await act("POST", "/route/track", { train: pick, station: s.dataset.trackStation, track: s.value === "" ? null : Number(s.value) });
       }
@@ -304,5 +308,215 @@
     };
   }
 
-  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, TYPE_COLORS, esc, hhmm };
+  // ---- ダイヤグラム（管理画面とダイヤグラムの設定画面で共通） ----
+  // 実績（実線）と見込み（点線）。◆は進路を扱う駅を通過する（停車駅は着く）予想時刻。
+  // ◆を押すと窓（番線・駅扱い・抑止・順序）。◆を横にずらすと、その駅の発車時刻を決める（スジずらし。ダブルクリックで解除）。
+  // 上の「全部・上りのみ・下りのみ」で、表示する列車を絞る
+  function diagramView({ box, tip, filter, act }) {
+    const DG = { w: 1000, left: 92, right: 12, top: 18, rowPx: 17, pastMin: 10, futureMin: 30 };
+    let diagram = null;
+    let dragging = null;
+    let shown = "全部";
+    try { shown = localStorage.getItem("gokkoDiagramFilter") || "全部"; } catch (e) {}
+
+    function drawFilter() {
+      if (!filter) return;
+      filter.innerHTML = ["全部", "上りのみ", "下りのみ"].map((f) =>
+        `<button data-filter="${f}" class="${f === shown ? "primary" : ""}">${f}</button>`).join(" ");
+    }
+    if (filter) filter.addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-filter]");
+      if (!b) return;
+      shown = b.dataset.filter;
+      try { localStorage.setItem("gokkoDiagramFilter", shown); } catch (e) {}
+      drawFilter();
+      box.dataset.html = "";
+      render(diagram);
+    });
+    drawFilter();
+
+    function layout(d) {
+      const ys = d.stations.map((s) => s.y);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const h = (maxY - minY) / 2 * DG.rowPx;
+      const now = new Date(d.now).getTime();
+      const t0 = now - DG.pastMin * 60000, t1 = now + DG.futureMin * 60000;
+      return {
+        height: DG.top + h + 24, now, t0, t1,
+        x: (t) => DG.left + (new Date(t).getTime() - t0) / (t1 - t0) * (DG.w - DG.left - DG.right),
+        t: (x) => t0 + (x - DG.left) / (DG.w - DG.left - DG.right) * (t1 - t0),
+        y: (z) => DG.top + (z - minY) / 2 * DG.rowPx
+      };
+    }
+
+    const visible = (tr) => shown === "全部" || (shown === "上りのみ" ? tr.direction === "上り" : tr.direction === "下り");
+
+    function render(d) {
+      if (!d) return;
+      diagram = d;
+      if (dragging || popup) return; // ずらしている間・◆の窓を開いている間は描き直さない
+      const L = layout(d);
+      const parts = [`<svg viewBox="0 0 ${DG.w} ${L.height}" width="100%" style="display:block">`];
+      for (const s of d.stations) {
+        const y = L.y(s.y);
+        parts.push(`<line x1="${DG.left}" x2="${DG.w - DG.right}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="${s.control ? 1.6 : 0.6}"/>`);
+        parts.push(`<text x="${DG.left - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="${s.control ? "var(--text)" : "var(--muted)"}" font-weight="${s.control ? 600 : 400}">${esc(s.name)}</text>`);
+      }
+      const first = Math.ceil(L.t0 / 60000) * 60000;
+      for (let t = first; t <= L.t1; t += 60000) {
+        const x = L.x(t), five = new Date(t).getMinutes() % 5 === 0;
+        parts.push(`<line x1="${x}" x2="${x}" y1="${DG.top - 6}" y2="${L.height - 18}" stroke="var(--line)" stroke-width="${five ? 1 : 0.4}"/>`);
+        if (five) parts.push(`<text x="${x}" y="${L.height - 4}" text-anchor="middle" font-size="10" fill="var(--muted)">${hhmm(t)}</text>`);
+      }
+      const nx = L.x(L.now);
+      parts.push(`<line x1="${nx}" x2="${nx}" y1="${DG.top - 10}" y2="${L.height - 18}" stroke="var(--danger)" stroke-width="1.2"/>`);
+      d.trains.forEach((tr, ti) => {
+        if (!visible(tr)) return;
+        const color = TYPE_COLORS[tr.type] || "var(--text)";
+        const pts = (arr) => arr.map((p) => `${L.x(p.t).toFixed(1)},${L.y(p.y).toFixed(1)}`).join(" ");
+        if (tr.history.length > 1) parts.push(`<polyline points="${pts(tr.history)}" fill="none" stroke="${color}" stroke-width="2"/>`);
+        if (tr.forecast.length > 1) parts.push(`<polyline points="${pts(tr.forecast)}" fill="none" stroke="${color}" stroke-width="1.6" stroke-dasharray="5 4"/>`);
+        const cur = tr.forecast[0];
+        parts.push(`<text x="${L.x(cur.t) + 6}" y="${L.y(cur.y) - 5}" font-size="11" font-weight="600" fill="${color}">${esc(tr.train)}</text>`);
+        tr.markers.forEach((m, mi) => {
+          const x = L.x(m.t), y = L.y(m.y);
+          const fill = m.held ? "#c62828" : !m.editable ? "#999" : m.departAt ? "#e0a800" : "#3aa0d8";
+          const trackText = m.track == null ? "通" : String(m.track);
+          const trackColor = m.trackSource === "集中" || m.trackSource === "駅扱い" ? "#e07000" : m.trackSource === "待避" ? "#b04fd0" : color;
+          const dep = m.departAt ? `・発車時刻 ${hhmm(new Date(m.departAt).getTime(), true)}` : "";
+          const tipText = `${tr.train} ${m.name}: ${m.track == null ? "通過" : m.track + "番線"}（${m.trackSource}）・${m.source} ${hhmm(new Date(m.t).getTime(), true)}${dep}（${m.status}）`
+            + "　押すと番線・駅扱い・抑止・順序" + (m.draggable ? "　横にずらすと発車時刻（ダブルクリックで解除）" : "");
+          parts.push(`<text x="${x + 8}" y="${y + 4}" font-size="11" font-weight="700" fill="${trackColor}" pointer-events="none">${esc(trackText)}</text>`);
+          parts.push(`<path d="M${x},${y - 7} L${x + 6},${y} L${x},${y + 7} L${x - 6},${y} Z" fill="${fill}" stroke="var(--panel, #fff)" stroke-width="1"
+            data-train="${esc(tr.train)}" data-station="${esc(m.stationId)}" data-ti="${ti}" data-mi="${mi}" data-drag="${m.draggable ? 1 : 0}"
+            data-x="${x}" data-tip="${esc(tipText)}" style="cursor:${m.draggable ? "ew-resize" : "pointer"}"/>`);
+        });
+      });
+      parts.push(`</svg>`);
+      if (!d.trains.some(visible)) parts.push(`<div class="muted">表示する列車はいません</div>`);
+      const html = parts.join("");
+      if (box.dataset.html !== html) { box.innerHTML = html; box.dataset.html = html; }
+    }
+
+    function svgX(ev) {
+      const svg = box.querySelector("svg");
+      const pt = svg.createSVGPoint();
+      pt.x = ev.clientX; pt.y = ev.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+    }
+
+    function open(el) {
+      const tr = diagram.trains[Number(el.dataset.ti)], m = tr && tr.markers[Number(el.dataset.mi)];
+      if (!m) return;
+      openPopup({ box, anchor: el, train: tr.train, marker: m, diagram, act, onClose: () => { box.dataset.html = ""; render(diagram); } });
+    }
+
+    box.addEventListener("pointermove", (ev) => {
+      if (dragging) {
+        const x = Math.max(DG.left, Math.min(DG.w - DG.right, svgX(ev)));
+        dragging.el.setAttribute("transform", `translate(${x - dragging.x0},0)`);
+        dragging.x = x;
+        if (tip) tip.textContent = `${dragging.label} → ${hhmm(layout(diagram).t(x), true)} 発に変更（離すと決定）`;
+      } else if (tip) {
+        const m = ev.target.closest("path[data-train]");
+        tip.textContent = m ? m.dataset.tip : "";
+      }
+    });
+    box.addEventListener("pointerdown", (ev) => {
+      if (ev.target.closest("[data-gokko-popup]")) return; // ◆の窓の中
+      const m = ev.target.closest("path[data-train]");
+      if (!m) { if (popup) { closePopup(); box.dataset.html = ""; render(diagram); } return; }
+      ev.preventDefault();
+      closePopup();
+      m.setPointerCapture(ev.pointerId);
+      dragging = { el: m, train: m.dataset.train, station: m.dataset.station, x0: Number(m.dataset.x), x: Number(m.dataset.x),
+                   label: m.dataset.tip.split(":")[0], canDrag: m.dataset.drag === "1" };
+    });
+    box.addEventListener("pointerup", async () => {
+      if (!dragging) return;
+      const d = dragging;
+      dragging = null;
+      // 動かさずに離したら、◆の窓（クリック）
+      if (Math.abs(d.x - d.x0) < 3 || !d.canDrag) {
+        d.el.removeAttribute("transform");
+        open(d.el);
+        return;
+      }
+      const time = new Date(layout(diagram).t(d.x)).toISOString();
+      box.dataset.html = "";
+      await act("POST", "/route/open-at", { train: d.train, station: d.station, time });
+    });
+    box.addEventListener("dblclick", (ev) => {
+      const m = ev.target.closest("path[data-train]");
+      if (!m || m.dataset.drag !== "1") return;
+      closePopup();
+      act("POST", "/route/open-at", { train: m.dataset.train, station: m.dataset.station, time: null });
+    });
+
+    return { update: render };
+  }
+
+  // ---- 進路を取る順番（取れずに待っている場内・出発）と、進路を要求した記録 ----
+  function queuePanel({ el, api }) {
+    let showLog = false;
+    el.addEventListener("click", async (ev) => {
+      const b = ev.target.closest("button[data-log]");
+      if (!b) return;
+      showLog = !showLog;
+      el.dataset.key = "";
+      await refreshLog();
+    });
+    let logLines = [];
+    async function refreshLog() {
+      if (showLog) { try { logLines = (await api("GET", "/route/log")).lines; } catch (e) { logLines = [e.message]; } }
+    }
+
+    return {
+      async update(d) {
+        await refreshLog();
+        const q = (d && d.queue) || [];
+        const html = `<div class="row" style="margin-bottom:4px"><b>進路を取る順番</b>
+            <span class="muted">（取れずに待っているもの。上から順に取ります）</span>
+            <button data-log="1" style="margin-left:auto">${showLog ? "記録を閉じる" : "進路の記録を見る"}</button></div>
+          ${q.length === 0 ? `<div class="muted">待っている進路はありません</div>` : `<table>${q.map((x, i) =>
+            `<tr><td class="muted">${i + 1}</td><td><b>${esc(x.train)}</b></td><td>${esc(x.station)}</td><td>${esc(x.kind)}</td><td class="muted">${esc(x.wait)}</td></tr>`).join("")}</table>`}
+          ${showLog ? `<div style="margin-top:8px"><b>進路の記録</b> <span class="muted">（新しい順。サーバーの logs フォルダにも日ごとに残ります）</span>
+            <pre style="max-height:240px;overflow:auto;font-size:12px;margin:4px 0 0">${esc(logLines.join("\n"))}</pre></div>` : ""}`;
+        if (el.dataset.key === html) return;
+        el.dataset.key = html;
+        el.innerHTML = html;
+      }
+    };
+  }
+
+  // 継続乗務申請（運転画面を出たあとも残している在線。5分で消える）と、出現待ちの列車
+  function continuePanel({ el, act }) {
+    el.addEventListener("click", async (ev) => {
+      const b = ev.target.closest("button[data-ghost]");
+      if (!b) return;
+      if (!confirm(`${b.dataset.train} の継続乗務申請を消して、残している在線をなくしますか？`)) return;
+      await act("POST", "/continue/delete", { id: b.dataset.ghost });
+    });
+    return {
+      update(d) {
+        const c = (d && d.continues) || [], a = (d && d.appear) || [];
+        const left = (t) => Math.max(0, Math.round((Date.parse(t) - Date.now()) / 1000));
+        const html = `<div class="row" style="margin-bottom:4px"><b>継続乗務申請</b>
+            <span class="muted">（運転画面を出たあとも在線を残している列車。同じ番線から次のシナリオを始めると、その列番で続けます）</span></div>
+          ${c.length === 0 ? `<div class="muted">継続乗務申請はありません</div>` : `<table>${c.map((x) =>
+            `<tr><td><b>${esc(x.train)}</b></td><td class="muted">${esc(x.circuits.join(" "))}</td>
+              <td>${hhmm(Date.parse(x.since), true)} から・あと${Math.floor(left(x.until) / 60)}分${left(x.until) % 60}秒</td>
+              <td><button data-ghost="${esc(x.id)}" data-train="${esc(x.train)}">消す</button></td></tr>`).join("")}</table>`}
+          <div class="row" style="margin:8px 0 4px"><b>出現待ち</b>
+            <span class="muted">（他の列車の在線・進路の上に現れた列車。先の列車が抜けるまで、サーバーの列車として扱いません）</span></div>
+          ${a.length === 0 ? `<div class="muted">出現待ちの列車はいません</div>` : `<table>${a.map((x) =>
+            `<tr><td><b>${esc(x.train)}</b></td><td class="muted">${esc(x.reason)}</td></tr>`).join("")}</table>`}`;
+        if (el.dataset.key === html) return;
+        el.dataset.key = html;
+        el.innerHTML = html;
+      }
+    };
+  }
+
+  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, diagramView, queuePanel, continuePanel, TYPE_COLORS, esc, hhmm };
 })();

@@ -112,7 +112,9 @@
       行き止まりの番線（駒野の下り1・2番線、日野森の上り1番線）を選ぶと、列車はその駅で打ち切りになり、線もそこで切れます。
       ◆の右の数字は番線（通＝通過、<span style="color:#e07000">橙</span>＝集中扱いの指定・駅扱い、<span style="color:#b04fd0">紫</span>＝待避）。◆をクリックすると番線を変えられます。開通済みでも、列車がまだ進路に入っていなければ取り直します。
       ◆の窓では、駅扱い（「本線→1番線」など。連動に問題がなければ抑止・待ちを無視して開通）、場内抑止・出発抑止、その駅の出発順序（上下とも）と、単線区間の走行順を指定できます。
-      <span style="color:#3aa0d8">◆</span>見込み <span style="color:#e0a800">◆</span>指定 <span style="color:#c62828">◆</span>抑止中 <span style="color:#999">◆</span>開通済み</div>
+      <span style="color:#3aa0d8">◆</span>見込み <span style="color:#e0a800">◆</span>指定 <span style="color:#c62828">◆</span>抑止中 <span style="color:#999">◆</span>開通済み。
+      ◆を左右にドラッグすると、その駅の発車時刻をずらせます（早めることもできます。進路は発車時刻の30秒前まで開通させません）。ダブルクリックで元に戻します。</div>
+    <div id="diagramFilter" class="row"></div>
     <div id="diagram" style="position:relative; touch-action:none"></div>
     <div id="diagramTip" class="muted" style="min-height:1.5em"></div>
   </section>
@@ -122,6 +124,16 @@
     <div class="muted" style="margin-bottom:8px">駅を選ぶと、その駅をこれから通る列車（上下とも）を、出発順序に並べ替えて指定できます。進路が競合する列車どうしは、先の列車が駅を抜けるまで後の列車を出発させません（競合しない番線の場内・出発は開けます）。
       番線もここで変えられます。単線区間を選ぶと、その区間を通る順番（例: 1051 → 903A → 1040）を指定できます。</div>
     <div id="orders"></div>
+  </section>
+
+  <section class="wide">
+    <h2>進路を取る順番・進路の記録</h2>
+    <div id="queue"></div>
+  </section>
+
+  <section class="wide">
+    <h2>継続乗務申請・出現待ち</h2>
+    <div id="continues"></div>
   </section>
 
   <section class="wide">
@@ -297,142 +309,12 @@
     }
   }
 
-  // ---- ダイヤグラム ----
-  const TYPE_COLORS = { "普通": "var(--text)", "準急": "#1e6fd9", "区急": "#18a33a", "急行": "#f08a00", "快急": "#b04fd0", "特急": "#d62828", "回送": "#888" };
-  const DG = { w: 1000, left: 92, right: 12, top: 18, rowPx: 17, pastMin: 10, futureMin: 30 };
-  let diagram = null;        // 最後に受け取ったデータ
-  let dragging = null;       // ドラッグ中の◆
-
-  function dgLayout(d) {
-    const ys = d.stations.map((s) => s.y);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const h = (maxY - minY) / 2 * DG.rowPx;
-    const now = new Date(d.now).getTime();
-    const t0 = now - DG.pastMin * 60000, t1 = now + DG.futureMin * 60000;
-    return {
-      height: DG.top + h + 24, now, t0, t1,
-      x: (t) => DG.left + (new Date(t).getTime() - t0) / (t1 - t0) * (DG.w - DG.left - DG.right),
-      t: (x) => t0 + (x - DG.left) / (DG.w - DG.left - DG.right) * (t1 - t0),
-      y: (z) => DG.top + (z - minY) / 2 * DG.rowPx
-    };
-  }
-
-  function hhmm(ms, sec) {
-    const d = new Date(ms);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${p(d.getHours())}:${p(d.getMinutes())}${sec ? ":" + p(d.getSeconds()) : ""}`;
-  }
-
-  function closeTrackPopup() {
-    GokkoDia.closePopup();
-  }
-
-  function openTrackPopup(el) {
-    const tr = diagram.trains[Number(el.dataset.ti)], m = tr && tr.markers[Number(el.dataset.mi)];
-    if (!m) return;
-    GokkoDia.openPopup({ box: $("diagram"), anchor: el, train: tr.train, marker: m, diagram, act, onClose: () => renderDiagram(diagram) });
-  }
-
+  // ---- ダイヤグラム（diapanel.js の共通の描き方。◆のずらし・絞り込みつき）・順序・進路を取る順番 ----
+  const diagramView = GokkoDia.diagramView({ box: $("diagram"), tip: $("diagramTip"), filter: $("diagramFilter"), act });
   const orders = GokkoDia.orderEditor({ el: $("orders"), act });
-
-  function renderDiagram(d) {
-    diagram = d;
-    orders.update(d);
-    if (dragging || GokkoDia.isOpen()) return; // ドラッグ中・◆の窓を開いている間は描き直さない
-    const L = dgLayout(d);
-    const parts = [];
-    parts.push(`<svg viewBox="0 0 ${DG.w} ${L.height}" width="100%" style="display:block">`);
-    // 駅
-    for (const s of d.stations) {
-      const y = L.y(s.y);
-      parts.push(`<line x1="${DG.left}" x2="${DG.w - DG.right}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="${s.control ? 1.6 : 0.6}"/>`);
-      parts.push(`<text x="${DG.left - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="${s.control ? "var(--text)" : "var(--muted)"}" font-weight="${s.control ? 600 : 400}">${esc(s.name)}</text>`);
-    }
-    // 時刻の目盛り
-    const first = Math.ceil(L.t0 / 60000) * 60000;
-    for (let t = first; t <= L.t1; t += 60000) {
-      const x = L.x(t), five = new Date(t).getMinutes() % 5 === 0;
-      parts.push(`<line x1="${x}" x2="${x}" y1="${DG.top - 6}" y2="${L.height - 18}" stroke="var(--line)" stroke-width="${five ? 1 : 0.4}"/>`);
-      if (five) parts.push(`<text x="${x}" y="${L.height - 4}" text-anchor="middle" font-size="10" fill="var(--muted)">${hhmm(t)}</text>`);
-    }
-    const nx = L.x(L.now);
-    parts.push(`<line x1="${nx}" x2="${nx}" y1="${DG.top - 10}" y2="${L.height - 18}" stroke="var(--danger)" stroke-width="1.2"/>`);
-    // 列車
-    d.trains.forEach((tr, ti) => {
-      const color = TYPE_COLORS[tr.type] || "var(--text)";
-      const pts = (arr) => arr.map((p) => `${L.x(p.t).toFixed(1)},${L.y(p.y).toFixed(1)}`).join(" ");
-      if (tr.history.length > 1) parts.push(`<polyline points="${pts(tr.history)}" fill="none" stroke="${color}" stroke-width="2"/>`);
-      if (tr.forecast.length > 1) parts.push(`<polyline points="${pts(tr.forecast)}" fill="none" stroke="${color}" stroke-width="1.6" stroke-dasharray="5 4"/>`);
-      const cur = tr.forecast[0];
-      parts.push(`<text x="${L.x(cur.t) + 6}" y="${L.y(cur.y) - 5}" font-size="11" font-weight="600" fill="${color}">${esc(tr.train)}</text>`);
-      tr.markers.forEach((m, mi) => {
-        const x = L.x(m.t), y = L.y(m.y);
-        const fill = m.held ? "#c62828" : !m.editable ? "#999" : m.openSource === "指定" ? "#e0a800" : "#3aa0d8";
-        const trackText = m.track == null ? "通" : String(m.track);
-        const trackColor = m.trackSource === "集中" || m.trackSource === "駅扱い" ? "#e07000" : m.trackSource === "待避" ? "#b04fd0" : color;
-        const openText = m.openAt ? `・開通 ${m.openSource} ${hhmm(new Date(m.openAt).getTime(), true)}` : "";
-        const tip = `${tr.train} ${m.name}: ${m.track == null ? "通過" : m.track + "番線"}（${m.trackSource}）・${m.source} ${hhmm(new Date(m.t).getTime(), true)}${openText}（${m.status}）`
-          + "　クリックで番線・駅扱い・抑止・出発順序" + (m.draggable ? "　ドラッグで開通時刻" : "");
-        const clickable = true;
-        parts.push(`<text x="${x + 8}" y="${y + 4}" font-size="11" font-weight="700" fill="${trackColor}" pointer-events="none">${esc(trackText)}</text>`);
-        parts.push(`<path d="M${x},${y - 7} L${x + 6},${y} L${x},${y + 7} L${x - 6},${y} Z" fill="${fill}" stroke="var(--panel)" stroke-width="1"
-          data-train="${esc(tr.train)}" data-station="${esc(m.stationId)}" data-ti="${ti}" data-mi="${mi}" data-editable="${m.draggable ? 1 : 0}"
-          data-clickable="${clickable ? 1 : 0}" data-x="${x}" data-y="${y}" data-tip="${esc(tip)}"
-          style="cursor:${m.draggable ? "ew-resize" : clickable ? "pointer" : "default"}"/>`);
-      });
-    });
-    parts.push(`</svg>`);
-    if (d.trains.length === 0) parts.push(`<div class="muted">在線共有モードで運転中の列車はいません</div>`);
-    setHtml($("diagram"), parts.join(""));
-  }
-
-  function svgX(ev) {
-    const svg = $("diagram").querySelector("svg");
-    const pt = svg.createSVGPoint();
-    pt.x = ev.clientX; pt.y = ev.clientY;
-    return pt.matrixTransform(svg.getScreenCTM().inverse()).x;
-  }
-
-  $("diagram").addEventListener("pointermove", (ev) => {
-    const m = ev.target.closest("path[data-train]");
-    if (dragging && dragging.canDrag) {
-      const x = Math.max(DG.left, Math.min(DG.w - DG.right, svgX(ev)));
-      dragging.el.setAttribute("transform", `translate(${x - dragging.x0},0)`);
-      dragging.x = x;
-      $("diagramTip").textContent = `${dragging.label} → ${hhmm(dgLayout(diagram).t(x), true)} に開通（離すと決定）`;
-    } else {
-      $("diagramTip").textContent = m ? m.dataset.tip : "";
-    }
-  });
-  $("diagram").addEventListener("pointerdown", (ev) => {
-    if (ev.target.closest("[data-gokko-popup]")) return; // ◆の窓の中
-    const m = ev.target.closest("path[data-train]");
-    if (!m) { if (GokkoDia.isOpen()) { closeTrackPopup(); renderDiagram(diagram); } return; }
-    if (m.dataset.editable !== "1" && m.dataset.clickable !== "1") return;
-    ev.preventDefault();
-    closeTrackPopup();
-    m.setPointerCapture(ev.pointerId);
-    dragging = { el: m, train: m.dataset.train, station: m.dataset.station, x0: Number(m.dataset.x), x: Number(m.dataset.x),
-                 label: m.dataset.tip.split(":")[0], canDrag: m.dataset.editable === "1" };
-  });
-  $("diagram").addEventListener("pointerup", async () => {
-    if (!dragging) return;
-    const d = dragging;
-    dragging = null;
-    // 動かさずに離したら、番線を選ぶ窓（クリック）
-    if (Math.abs(d.x - d.x0) < 3 || !d.canDrag) {
-      d.el.removeAttribute("transform");
-      if (d.el.dataset.clickable === "1") openTrackPopup(d.el); else renderDiagram(diagram);
-      return;
-    }
-    const time = new Date(dgLayout(diagram).t(d.x)).toISOString();
-    await act("POST", "/route/open-at", { train: d.train, station: d.station, time });
-  });
-  $("diagram").addEventListener("dblclick", (ev) => {
-    const m = ev.target.closest("path[data-train]");
-    if (!m || m.dataset.editable !== "1") return;
-    act("POST", "/route/open-at", { train: m.dataset.train, station: m.dataset.station, time: null });
-  });
+  const queue = GokkoDia.queuePanel({ el: $("queue"), api });
+  const continues = GokkoDia.continuePanel({ el: $("continues"), act });
+  function renderDiagram(d) { orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); }
 
   async function refresh() {
     if (!key) { $("conn").textContent = "管理キーを入力してください"; $("conn").className = "status muted"; return; }

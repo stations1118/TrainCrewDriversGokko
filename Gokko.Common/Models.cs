@@ -66,6 +66,12 @@ public sealed class ClientReport
 
     /// <summary>ユーザーが選んだ番線（駅ID → 番線）。</summary>
     public Dictionary<string, int> TrackChoices { get; set; } = new();
+
+    /// <summary>
+    /// 継続乗務ボタンが押されているか。押している間に運転画面を出ると、サーバーは最後の在線位置を5分間残す
+    /// （同じ番線から次のシナリオを始めると、その列番の列車として続ける）。
+    /// </summary>
+    public bool ContinueDuty { get; set; }
 }
 
 /// <summary>停車駅1つ分（ゲームの stationList の要素から、時刻を除いたもの）。</summary>

@@ -140,9 +140,15 @@ public sealed class DiaTrain
     /// </summary>
     public (string Number, string StationId)? Next { get; set; }
 
+    /// <summary>時刻表（路線の外の駅も含む、ダイヤに書かれた全駅）。時刻は "HH:mm:ss"、書かれていなければ null。</summary>
+    public List<DiaStop> Stops { get; } = new();
+
     /// <summary>駅ID → 停車するか・番線（書かれていなければ null）。</summary>
     public Dictionary<string, (string StopType, int? Track)> Stations { get; } = new();
 }
+
+/// <summary>時刻表の1駅（StationId は路線の外の駅なら null。Stop は 停・通・運停）。</summary>
+public sealed record DiaStop(string Name, string? StationId, string Stop, string? Arr, string? Dep);
 
 /// <summary>標準運転時分の1区間。</summary>
 public sealed record RunTimeRow(string Type, Dir Dir, string From, string To, bool FromStops, bool ToStops, int Seconds);
@@ -410,6 +416,11 @@ public sealed class RailData
                 if (t.TryGetProperty("next", out var nx) && nx.ValueKind == JsonValueKind.Object
                     && NormalizeTrain(Str(nx, "number")) is { Length: > 0 } nextNumber && Str(nx, "st") is { Length: > 0 } nextStation)
                     cur.Next = (nextNumber, nextStation);
+
+                if (cur.Stops.Count == 0)
+                    foreach (var s in t.GetProperty("stops").EnumerateArray())
+                        cur.Stops.Add(new DiaStop(Str(s, "name"), Str(s, "st") is { Length: > 0 } sid0 ? sid0 : null, Str(s, "stop"),
+                            Str(s, "arr") is { Length: > 0 } a0 ? a0 : null, Str(s, "dep") is { Length: > 0 } d0 ? d0 : null));
 
                 string? lastStation = null;
                 foreach (var s in t.GetProperty("stops").EnumerateArray())

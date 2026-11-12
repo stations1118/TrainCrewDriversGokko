@@ -52,6 +52,7 @@ app.Logger.LogInformation("進路: 駅 {Stations}件（うち扱う駅 {Control}
 var central = app.Services.GetRequiredService<CentralControl>();
 var incidentLog = app.Services.GetRequiredService<IncidentManager>();
 central.Changed += message => incidentLog.Note(message);
+app.Services.GetRequiredService<PlayerRegistry>().Changed += message => incidentLog.Note(message);
 if (string.IsNullOrEmpty(options.AdminKey))
     app.Logger.LogWarning("Gokko:AdminKey が未設定です。管理画面は使えません");
 if (string.IsNullOrEmpty(options.DiaPassword))

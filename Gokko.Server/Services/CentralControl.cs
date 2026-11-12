@@ -33,6 +33,14 @@ public sealed class CentralControl
     private readonly Dictionary<(string A, string B), List<string>> _sectionOrders = new();
     private readonly Dictionary<(string Train, string Station), string> _manual = new();
 
+    // 順序を最後に変えた順番（出発順序と走行順のどちらが新しいかで、同期の向きを決める）
+    private long _stamp;
+    private readonly Dictionary<string, long> _orderStamps = new();
+    private readonly Dictionary<(string A, string B), long> _sectionStamps = new();
+
+    public long OrderStamp(string station) { lock (_lock) return _orderStamps.GetValueOrDefault(station); }
+    public long SectionStamp(string a, string b) { lock (_lock) return _sectionStamps.GetValueOrDefault(SectionKey(a, b)); }
+
     public event Action<string>? Changed;
 
     // ---- 駅の出発順序 ----
@@ -49,9 +57,30 @@ public sealed class CentralControl
         {
             if (trains is { Count: > 0 }) _orders[station] = trains.Distinct().ToList();
             else _orders.Remove(station);
+            _orderStamps[station] = ++_stamp;
         }
 
         Changed?.Invoke($"集中扱い: {station} 出発順序 → {(trains is { Count: > 0 } ? string.Join(" → ", trains) : "自動に戻す")}");
+    }
+
+    /// <summary>走行順に合わせて出発順序を直す（同期。記録には出さず、走行順と同じ更新時刻にする）。</summary>
+    public void SyncOrder(string station, IReadOnlyList<string> trains, long stamp)
+    {
+        lock (_lock)
+        {
+            _orders[station] = trains.Distinct().ToList();
+            _orderStamps[station] = stamp;
+        }
+    }
+
+    /// <summary>出発順序に合わせて走行順を直す（同期。記録には出さず、出発順序と同じ更新時刻にする）。</summary>
+    public void SyncSectionOrder(string a, string b, IReadOnlyList<string> trains, long stamp)
+    {
+        lock (_lock)
+        {
+            _sectionOrders[SectionKey(a, b)] = trains.Distinct().ToList();
+            _sectionStamps[SectionKey(a, b)] = stamp;
+        }
     }
 
     /// <summary>その駅を抜けた列車を出発順序から外す（黙って。全部抜けたら順序を消す）。</summary>
@@ -80,6 +109,7 @@ public sealed class CentralControl
         {
             if (trains is { Count: > 0 }) _sectionOrders[SectionKey(a, b)] = trains.Distinct().ToList();
             else _sectionOrders.Remove(SectionKey(a, b));
+            _sectionStamps[SectionKey(a, b)] = ++_stamp;
         }
 
         Changed?.Invoke($"集中扱い: {a}〜{b} 走行順 → {(trains is { Count: > 0 } ? string.Join(" → ", trains) : "自動に戻す")}");
@@ -96,9 +126,9 @@ public sealed class CentralControl
         }
     }
 
-    // ---- 開通時刻（ダイヤモード用） ----
+    // ---- 発車時刻（ダイヤグラムのスジずらし） ----
 
-    /// <summary>ダイヤグラムで指定した、この時刻まで開通させない時刻（UTC）。</summary>
+    /// <summary>ダイヤグラムで指定した発車時刻（UTC）。この時刻の30秒前まで、その駅の出発進路を開通させない。</summary>
     public DateTime? OpenAt(string train, string station)
     {
         lock (_lock) return _openAt.TryGetValue((train, station), out var t) ? t : null;
@@ -112,7 +142,29 @@ public sealed class CentralControl
             else _openAt.Remove((train, station));
         }
 
-        Changed?.Invoke($"集中扱い: {train} {station} 開通時刻 → {(utc?.ToLocalTime().ToString("HH:mm:ss") ?? "指定解除")}");
+        Changed?.Invoke($"集中扱い: {train} {station} 発車時刻 → {(utc?.ToLocalTime().ToString("HH:mm:ss") ?? "指定解除")}");
+    }
+
+    // ---- 臨時停車・臨時通過・打ち切り（サーバーの扱いだけ。ゲームの停車駅は変わらない） ----
+
+    private readonly Dictionary<(string Train, string Station), string> _stops = new();
+
+    /// <summary>"停車"（臨時停車）・"通過"（臨時通過）・"打ち切り"。指定がなければ null。</summary>
+    public string? StopOverride(string train, string station)
+    {
+        lock (_lock) return _stops.GetValueOrDefault((train, station));
+    }
+
+    public void SetStop(string train, string station, string? kind)
+    {
+        lock (_lock)
+        {
+            if (kind is "停車" or "通過" or "打ち切り") _stops[(train, station)] = kind;
+            else _stops.Remove((train, station));
+        }
+
+        var label = kind switch { "停車" => "臨時停車", "通過" => "臨時通過", "打ち切り" => "打ち切り", _ => "停車・通過を元に戻す" };
+        Changed?.Invoke($"集中扱い: {train} {station} {label}");
     }
 
     // ---- 番線・抑止・開通指示 ----
@@ -227,6 +279,7 @@ public sealed class CentralControl
             _cancels.RemoveWhere(k => k.Train == train);
             foreach (var k in _manual.Keys.Where(k => k.Train == train).ToList()) _manual.Remove(k);
             foreach (var k in _openAt.Keys.Where(k => k.Train == train).ToList()) _openAt.Remove(k);
+            foreach (var k in _stops.Keys.Where(k => k.Train == train).ToList()) _stops.Remove(k);
         }
     }
 }

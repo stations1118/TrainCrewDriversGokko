@@ -53,6 +53,9 @@ public sealed class MainForm : Form
     private readonly TabPage _routeTab = new() { Text = "進路" };
     private readonly DataGridView _planGrid = new();
     private readonly Button _departButton = new() { Text = "出発要求" };
+
+    // 継続乗務: 押している間に運転画面を出ると、サーバーが最後の在線位置を5分間残す（同じ番線から次のシナリオを始めると、その列番で続ける）
+    private readonly CheckBox _continueButton = new() { Text = "継続乗務", Appearance = Appearance.Button, TextAlign = ContentAlignment.MiddleCenter };
     private readonly Label _routeMessage = new();
 
     private IReadOnlyList<string>? _syncedCrossings;
@@ -200,7 +203,22 @@ public sealed class MainForm : Form
         BuildPlanGrid();
         routeLayout.Controls.Add(_planGrid);
         _departButton.Dock = DockStyle.Fill;
-        routeLayout.Controls.Add(_departButton);
+        _continueButton.Dock = DockStyle.Fill;
+        _continueButton.Font = new Font(Font.FontFamily, 10f, FontStyle.Bold);
+        _continueButton.CheckedChanged += (_, _) =>
+        {
+            _continueButton.BackColor = _continueButton.Checked ? Color.DarkOrange : SystemColors.Control;
+            _continueButton.ForeColor = _continueButton.Checked ? Color.White : SystemColors.ControlText;
+            ShowMessage(_continueButton.Checked
+                ? "継続乗務: このまま運転画面を出ると、在線位置を5分間残します。同じ番線から次のシナリオを始めると、この列番で続けます"
+                : "継続乗務を取り消しました");
+        };
+        var bottom = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Margin = Padding.Empty };
+        bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 72));
+        bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28));
+        bottom.Controls.Add(_departButton, 0, 0);
+        bottom.Controls.Add(_continueButton, 1, 0);
+        routeLayout.Controls.Add(bottom);
         _routeTab.Controls.Add(routeLayout);
 
         _tabs.TabPages.Add(incidentPage);
@@ -396,7 +414,8 @@ public sealed class MainForm : Form
                     TrainNumber = trainNumber,
                     TrainCrewConnected = gameConnected,
                     InGame = gameConnected && game?.InGame == true,
-                    TrackCircuits = gameConnected && game != null ? game.TrackCircuits : new List<string>()
+                    TrackCircuits = gameConnected && game != null ? game.TrackCircuits : new List<string>(),
+                    ContinueDuty = shared && _continueButton.Checked
                 };
                 if (shared && gameConnected && game != null)
                 {

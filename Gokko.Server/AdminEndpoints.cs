@@ -33,6 +33,8 @@ public static class AdminEndpoints
     /// <summary>駅扱い（強制進路）。Action は "arrive:1" "depart:2" "through" "shunt:3" など（◆・表のボタンが持っている値）。</summary>
     public sealed record ManualRequest(string Train, string Station, string Action, string? Label);
 
+    public sealed record IdRequest(string Id);
+
     /// <summary>手動進路（管理者用）。進路名を直接指定する。</summary>
     public sealed record ManualRouteRequest(string Train, string Interlock, string Route, bool Set);
 
@@ -72,8 +74,23 @@ public static class AdminEndpoints
         MapDiagramControls(admin);
         MapDiagramControls(dia);
 
+        // ダイヤグラムの設定画面からは、特発の解除だけできる（作動はできない）
+        dia.MapGet("/incidents", (IncidentManager incidents) => Results.Ok(new
+        {
+            incidents = incidents.Snapshot().OrderBy(i => i.StartedUtc).Select(i => new { crossing = i.Crossing, reason = i.Reason, source = i.Source, started = i.StartedUtc })
+        }));
+        dia.MapPost("/release", (ReleaseRequest req, IncidentManager incidents) =>
+        {
+            if (string.IsNullOrWhiteSpace(req.Crossing)) return Results.BadRequest(new { ok = false, message = "踏切を指定してください" });
+            var released = incidents.Release([req.Crossing.Trim()], "ダイヤグラムの設定画面");
+            return Results.Ok(new { ok = true, released = released.Count });
+        });
+
         // 在線位置の画面（tid.html）。見るだけで、操作はできない。合言葉なしで誰でも見られる
         var view = app.MapGroup("/api/tid");
+
+        view.MapGet("/timetable", (string? train, RouteEngine engine, GameClock clock) =>
+            engine.Timetable(train ?? "", clock.Now) is { } t ? Results.Ok(t) : Results.NotFound(new { message = "この列車の時刻表はありません" }));
 
         view.MapGet("/state", (RouteEngine engine, GameClock clock) => Results.Ok(new
         {
@@ -164,12 +181,6 @@ public static class AdminEndpoints
             return Results.Ok(new { ok = true });
         });
 
-        admin.MapPost("/route/open-at", (OpenAtRequest req, CentralControl central) =>
-        {
-            central.SetOpenAt(req.Train, req.Station, req.Time?.UtcDateTime);
-            return Results.Ok(new { ok = true });
-        });
-
         // 手動進路（管理者用）: 駅ごとの全進路の一覧と、進路名を直接指定した開通・取消
         admin.MapGet("/route/catalog", (RailData rail) => Results.Ok(rail.ControlStations.Select(s => new
         {
@@ -221,7 +232,11 @@ public static class AdminEndpoints
     /// <summary>ダイヤグラムの表示と、そこからできる操作（管理画面と、ダイヤグラムの設定画面で共通）。</summary>
     private static void MapDiagramControls(RouteGroupBuilder g)
     {
-        g.MapGet("/diagram", (RouteEngine engine, RailData rail) => Results.Ok(new
+        // 継続乗務で残している在線を消す
+        g.MapPost("/continue/delete", (IdRequest req, PlayerRegistry players) =>
+            players.RemoveGhost(req.Id) ? Results.Ok(new { ok = true }) : Results.NotFound(new { message = "その継続乗務申請はもうありません" }));
+
+        g.MapGet("/diagram", (RouteEngine engine, RailData rail, PlayerRegistry players) => Results.Ok(new
         {
             now = DateTimeOffset.UtcNow,
             stations = rail.Line.StationIds.Select(id => new
@@ -233,11 +248,40 @@ public static class AdminEndpoints
             }),
             trains = engine.DiagramView(),
             orders = engine.OrdersView(),
-            sections = engine.SectionsView()
+            sections = engine.SectionsView(),
+            // これから進路を取る順番（取れずに待っている場内・出発）
+            queue = engine.QueueView(),
+            // 継続乗務申請（残している在線）と、出現待ちの列車
+            continues = players.Ghosts().Select(x => new
+            {
+                id = x.Id,
+                train = x.Info.TrainNumber,
+                circuits = x.Info.TrackCircuits,
+                since = x.SinceUtc,
+                until = x.UntilUtc
+            }),
+            appear = engine.AppearView()
         }));
 
-        // 列車別設定（列車ごとの、この先の駅の番線・状態・駅扱いの選択肢）
+        // スジずらし: ◆を横にずらして、その駅の発車時刻を決める（time が null なら指定解除）
+        g.MapPost("/route/open-at", (OpenAtRequest req, CentralControl central) =>
+        {
+            central.SetOpenAt(req.Train, req.Station, req.Time?.UtcDateTime);
+            return Results.Ok(new { ok = true });
+        });
+
+        // 進路を要求した記録（新しい順）
+        g.MapGet("/route/log", (RouteEngine engine) => Results.Ok(new { lines = engine.RouteLogView() }));
+
+        // 列車別設定)（列車ごとの、この先の駅の番線・状態・駅扱いの選択肢）
         g.MapGet("/trains", (RouteEngine engine) => Results.Ok(new { trains = engine.AdminView() }));
+
+        // 臨時停車・臨時通過・打ち切り（kind: "停車" / "通過" / "打ち切り"、null で元に戻す）
+        g.MapPost("/route/stop", (TrainStationRequest req, CentralControl central) =>
+        {
+            central.SetStop(req.Train, req.Station, req.Kind);
+            return Results.Ok(new { ok = true });
+        });
 
         g.MapPost("/route/track", (TrainStationRequest req, CentralControl central) =>
         {

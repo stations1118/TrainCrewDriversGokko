@@ -46,12 +46,15 @@
       },
       "up": {
         "arrive": [
-          { "track": 1, "routes": ["1RE", "5RA"] }, { "track": 2, "routes": ["1RE", "5RB"] },
+          // 1番線は出発停止（場内 5RA を先に開通させ、列車が入りきるまで 7R を出さない）
+          { "track": 1, "routes": ["1RE", "5RA"], "departStop": true }, { "track": 2, "routes": ["1RE", "5RB"] },
           { "track": 5, "routes": ["1RD5"] }, { "track": 6, "routes": ["1RD6"] }
         ],
         "depart": [
           { "track": 1, "routes": ["7R"] }, { "track": 2, "routes": ["8R"] }
-        ]
+        ],
+        // 始発の入換: 4・5・6番線から1番線へ（そのあと 7R で出発）
+        "shunt": [ { "from": 4, "to": 1, "routes": ["24R"] }, { "from": 5, "to": 1, "routes": ["25R"] }, { "from": 6, "to": 1, "routes": ["26R"] } ]
       },
       "notes": [
         "下りが通れるのは3番線だけ（6L で 6LT まで出て、第二出発 2L で本線へ）",

@@ -7,7 +7,7 @@ namespace Gokko.Server.Services;
 /// <summary>参加中のプレイヤー1人分の状態。読むときは <see cref="PlayerRegistry.Snapshot"/> の複製を使う。</summary>
 public sealed class PlayerInfo
 {
-    public required string ConnectionId { get; init; }
+    public required string ConnectionId { get; set; }
     public DateTime JoinedUtc { get; init; }
     public string TrainNumber { get; set; } = "";
     public bool TrainCrewConnected { get; set; }
@@ -31,6 +31,20 @@ public sealed class PlayerInfo
     public float Speed { get; set; }
     public HashSet<(string Interlock, string Route)> GameRoutes { get; set; } = new();
     public Dictionary<string, int> TrackChoices { get; set; } = new();
+
+    // ---- 継続乗務 ----
+
+    /// <summary>継続乗務ボタンが押されているか（最後の報告）。</summary>
+    public bool ContinueDuty { get; set; }
+
+    /// <summary>継続乗務で引き継いだ列番。ゲームから届く列番の代わりに使う（運転画面を出たら忘れる）。</summary>
+    public string? Alias { get; set; }
+
+    /// <summary>継続乗務で引き継いだ残した在線（<see cref="PlayerRegistry.GhostPrefix"/> で始まる接続ID）。進路の判断が列車を引き継ぐ。</summary>
+    public string? ContinuedFrom { get; set; }
+
+    /// <summary>出現待ちの理由（継続乗務の開始番線が違う）。あれば、サーバーの列車として扱わない。</summary>
+    public string? AppearReason { get; set; }
 
     /// <summary>位置（ゾーン）が分かっていた最後の時刻。データにない回路を踏んでいる間は、前の位置を保つ。</summary>
     public DateTime ZonesUpdatedUtc { get; set; }
@@ -65,7 +79,14 @@ public sealed class PlayerRegistry(GameData data)
 
     public bool IsJoined(string connectionId) => _players.ContainsKey(connectionId);
 
-    public void Remove(string connectionId) => _players.TryRemove(connectionId, out _);
+    /// <summary>退出。継続乗務ボタンを押したまま運転中だったら、在線を残す（つなぎ直して同じ番線から始めれば引き継ぐ）。</summary>
+    public void Remove(string connectionId)
+    {
+        if (!_players.TryRemove(connectionId, out var p)) return;
+        lock (p)
+            if (p.ContinueDuty && p.Mode == ShareMode.Shared && p.InGame && p.TrackCircuits.Count > 0 && p.TrainNumber.Length > 0)
+                AddGhost(p);
+    }
 
     public PlayerInfo? Get(string connectionId)
     {
@@ -73,6 +94,7 @@ public sealed class PlayerRegistry(GameData data)
         lock (p) return p.Clone();
     }
 
+    /// <summary>参加中のプレイヤーと、継続乗務で残している在線（接続IDが <see cref="GhostPrefix"/> で始まる）。</summary>
     public List<PlayerInfo> Snapshot()
     {
         var list = new List<PlayerInfo>();
@@ -81,7 +103,101 @@ public sealed class PlayerRegistry(GameData data)
             lock (p) list.Add(p.Clone());
         }
 
+        lock (_ghosts)
+        {
+            ExpireGhosts();
+            list.AddRange(_ghosts.Values.Select(g => g.Info.Clone()));
+        }
+
         return list;
+    }
+
+    // ---- 継続乗務: 運転画面を出たあとも、最後の在線位置を5分間残す ----
+
+    public const string GhostPrefix = "継続/";
+    public static readonly TimeSpan GhostLife = TimeSpan.FromMinutes(5);
+
+    public sealed record Ghost(string Id, string Owner, PlayerInfo Info, DateTime SinceUtc, DateTime UntilUtc);
+
+    private readonly Dictionary<string, Ghost> _ghosts = new();
+
+    public event Action<string>? Changed;
+
+    public List<Ghost> Ghosts()
+    {
+        lock (_ghosts)
+        {
+            ExpireGhosts();
+            return _ghosts.Values.OrderBy(g => g.SinceUtc).ToList();
+        }
+    }
+
+    /// <summary>継続乗務の在線を消す（管理画面・ダイヤグラムの設定画面から）。</summary>
+    public bool RemoveGhost(string id)
+    {
+        Ghost? g;
+        lock (_ghosts)
+            if (!_ghosts.Remove(id, out g)) return false;
+        Changed?.Invoke($"継続乗務: {g.Info.TrainNumber} の在線を消しました");
+        return true;
+    }
+
+    private void ExpireGhosts()
+    {
+        var now = DateTime.UtcNow;
+        foreach (var g in _ghosts.Values.Where(g => g.UntilUtc <= now).ToList())
+        {
+            _ghosts.Remove(g.Id);
+            Changed?.Invoke($"継続乗務: {g.Info.TrainNumber} は5分たったので在線を消しました");
+        }
+    }
+
+    private void AddGhost(PlayerInfo from)
+    {
+        var now = DateTime.UtcNow;
+        var id = $"{GhostPrefix}{from.ConnectionId}/{now.Ticks}";
+        var info = from.Clone();
+        info.ConnectionId = id;
+        info.InGame = true;
+        info.TrainCrewConnected = true;
+        info.Speed = 0;
+        info.ContinueDuty = false;
+        info.Alias = null;
+        info.ContinuedFrom = null;
+        info.AppearReason = null;
+        lock (_ghosts)
+        {
+            foreach (var old in _ghosts.Values.Where(g => g.Owner == from.ConnectionId).ToList()) _ghosts.Remove(old.Id);
+            _ghosts[id] = new Ghost(id, from.ConnectionId, info, now, now + GhostLife);
+        }
+
+        Changed?.Invoke($"継続乗務: {info.TrainNumber} の在線を5分間残します");
+    }
+
+    /// <summary>
+    /// 運転画面に入った列車が、継続乗務の在線を引き継ぐか。同じ番線（踏んでいる軌道回路が重なる）なら引き継ぎ、
+    /// 自分が残した在線があるのに番線が違えば「開始番線が違う」として出現待ちにする。
+    /// </summary>
+    private void MatchGhost(PlayerInfo p)
+    {
+        lock (_ghosts)
+        {
+            ExpireGhosts();
+            var same = _ghosts.Values.Where(g => g.Info.TrackCircuits.Any(p.TrackCircuits.Contains))
+                .OrderByDescending(g => g.Owner == p.ConnectionId).FirstOrDefault();
+            if (same != null)
+            {
+                _ghosts.Remove(same.Id);
+                p.Alias = same.Info.TrainNumber;
+                p.ContinuedFrom = same.Id;
+                p.AppearReason = null;
+                Changed?.Invoke($"継続乗務: {same.Info.TrainNumber} として運転を続けます");
+                return;
+            }
+
+            var mine = _ghosts.Values.FirstOrDefault(g => g.Owner == p.ConnectionId);
+            p.AppearReason = mine != null ? $"開始番線が違う（継続乗務 {mine.Info.TrainNumber} の在線が残っています）" : null;
+        }
     }
 
     /// <summary>クライアントの報告を反映する。参加していない接続なら false。</summary>
@@ -99,7 +215,20 @@ public sealed class PlayerRegistry(GameData data)
 
         lock (p)
         {
-            p.TrainNumber = Truncate(NormalizeName(report.TrainNumber));
+            // 継続乗務: ボタンを押したまま運転画面を出たら、最後の在線を残す。運転画面に入ったら、残した在線を引き継ぐか確かめる
+            var wasIn = p.InGame && p.TrackCircuits.Count > 0;
+            var nowIn = report.InGame && circuits.Count > 0;
+            if (wasIn && !nowIn && p.Mode == ShareMode.Shared && (p.ContinueDuty || report.ContinueDuty) && p.TrainNumber.Length > 0)
+                AddGhost(p);
+            p.ContinueDuty = report.ContinueDuty;
+            if (!nowIn) { p.Alias = null; p.ContinuedFrom = null; p.AppearReason = null; }
+            else if (p.Mode == ShareMode.Shared && (!wasIn || p.AppearReason != null))
+            {
+                p.TrackCircuits = circuits;
+                MatchGhost(p);
+            }
+
+            p.TrainNumber = p.Alias ?? Truncate(NormalizeName(report.TrainNumber));
             p.TrainCrewConnected = report.TrainCrewConnected;
             p.InGame = report.InGame;
             p.TrackCircuits = circuits;
