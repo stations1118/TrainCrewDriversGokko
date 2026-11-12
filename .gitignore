@@ -1,4 +1,4 @@
-# 公開するのは、クライアント・共通・サーバーの3つのフォルダだけ
+
 /*
 !/.gitignore
 !/Gokko.Client/
@@ -12,5 +12,5 @@ publish/
 .vs/
 *.user
 
-# 本番の接続先（公開しない）
+
 Gokko.Client/ServerAddress.Local.cs
