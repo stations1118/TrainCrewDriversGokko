@@ -1,5 +1,6 @@
 // ダイヤグラムの◆の窓と、出発順序・走行順の編集（管理画面 admin.html と、ダイヤグラムの設定画面 diasettings.html で共通）。
 // 使い方: GokkoDia.openPopup({ box, train, marker, diagram, act, onClose }) / GokkoDia.orderEditor({ el, act })
+//         GokkoDia.trainEditor({ el, act })（列車別設定）
 (() => {
   const TYPE_COLORS = { "普通": "var(--text)", "準急": "#1e6fd9", "区急": "#18a33a", "急行": "#f08a00", "快急": "#b04fd0", "特急": "#d62828", "回送": "#888" };
 
@@ -230,5 +231,78 @@
     };
   }
 
-  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, TYPE_COLORS, esc, hhmm };
+  // ---- 列車別設定（列車を選んで、この先の駅ごとに番線・抑止・自動開通・駅扱いを操作する） ----
+  function trainEditor({ el, act }) {
+    let trains = [];
+    let pick = "";
+    let pressing = false; // ボタンを押している間は描き直さない（押している途中のボタンが消えないように）
+
+    function table(t) {
+      return `<div class="scroll" style="overflow-x:auto"><table>
+        <thead style="white-space:nowrap"><tr><td class="muted">駅</td><td class="muted">停車</td><td class="muted">番線</td><td class="muted">決め方</td><td class="muted">状態</td><td></td></tr></thead>
+        <tbody>${t.stations.map((s) => {
+          const st = esc(s.stationId);
+          const opts = [`<option value="">（指定なし）</option>`].concat(s.options.map((o) =>
+            `<option value="${o}" ${s.track === o && s.source === "集中" ? "selected" : ""}>${o}番線</option>`)).join("");
+          const manual = s.manual.length > 0
+            ? `<select data-manual-station="${st}"><option value="">駅扱い…</option>${s.manual.map((x) =>
+                `<option value="${esc(x.action)}">${esc(x.label)}</option>`).join("")}</select>` : "";
+          return `<tr>
+            <td>${esc(s.name)}</td>
+            <td class="muted">${esc(s.stopType)}</td>
+            <td>${s.track ?? "-"} ${s.options.length > 0 ? `<select data-track-station="${st}">${opts}</select>` : ""}</td>
+            <td class="muted">${esc(s.source)}${s.locked ? "・確定" : ""}</td>
+            <td>${esc(s.status)}</td>
+            <td style="white-space:nowrap">
+              <button data-hold="arrive" data-station="${st}" data-on="${s.holdArrive ? 1 : 0}" class="${s.holdArrive ? "danger" : ""}">${s.holdArrive ? "場内抑止中" : "場内抑止"}</button>
+              <button data-hold="depart" data-station="${st}" data-on="${s.holdDepart ? 1 : 0}" class="${s.holdDepart ? "danger" : ""}">${s.holdDepart ? "出発抑止中" : "出発抑止"}</button>
+              <button class="primary" data-force="${st}">自動開通</button>
+              ${manual}
+            </td></tr>`;
+        }).join("")}</tbody></table></div>`;
+    }
+
+    function draw() {
+      const t = trains.find((x) => x.train === pick);
+      const opts = `<option value="">列車を選ぶ</option>` + trains.map((x) =>
+        `<option value="${esc(x.train)}" ${x.train === pick ? "selected" : ""}>${esc(x.train)}（${esc(x.type)}・${esc(x.direction)}・${esc(x.position)}）</option>`).join("");
+      el.innerHTML = `<div class="row"><select data-pick-train>${opts}</select>
+          ${trains.length === 0 ? `<span class="muted">在線共有モードで運転中の列車はいません</span>` : ""}</div>${t ? table(t) : ""}`;
+    }
+
+    el.addEventListener("pointerdown", () => { pressing = true; });
+    window.addEventListener("pointerup", () => { setTimeout(() => { pressing = false; }, 0); });
+    el.addEventListener("change", async (ev) => {
+      const s = ev.target.closest("select");
+      if (!s) return;
+      if (s.dataset.pickTrain !== undefined) { pick = s.value; el.dataset.key = ""; draw(); return; }
+      if (!pick) return;
+      if (s.dataset.manualStation && s.value) {
+        await act("POST", "/route/manual", { train: pick, station: s.dataset.manualStation, action: s.value, label: s.options[s.selectedIndex].text });
+      } else if (s.dataset.trackStation) {
+        await act("POST", "/route/track", { train: pick, station: s.dataset.trackStation, track: s.value === "" ? null : Number(s.value) });
+      }
+      s.blur();
+    });
+    el.addEventListener("click", async (ev) => {
+      const b = ev.target.closest("button");
+      if (!b || !pick) return;
+      if (b.dataset.hold) await act("POST", "/route/hold", { train: pick, station: b.dataset.station, hold: b.dataset.on !== "1", kind: b.dataset.hold });
+      else if (b.dataset.force) await act("POST", "/route/force", { train: pick, station: b.dataset.force });
+    });
+
+    return {
+      update(list) {
+        trains = list || [];
+        if (pick && !trains.some((x) => x.train === pick)) pick = "";
+        if (pressing || el.contains(document.activeElement) && document.activeElement.tagName === "SELECT") return;
+        const key = JSON.stringify([pick, trains.map((x) => [x.train, x.position]), trains.find((x) => x.train === pick)]);
+        if (el.dataset.key === key) return;
+        el.dataset.key = key;
+        draw();
+      }
+    };
+  }
+
+  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, TYPE_COLORS, esc, hhmm };
 })();

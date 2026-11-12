@@ -33,6 +33,7 @@ public sealed class GameLink
     public const string GameUri = "ws://127.0.0.1:50300/";
 
     private static readonly string[] DataRequestArgs = ["tconlyontrain"];
+    private static readonly string[] InterlockRequestArgs = ["interlock"];
 
     private static readonly string[] ScreenNames =
         ["MainGame", "MainGame_Pause", "MainGame_Loading", "Menu", "Result", "Title", "Other", "NotRunningGame"];
@@ -165,9 +166,16 @@ public sealed class GameLink
     {
         try
         {
+            var n = 0;
             while (ws.State == WebSocketState.Open && !ct.IsCancellationRequested)
             {
                 await SendAsync(ws, "DataRequest", DataRequestArgs, ct);
+
+                // 進路の一覧（連動装置のデータ）は、「interlock」だけを単独で要求しないと、ゲームが送ってこない
+                // （ほかの項目と一緒に要求しても有効にならない。一度有効にすると、ゲームを起動し直すまで続く）。
+                // 届かないと、サーバーはゲームの進路が見えず、開通の確認も取消もできない。
+                // 接続の直後と、そのあと10秒ごとに要求する（シナリオの読み込みなどで止まっても、すぐ戻るように）
+                if (n++ % 20 == 0) await SendAsync(ws, "DataRequest", InterlockRequestArgs, ct);
                 await Task.Delay(500, ct);
             }
         }

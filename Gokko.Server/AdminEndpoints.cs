@@ -236,6 +236,9 @@ public static class AdminEndpoints
             sections = engine.SectionsView()
         }));
 
+        // 列車別設定（列車ごとの、この先の駅の番線・状態・駅扱いの選択肢）
+        g.MapGet("/trains", (RouteEngine engine) => Results.Ok(new { trains = engine.AdminView() }));
+
         g.MapPost("/route/track", (TrainStationRequest req, CentralControl central) =>
         {
             central.SetTrack(req.Train, req.Station, req.Track);

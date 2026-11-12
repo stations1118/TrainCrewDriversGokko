@@ -51,6 +51,10 @@
   <section style="margin-top:16px">
     <div id="orders"></div>
   </section>
+  <section style="margin-top:16px">
+    <div class="status" style="margin-bottom:8px">列車別設定</div>
+    <div id="trains"></div>
+  </section>
 </main>
 
 <script src="diapanel.js"></script>
@@ -123,6 +127,7 @@
   }
 
   const orders = GokkoDia.orderEditor({ el: $("orders"), act });
+  const trainSettings = GokkoDia.trainEditor({ el: $("trains"), act });
 
   function renderDiagram(d) {
     diagram = d;
@@ -184,6 +189,7 @@
     if (!key) { $("conn").textContent = "合言葉を入力してください"; $("conn").className = "status muted"; return; }
     try {
       renderDiagram(await api("GET", "/diagram"));
+      trainSettings.update((await api("GET", "/trains")).trains);
       $("conn").textContent = "接続中"; $("conn").className = "status ok";
       $("error").textContent = "";
     } catch (e) {
