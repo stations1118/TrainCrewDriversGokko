@@ -1,0 +1,253 @@
+// 番線の表（案）。駅・方向・番線ごとに、TRAIN CREW に送る進路の並びを書く。
+//
+// 方向: 下り = 新大路方 → 館浜方、上り = 館浜方 → 新大路方
+// arrive  … 本線からその番線に入る進路（場内）。並びは本線側から順。2本あるもの（第二場内など）は両方送る
+// depart  … その番線から本線へ出る進路（出発）。並びは番線側から順
+// through … 番線を使わずに通過する進路（江ノ原信号場の本線）
+// shunt   … 始発の入換（from 番線 → to 番線）。from にいる列車は、まず入換で to に入り、それから出発する
+// departStop … arrive に付ける。出発停止の番線（場内進路を開通させている間は、出発を開通できない）。
+//              連動表の場内進路の鎖錠欄に、同じ番線から同じ方向への出発があるもの。入換（shunt）は書かなくても常に出発停止
+// turnback   … arrive に付ける。行き止まり（折り返し）として選べる番線。選ぶと列車はその駅で打ち切り、先の駅は扱わない
+//              （ダイヤグラムの線もその駅で切る）
+// 送る順番（出発→場内 など）は、サーバーの側で決める。ここには「どの進路が必要か」だけを書く。
+{
+  "stations": [
+    {
+      "id": "TH76", "name": "館浜", "interlock": "館浜連動装置",
+      "down": {
+        "arrive": [
+          { "track": 1, "routes": ["5LA"] }, { "track": 2, "routes": ["5LB"] },
+          { "track": 3, "routes": ["5LC"] }, { "track": 4, "routes": ["5LD"] }
+        ],
+        "depart": []
+      },
+      "up": {
+        "arrive": [],
+        "depart": [
+          { "track": 1, "routes": ["1R"] }, { "track": 2, "routes": ["2R"] },
+          { "track": 3, "routes": ["3R"] }, { "track": 4, "routes": ["4R"] }
+        ]
+      },
+      "notes": ["終着駅。下りは着くだけ、上りは出るだけ"]
+    },
+    {
+      "id": "TH75", "name": "駒野", "interlock": "駒野連動装置",
+      "down": {
+        "arrive": [
+          // 1・2番線は行き止まり（館浜方へは出られない）。選ぶと駒野で打ち切り（折り返し）
+          { "track": 1, "routes": ["9LA"], "turnback": true }, { "track": 2, "routes": ["9LB"], "turnback": true }, { "track": 3, "routes": ["9LC"] }
+        ],
+        "depart": [
+          { "track": 3, "routes": ["6L", "2L"] },
+          { "track": 5, "routes": ["3L"] }, { "track": 6, "routes": ["4L"] }
+        ]
+      },
+      "up": {
+        "arrive": [
+          { "track": 1, "routes": ["1RE", "5RA"] }, { "track": 2, "routes": ["1RE", "5RB"] },
+          { "track": 5, "routes": ["1RD5"] }, { "track": 6, "routes": ["1RD6"] }
+        ],
+        "depart": [
+          { "track": 1, "routes": ["7R"] }, { "track": 2, "routes": ["8R"] }
+        ]
+      },
+      "notes": [
+        "下りが通れるのは3番線だけ（6L で 6LT まで出て、第二出発 2L で本線へ）",
+        "上りが通れるのは1・2番線だけ（1RE で 1RET まで入り、5RA/5RB で番線へ）",
+        "下り1・2番線と上り5・6番線は、着いたら折り返す（そのまま同じ方向には出られない）"
+      ]
+    },
+    {
+      "id": "TH71", "name": "津崎", "interlock": "津崎連動装置",
+      "down": {
+        "arrive": [ { "track": 3, "routes": ["6LC"] }, { "track": 4, "routes": ["6LD"], "departStop": true } ],
+        "depart": [ { "track": 3, "routes": ["2L"] }, { "track": 4, "routes": ["3L"] } ]
+      },
+      "up": {
+        "arrive": [ { "track": 1, "routes": ["1RA"], "departStop": true }, { "track": 2, "routes": ["1RB"] } ],
+        "depart": [ { "track": 1, "routes": ["4R"] }, { "track": 2, "routes": ["5R"] } ]
+      }
+    },
+    {
+      "id": "TH70", "name": "浜園", "interlock": "浜園連動装置",
+      "down": {
+        "arrive": [ { "track": 2, "routes": ["5L"] } ],
+        "depart": [ { "track": 2, "routes": ["2L"] } ]
+      },
+      "up": {
+        "arrive": [ { "track": 1, "routes": ["1R"] } ],
+        "depart": [ { "track": 1, "routes": ["3R"] }, { "track": 2, "routes": ["4R"] } ]
+      },
+      "notes": ["上りの2番線発（4R）は、下りで着いた列車の折り返し"]
+    },
+    {
+      "id": "TH67", "name": "新野崎", "interlock": "新野崎連動装置",
+      "down": {
+        "arrive": [
+          { "track": 3, "routes": ["10LC", "4L"] }, { "track": 4, "routes": ["10LD", "5L"], "departStop": true }
+        ],
+        "depart": [ { "track": 3, "routes": ["2L"] }, { "track": 4, "routes": ["3L"] } ],
+        // 始発の入換: 引上線（5番線）からホームへ。出発要求ボタンが「入換要求」になる
+        "shunt": [ { "from": 5, "to": 3, "routes": ["25LC"] }, { "from": 5, "to": 4, "routes": ["25LD"] } ]
+      },
+      "up": {
+        // 1RA は連動表の鎖錠欄に 8R がないが、記述ミスとして出発停止にする
+        "arrive": [ { "track": 1, "routes": ["1RA"], "departStop": true }, { "track": 2, "routes": ["1RB"] } ],
+        "depart": [
+          { "track": 1, "routes": ["8R"] }, { "track": 2, "routes": ["9R"] },
+          { "track": 3, "routes": ["6R"] }, { "track": 4, "routes": ["7R"] }
+        ]
+      },
+      "notes": [
+        "下りは場内が2段（10LC/10LD で 34T まで、4L/5L で番線へ）",
+        "上りの3・4番線発（6R/7R）は、下りで着いた列車の折り返し",
+        "1・2番線から5番線（引上線）への入換（23R/24R）、5番線から3・4番線（25LC/25LD）は表に入れていない"
+      ]
+    },
+    {
+      "id": "TH66S", "name": "江ノ原信号場", "interlock": "江ノ原信号場連動装置",
+      "down": {
+        "through": ["5LE"],
+        "arrive": [ { "track": 10, "routes": ["5LD"], "note": "江ノ原検車区へ入区" } ],
+        "depart": [ { "track": 11, "routes": ["3L"] }, { "track": 12, "routes": ["4L"] } ],
+        // 始発の入換: 13番線から 11・12番線へ（下りで出る列車）
+        "shunt": [ { "from": 13, "to": 11, "routes": ["13RA"] }, { "from": 13, "to": 12, "routes": ["13RB"] } ]
+      },
+      "up": {
+        "through": ["1RC"],
+        "arrive": [ { "track": 11, "routes": ["1RA"] }, { "track": 12, "routes": ["1RB"] } ],
+        "depart": [ { "track": 13, "routes": ["2R"], "note": "江ノ原検車区から出区" } ],
+        // 始発の入換: 10・11・12番線から 13番線へ（上りで出区する列車。先に入換で13番線に入ってから出発）
+        "shunt": [
+          { "from": 10, "to": 13, "routes": ["11R"] }, { "from": 11, "to": 13, "routes": ["15L13"] }, { "from": 12, "to": 13, "routes": ["16L13"] }
+        ]
+      },
+      "notes": [
+        "本線の列車は番線を使わず、上り 1RC・下り 5LE で通過する",
+        "スタフの「江原検」は江ノ原検車区。下りの入区は10番線、上りの出区は13番線（スタフの ⑩・⑬ と一致）",
+        "上り11・12番線に着いた列車は、下り（3L/4L）で折り返す"
+      ]
+    },
+    {
+      "id": "TH65", "name": "大道寺", "interlock": "大道寺連動装置",
+      "down": {
+        "arrive": [
+          { "track": 3, "routes": ["13LC", "11L"], "departStop": true }, { "track": 4, "routes": ["13LD", "12L"] }
+        ],
+        "depart": [ { "track": 3, "routes": ["5L"] }, { "track": 4, "routes": ["6L"] } ],
+        // 始発の入換: 検車区（入換Y線 YT）からホームへ。関連進路（27L・28L）はサーバーが自動で足す
+        // 既定は E線経由（Y線→E線 32LE、E線→番線 29L*）。E線に列車がいれば、Y線から直接（32L*）
+        "shunt": [
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 3, "routes": ["32LE", "29LC"], "requireFree": ["TH65_ET"], "via": "E線" },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LE", "29LD"], "requireFree": ["TH65_ET"], "via": "E線" },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 3, "routes": ["32LC"] },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LD"] }
+        ]
+      },
+      "up": {
+        "arrive": [
+          // 1番線は、連動表では出発停止ではないが、運用で出発停止を定位とする
+          { "track": 1, "routes": ["1RA", "2R"], "departStop": true }, { "track": 2, "routes": ["1RB", "3R"], "departStop": true },
+          { "track": 3, "routes": ["1RC", "4R"], "departStop": true }
+        ],
+        "depart": [
+          { "track": 1, "routes": ["7R"] }, { "track": 2, "routes": ["8R"] },
+          { "track": 3, "routes": ["9R"] }, { "track": 4, "routes": ["10R"] }
+        ],
+        "shunt": [
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 2, "routes": ["32LE", "29LB"], "requireFree": ["TH65_ET"], "via": "E線" },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 3, "routes": ["32LE", "29LC"], "requireFree": ["TH65_ET"], "via": "E線" },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LE", "29LD"], "requireFree": ["TH65_ET"], "via": "E線" },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 1, "routes": ["32LA"] },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 2, "routes": ["32LB"] },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 3, "routes": ["32LC"] },
+          { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LD"] }
+        ]
+      },
+      "notes": [
+        "場内は上下とも2段（上り 1RA/1RB/1RC＋2R/3R/4R、下り 13LC/13LD＋11L/12L）",
+        "上りの4番線発（10R）は、下りで着いた列車の折り返し",
+        "検車区（XT/YT/ET）への入換は表に入れていない"
+      ]
+    },
+    {
+      "id": "TH64", "name": "藤江", "interlock": "藤江連動装置",
+      "down": {
+        "arrive": [ { "track": 1, "routes": ["14L"] }, { "track": 2, "routes": ["15L"] } ],
+        "depart": [ { "track": 1, "routes": ["12L"] }, { "track": 2, "routes": ["13L"] } ]
+      },
+      "up": {
+        "arrive": [ { "track": 1, "routes": ["12R"] }, { "track": 2, "routes": ["13R"] } ],
+        "depart": [ { "track": 1, "routes": ["14R"] }, { "track": 2, "routes": ["15R"] } ]
+      },
+      "notes": ["行き違い駅。上下どちらも1・2番線の両方を使える"]
+    },
+    {
+      "id": "TH63", "name": "水越", "interlock": "水越連動装置",
+      "down": {
+        "arrive": [ { "track": 1, "routes": ["14L"] }, { "track": 2, "routes": ["15L"] } ],
+        "depart": [ { "track": 1, "routes": ["12L"] }, { "track": 2, "routes": ["13L"] } ]
+      },
+      "up": {
+        "arrive": [ { "track": 1, "routes": ["12R"] }, { "track": 2, "routes": ["13R"] } ],
+        "depart": [ { "track": 1, "routes": ["14R"] }, { "track": 2, "routes": ["15R"] } ]
+      },
+      "notes": ["行き違い駅。上下どちらも1・2番線の両方を使える"]
+    },
+    {
+      "id": "TH62", "name": "高見沢", "interlock": "高見沢連動装置",
+      "down": {
+        "arrive": [ { "track": 1, "routes": ["14L"] }, { "track": 2, "routes": ["15L"] } ],
+        "depart": [ { "track": 1, "routes": ["12L"] }, { "track": 2, "routes": ["13L"] } ]
+      },
+      "up": {
+        "arrive": [ { "track": 1, "routes": ["12R"] }, { "track": 2, "routes": ["13R"] } ],
+        "depart": [ { "track": 1, "routes": ["14R"] }, { "track": 2, "routes": ["15R"] } ]
+      },
+      "notes": ["行き違い駅。上下どちらも1・2番線の両方を使える"]
+    },
+    {
+      "id": "TH61", "name": "日野森", "interlock": "日野森連動装置",
+      "down": {
+        "arrive": [ { "track": 3, "routes": ["6L"] } ],
+        "depart": [ { "track": 1, "routes": ["3L"] }, { "track": 3, "routes": ["4L"] } ]
+      },
+      "up": {
+        // 1番線は行き止まり（新大路方へは出られない）。選ぶと日野森で打ち切り（折り返し）
+        "arrive": [ { "track": 1, "routes": ["2RA"], "turnback": true }, { "track": 2, "routes": ["2RB"] } ],
+        "depart": [ { "track": 2, "routes": ["5R"] } ]
+      },
+      "notes": [
+        "下りが通れるのは3番線だけ、上りが通れるのは2番線だけ",
+        "上り1番線に着いた列車は、下り（3L）で折り返す"
+      ]
+    },
+    {
+      "id": "TH59", "name": "西赤山", "interlock": "西赤山連動装置",
+      "down": {
+        "arrive": [ { "track": 2, "routes": ["13L"] } ],
+        "depart": [ { "track": 2, "routes": ["12L"] } ]
+      },
+      "up": {
+        "arrive": [ { "track": 1, "routes": ["11R"] } ],
+        "depart": [ { "track": 1, "routes": ["13R"] } ]
+      },
+      "notes": ["行き違い駅。下りは2番線、上りは1番線に決まっている"]
+    },
+    {
+      "id": "TH58", "name": "赤山町", "interlock": "赤山町連動装置",
+      "down": {
+        "arrive": [ { "track": 1, "routes": ["9LA"] }, { "track": 2, "routes": ["9LB"] }, { "track": 3, "routes": ["9LC"] } ],
+        "depart": [ { "track": 1, "routes": ["3L"] }, { "track": 2, "routes": ["4L"] }, { "track": 3, "routes": ["5L"] } ]
+      },
+      "up": {
+        "arrive": [ { "track": 1, "routes": ["2RA"] }, { "track": 2, "routes": ["2RB"] }, { "track": 3, "routes": ["2RC"] } ],
+        "depart": [ { "track": 1, "routes": ["6R"] }, { "track": 2, "routes": ["7R"] }, { "track": 3, "routes": ["8R"] } ]
+      },
+      "notes": [
+        "上下どちらも1〜3番線のどれでも使える",
+        "上りの出発（6R/7R/8R）は三郷方面へ。三郷より先はゲーム上未実装"
+      ]
+    }
+  ]
+}

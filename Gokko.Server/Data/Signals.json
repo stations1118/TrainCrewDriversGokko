@@ -1,0 +1,5794 @@
+{
+  "signals": [
+    {
+      "name": "JR浜園上り出発3R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "JR浜園上り出発4R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "JR浜園下り出発3L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "JR浜園下り出発4L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "JR浜園場内1L",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "JR浜園場内2L",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石上り出発14R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石上り出発15R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石上り場内12R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石上り場内13R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石下り出発12L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石下り出発13L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石下り場内14L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三石下り場内15L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "三郷上り出発13R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "三郷連動装置",
+          "route": "13R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "三郷上り場内12R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "三郷連動装置",
+          "route": "12R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "三郷下り出発12L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "三郷連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "三郷下り場内14L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "三郷連動装置",
+          "route": "14L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "上吉沢上り出発14R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上吉沢上り出発15R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上吉沢上り場内12R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上吉沢上り場内13R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上吉沢下り出発12L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上吉沢下り出発13L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上吉沢下り場内14L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上吉沢下り場内15L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢上り出発14R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢上り出発14R中継",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": []
+    },
+    {
+      "name": "下吉沢上り出発15R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢上り場内12R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢上り場内13R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢下り出発12L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢下り出発13L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢下り場内14L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下吉沢下り場内15L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "二木戸上り出発13R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "二木戸上り場内12R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "二木戸下り出発12L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "二木戸下り場内14L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田上り出発14R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田上り出発15R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田上り場内12R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田上り場内13R",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田下り出発12L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田下り出発13L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田下り場内14L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "名田下り場内15L",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路上り出発4L",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路上り出発5L",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路上り場内8L",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路上り場内9L",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路上り場内10LB",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路上り場内10LC",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路下り出発6R",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路下り出発7R",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路下り場内2R",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大路下り場内3R",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "大道寺上り出発7R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞166"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_XT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "7R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り出発8R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞166"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_XT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "8R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り出発9R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞166"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_XT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "9R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り出発10R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞166"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_XT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "10R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り場内1RTA",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺上り場内2R"
+      ],
+      "protects": [
+        "TH65_1RT",
+        "TH65_41T"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "1RA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り場内1RTB",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺上り場内3R",
+        "大道寺上り場内4R"
+      ],
+      "protects": [
+        "TH65_1RT",
+        "TH65_41T",
+        "TH65_42ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "1RB",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "1RC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り場内2R",
+      "type": "4灯YY式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺上り出発7R",
+        "大道寺入換21R"
+      ],
+      "protects": [
+        "TH65_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "2R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り場内3R",
+      "type": "4灯YY式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺上り出発8R",
+        "大道寺入換22R"
+      ],
+      "protects": [
+        "TH65_3RT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "3R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺上り場内4R",
+      "type": "4灯YY式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺上り出発9R",
+        "大道寺入換23R"
+      ],
+      "protects": [
+        "TH65_11LT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "4R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り出発5L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "江ノ原信号場下り場内5LD",
+        "江ノ原信号場下り場内5LE"
+      ],
+      "protects": [
+        "TH65_42イT",
+        "TH65_42ロT",
+        "TH65_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "5L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り出発6L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "江ノ原信号場下り場内5LD",
+        "江ノ原信号場下り場内5LE"
+      ],
+      "protects": [
+        "TH65_42イT",
+        "TH65_42ロT",
+        "TH65_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "6L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り場内11L",
+      "type": "4灯YY式G無",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺下り出発5L"
+      ],
+      "protects": [
+        "TH65_11LT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "11L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り場内11L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "大道寺下り場内11L"
+      ],
+      "protects": [
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "11L",
+          "source": "TH65_11L"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り場内12L",
+      "type": "4灯YY式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺下り出発6L"
+      ],
+      "protects": [
+        "TH65_12LT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り場内12L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "大道寺下り場内12L"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "12L",
+          "source": "TH65_12L"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り場内13LC",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺下り場内11L"
+      ],
+      "protects": [
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "13LC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り場内13LD",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺下り場内12L"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "13LD",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺下り場内13L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "大道寺下り場内13LC",
+        "大道寺下り場内13LD"
+      ],
+      "protects": [
+        "DF1T"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "13LC",
+          "source": "TH65_13LSC"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "13LD",
+          "source": "TH65_13LSD"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換21R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "21RX",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "21RY",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換22R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換30R"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_ET"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "22RX",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "22RE",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "22RY",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換23R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換30R"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_ET"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "23RX",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "23RE",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "23RY",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換24R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換30R"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_ET"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "24RX",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "24RE",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "24RY",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換25R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換30R"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_ET"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "25RX",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "25RY",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "25RE",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換26R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換30R"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_ET"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "26RE",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "26RX",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "26RY",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換27L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "27L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換28L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "28L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換29L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換27L",
+        "大道寺入換28L"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_50ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "29LB",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "29LC",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "29LD",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "29L5",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "29L6",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換30R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "30R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換31L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換27L",
+        "大道寺入換28L"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_50ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "31LA",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "31LB",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "31LC",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "31LD",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "31L5",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "31L6",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "大道寺入換32L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺入換28L",
+        "大道寺入換27L",
+        "大道寺入換29L"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_50ロT",
+        "TH65_ET"
+      ],
+      "routes": [
+        {
+          "interlock": "大道寺連動装置",
+          "route": "32LE",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "32LA",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "32LB",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "32LC",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "32LD",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "32L5",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "大道寺連動装置",
+          "route": "32L6",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新大路上り出発4L",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路上り出発5L",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路上り場内10L",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路上り場内11L",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路上り場内12LC",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路上り場内12LD",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り出発6R",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り出発7R",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り出発8R",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り出発9R",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り場内1RA",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り場内1RB",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り場内2R",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新大路下り場内3R",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "新野崎上り出発6R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞136"
+      ],
+      "protects": [
+        "TH67_33イT",
+        "TH67_33ロT",
+        "TH67_34T",
+        "TH67_35イT",
+        "TH67_35ロT",
+        "TH67_36イT",
+        "TH67_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "6R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎上り出発7R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞136"
+      ],
+      "protects": [
+        "TH67_33イT",
+        "TH67_33ロT",
+        "TH67_34T",
+        "TH67_35イT",
+        "TH67_35ロT",
+        "TH67_36イT",
+        "TH67_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "7R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎上り出発8R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞136"
+      ],
+      "protects": [
+        "TH67_33イT",
+        "TH67_33ロT",
+        "TH67_34T",
+        "TH67_35イT",
+        "TH67_35ロT",
+        "TH67_36イT",
+        "TH67_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "8R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎上り出発9R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞136"
+      ],
+      "protects": [
+        "TH67_33イT",
+        "TH67_33ロT",
+        "TH67_34T",
+        "TH67_35イT",
+        "TH67_35ロT",
+        "TH67_36イT",
+        "TH67_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "9R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎上り場内1RA",
+      "type": "2灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "新野崎上り出発8R"
+      ],
+      "protects": [
+        "TH67_1RAT",
+        "TH67_1RT",
+        "TH67_32T"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "1RA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎上り場内1RB",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "新野崎上り出発9R"
+      ],
+      "protects": [
+        "TH67_1RBT",
+        "TH67_1RT",
+        "TH67_32T"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "1RB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎下り出発2L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞123"
+      ],
+      "protects": [
+        "TH67_31T",
+        "TH67_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "2L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎下り出発3L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞123"
+      ],
+      "protects": [
+        "TH67_31T",
+        "TH67_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "3L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎下り場内4L",
+      "type": "5灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "新野崎下り出発2L"
+      ],
+      "protects": [
+        "TH67_4LT"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "4L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎下り場内5L",
+      "type": "4灯YY式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "新野崎下り出発3L"
+      ],
+      "protects": [
+        "TH67_5LT"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "5L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎下り場内10LC",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "新野崎下り場内4L"
+      ],
+      "protects": [
+        "TH67_10LT",
+        "TH67_34T",
+        "TH67_35イT"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "10LC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎下り場内10LD",
+      "type": "2灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "新野崎下り場内5L"
+      ],
+      "protects": [
+        "TH67_10LT",
+        "TH67_34T",
+        "TH67_35イT"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "10LD",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎入換21L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "21L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎入換22L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "22L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎入換23R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "23R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎入換24R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "24R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "新野崎入換25L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "新野崎入換21L",
+        "新野崎入換22L"
+      ],
+      "protects": [
+        "TH67_34T",
+        "TH67_35イT",
+        "TH67_35ロT",
+        "TH67_36イT",
+        "TH67_36ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "新野崎連動装置",
+          "route": "25LC",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "新野崎連動装置",
+          "route": "25LD",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "日野森上り出発5R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞238"
+      ],
+      "protects": [
+        "TH61_5RT"
+      ],
+      "routes": [
+        {
+          "interlock": "日野森連動装置",
+          "route": "5R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "日野森上り場内2RA",
+      "type": "2灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "日野森連動装置",
+          "route": "2RA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "日野森上り場内2RB",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "日野森上り出発5R"
+      ],
+      "protects": [
+        "TH61_21イT",
+        "TH61_22T",
+        "TH61_2RBT",
+        "TH61_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "日野森連動装置",
+          "route": "2RB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "日野森下り出発3L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞227"
+      ],
+      "protects": [
+        "TH61_21イT",
+        "TH61_21ロT",
+        "TH61_22T",
+        "TH61_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "日野森連動装置",
+          "route": "3L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "日野森下り出発4L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞227"
+      ],
+      "protects": [
+        "TH61_21イT",
+        "TH61_21ロT",
+        "TH61_22T",
+        "TH61_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "日野森連動装置",
+          "route": "4L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "日野森下り場内6L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "日野森下り出発4L"
+      ],
+      "protects": [
+        "TH61_6LT"
+      ],
+      "routes": [
+        {
+          "interlock": "日野森連動装置",
+          "route": "6L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "東井上り出発5R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井上り出発6R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井上り出発7R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井上り場内1R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井下り出発2L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井下り出発3L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井下り出発4L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井下り場内8L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "東井下り場内9L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "水越上り出発14R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞200"
+      ],
+      "protects": [
+        "TH63_22イT",
+        "TH63_22ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "14R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "水越上り出発15R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞200"
+      ],
+      "protects": [
+        "TH63_22イT",
+        "TH63_22ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "15R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "水越上り出発15R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "水越上り出発15R"
+      ],
+      "protects": [
+        "TH63_15LT",
+        "TH63_21イT",
+        "TH63_21ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "15R",
+          "source": "TH63_15R"
+        }
+      ]
+    },
+    {
+      "name": "水越上り場内12R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "水越上り出発14R"
+      ],
+      "protects": [
+        "TH63_12RT",
+        "TH63_21イT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "12R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "水越上り場内13R",
+      "type": "5灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "水越上り出発15R"
+      ],
+      "protects": [
+        "TH63_15LT",
+        "TH63_21イT",
+        "TH63_21ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "13R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "水越下り出発12L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞193"
+      ],
+      "protects": [
+        "TH63_21イT",
+        "TH63_21ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "水越下り出発13L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞193"
+      ],
+      "protects": [
+        "TH63_21イT",
+        "TH63_21ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "13L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "水越下り出発13L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "水越下り出発13L"
+      ],
+      "protects": [
+        "TH63_15LT",
+        "TH63_22ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "13L",
+          "source": "TH63_13L"
+        }
+      ]
+    },
+    {
+      "name": "水越下り場内14L",
+      "type": "4灯YY式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "水越下り出発12L"
+      ],
+      "protects": [
+        "TH63_12RT",
+        "TH63_22イT",
+        "TH63_22ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "14L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "水越下り場内15L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "水越下り出発13L"
+      ],
+      "protects": [
+        "TH63_15LT",
+        "TH63_22ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "水越連動装置",
+          "route": "15L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場入換11R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "江ノ原信号場入換13R"
+      ],
+      "protects": [
+        "TH66S_13T",
+        "TH66S_51イT"
+      ],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "11R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場入換12L",
+      "type": "入換信号機",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場入換13R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "13RA",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "13RB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原検車区入換15L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "15L13",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原検車区入換16L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "16L13",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場上り出発2R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞156"
+      ],
+      "protects": [
+        "TH66S_1RCT",
+        "TH66S_1RT",
+        "TH66S_51ロT",
+        "TH66S_52T",
+        "TH66S_54T",
+        "TH66S_55T"
+      ],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "2R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場上り場内1RA",
+      "type": "2灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "1RA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場上り場内1RB",
+      "type": "2灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "1RB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場上り場内1RC",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞156"
+      ],
+      "protects": [
+        "TH66S_1RCT",
+        "TH66S_1RT",
+        "TH66S_51ロT",
+        "TH66S_52T",
+        "TH66S_54T",
+        "TH66S_55T"
+      ],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "1RC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場下り出発3L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞151"
+      ],
+      "protects": [
+        "TH66S_52T",
+        "TH66S_53T",
+        "TH66S_54T",
+        "TH66S_55T",
+        "TH66S_56T",
+        "TH66S_57T",
+        "TH66S_5LET",
+        "TH66S_5LT"
+      ],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "3L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場下り出発4L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞151"
+      ],
+      "protects": [
+        "TH66S_52T",
+        "TH66S_53T",
+        "TH66S_54T",
+        "TH66S_55T",
+        "TH66S_56T",
+        "TH66S_57T",
+        "TH66S_5LET",
+        "TH66S_5LT"
+      ],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "4L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場下り場内5LD",
+      "type": "2灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "5LD",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場下り場内5LE",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞151"
+      ],
+      "protects": [
+        "TH66S_52T",
+        "TH66S_53T",
+        "TH66S_54T",
+        "TH66S_55T",
+        "TH66S_56T",
+        "TH66S_57T",
+        "TH66S_5LET",
+        "TH66S_5LT"
+      ],
+      "routes": [
+        {
+          "interlock": "江ノ原信号場連動装置",
+          "route": "5LE",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "江ノ原信号場内入換",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "津崎上り出発4R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞86"
+      ],
+      "protects": [
+        "TH71_23T",
+        "TH71_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "4R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎上り出発5R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞86"
+      ],
+      "protects": [
+        "TH71_23T",
+        "TH71_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "5R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎上り場内1RA",
+      "type": "2灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "津崎上り出発4R"
+      ],
+      "protects": [
+        "TH71_1RAT",
+        "TH71_1RT",
+        "TH71_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "1RA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎上り場内1RB",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "津崎上り出発5R"
+      ],
+      "protects": [
+        "TH71_1RBT",
+        "TH71_1RT",
+        "TH71_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "1RB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎上り場内1R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "津崎上り場内1RA",
+        "津崎上り場内1RB"
+      ],
+      "protects": [
+        "上り74T"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "1RA",
+          "source": "TH71_1RA"
+        },
+        {
+          "interlock": "津崎連動装置",
+          "route": "1RB",
+          "source": "TH71_1RB"
+        }
+      ]
+    },
+    {
+      "name": "津崎下り出発2L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞75"
+      ],
+      "protects": [
+        "TH71_22T",
+        "TH71_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "2L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎下り出発2L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "津崎下り出発2L"
+      ],
+      "protects": [
+        "TH71_24T",
+        "TH71_6LCT",
+        "TH71_6LT"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "2L",
+          "source": "TH71_2L"
+        }
+      ]
+    },
+    {
+      "name": "津崎下り出発3L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞75"
+      ],
+      "protects": [
+        "TH71_22T",
+        "TH71_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "3L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎上り出発5R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "津崎上り出発5R"
+      ],
+      "protects": [
+        "TH71_1RBT",
+        "TH71_1RT",
+        "TH71_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "5R",
+          "source": "TH71_5R"
+        }
+      ]
+    },
+    {
+      "name": "津崎下り場内6LC",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "津崎下り出発2L"
+      ],
+      "protects": [
+        "TH71_24T",
+        "TH71_6LCT",
+        "TH71_6LT"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "6LC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎下り場内6LD",
+      "type": "2灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "津崎下り出発3L"
+      ],
+      "protects": [
+        "TH71_24T",
+        "TH71_6LDT",
+        "TH71_6LT"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "6LD",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "津崎下り場内6L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "津崎下り場内6LC",
+        "津崎下り場内6LD"
+      ],
+      "protects": [
+        "下り89T"
+      ],
+      "routes": [
+        {
+          "interlock": "津崎連動装置",
+          "route": "6LC",
+          "source": "TH71_6LC"
+        },
+        {
+          "interlock": "津崎連動装置",
+          "route": "6LD",
+          "source": "TH71_6LD"
+        }
+      ]
+    },
+    {
+      "name": "浜園上り出発3R中継",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "浜園上り出発3R"
+      ],
+      "protects": [
+        "TH70_1RAT"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "3R",
+          "source": "TH70_3R"
+        }
+      ]
+    },
+    {
+      "name": "浜園上り出発3R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞102"
+      ],
+      "protects": [
+        "TH70_21イT",
+        "TH70_21ロT",
+        "TH70_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "3R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "浜園上り出発4R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞102"
+      ],
+      "protects": [
+        "TH70_21イT",
+        "TH70_21ロT",
+        "TH70_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "4R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "浜園上り場内1R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "浜園上り出発3R"
+      ],
+      "protects": [
+        "TH70_1RAT"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "1R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "浜園上り場内1R中継",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "浜園上り場内1R"
+      ],
+      "protects": [
+        "上り92T"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "1R",
+          "source": "TH70_1R"
+        }
+      ]
+    },
+    {
+      "name": "浜園下り出発2L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞89"
+      ],
+      "protects": [
+        "TH70_2LT"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "2L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "浜園下り出発2L中継",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "浜園下り出発2L"
+      ],
+      "protects": [
+        "TH70_21イT",
+        "TH70_5LBT",
+        "TH70_5LT"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "2L",
+          "source": "TH70_2L"
+        }
+      ]
+    },
+    {
+      "name": "浜園下り場内5L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "浜園下り出発2L"
+      ],
+      "protects": [
+        "TH70_21イT",
+        "TH70_5LBT",
+        "TH70_5LT"
+      ],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "5L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "浜園入換11R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "11R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "浜園入換12L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "浜園連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "珠川上り出発11R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "珠川下り出発11L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "藤江上り出発14R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞188"
+      ],
+      "protects": [
+        "TH64_14RT",
+        "TH64_15RT",
+        "TH64_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "14R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "藤江上り出発15R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞188"
+      ],
+      "protects": [
+        "TH64_14RT",
+        "TH64_15RT",
+        "TH64_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "15R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "藤江上り出発15R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "藤江上り出発15R"
+      ],
+      "protects": [
+        "TH64_13LT",
+        "TH64_15LT",
+        "TH64_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "15R",
+          "source": "TH64_15R"
+        }
+      ]
+    },
+    {
+      "name": "藤江上り場内12R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "藤江上り出発14R"
+      ],
+      "protects": [
+        "TH64_12LT",
+        "TH64_12RT",
+        "TH64_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "12R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "藤江上り場内13R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "藤江上り出発15R"
+      ],
+      "protects": [
+        "TH64_13LT",
+        "TH64_15LT",
+        "TH64_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "13R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "藤江下り出発12L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞177"
+      ],
+      "protects": [
+        "TH64_12LT",
+        "TH64_13LT",
+        "TH64_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "藤江下り出発13L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞177"
+      ],
+      "protects": [
+        "TH64_12LT",
+        "TH64_13LT",
+        "TH64_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "13L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "藤江下り出発13L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "藤江下り出発13L"
+      ],
+      "protects": [
+        "TH64_15LT",
+        "TH64_15RT",
+        "TH64_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "13L",
+          "source": "TH64_13L"
+        }
+      ]
+    },
+    {
+      "name": "藤江下り場内14L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "藤江下り出発12L"
+      ],
+      "protects": [
+        "TH64_12RT",
+        "TH64_14RT",
+        "TH64_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "14L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "藤江下り場内15L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "藤江下り出発13L"
+      ],
+      "protects": [
+        "TH64_15LT",
+        "TH64_15RT",
+        "TH64_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "藤江連動装置",
+          "route": "15L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "西赤山上り出発13R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞258"
+      ],
+      "protects": [
+        "TH59_21イT",
+        "TH59_21ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "西赤山連動装置",
+          "route": "13R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "西赤山上り場内11R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "西赤山上り出発13R"
+      ],
+      "protects": [
+        "TH59_11RT"
+      ],
+      "routes": [
+        {
+          "interlock": "西赤山連動装置",
+          "route": "11R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "西赤山下り出発12L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞249"
+      ],
+      "protects": [
+        "TH59_12LT"
+      ],
+      "routes": [
+        {
+          "interlock": "西赤山連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "西赤山下り場内13L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "西赤山下り出発12L"
+      ],
+      "protects": [
+        "TH59_13LT",
+        "TH59_21ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "西赤山連動装置",
+          "route": "13L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り出発6R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞282"
+      ],
+      "protects": [
+        "AS1T",
+        "TH58_23イT",
+        "TH58_23ロT",
+        "TH58_25T",
+        "TH58_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "6R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り出発7R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞282"
+      ],
+      "protects": [
+        "AS1T",
+        "TH58_23イT",
+        "TH58_23ロT",
+        "TH58_25T",
+        "TH58_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "7R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り出発8R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞282"
+      ],
+      "protects": [
+        "AS1T",
+        "TH58_23イT",
+        "TH58_23ロT",
+        "TH58_25T",
+        "TH58_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "8R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り場内2RA",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "赤山町上り出発6R"
+      ],
+      "protects": [
+        "TH58_21T",
+        "TH58_2RAT",
+        "TH58_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "2RA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り場内2RB",
+      "type": "5灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "赤山町上り出発7R"
+      ],
+      "protects": [
+        "TH58_21T",
+        "TH58_22イT",
+        "TH58_2RBT",
+        "TH58_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "2RB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り場内2RC",
+      "type": "4灯YY式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "赤山町上り出発8R"
+      ],
+      "protects": [
+        "TH58_21T",
+        "TH58_22ロT",
+        "TH58_2RT",
+        "TH58_9LCT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "2RC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町下り出発3L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞277"
+      ],
+      "protects": [
+        "TH58_21T",
+        "TH58_22イT",
+        "TH58_22ロT",
+        "TH58_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "3L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町下り出発4L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞277"
+      ],
+      "protects": [
+        "TH58_21T",
+        "TH58_22イT",
+        "TH58_22ロT",
+        "TH58_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "4L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町下り出発5L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞277"
+      ],
+      "protects": [
+        "TH58_21T",
+        "TH58_22イT",
+        "TH58_22ロT",
+        "TH58_2RT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "5L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り場内9LA",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "赤山町下り出発3L",
+        "赤山町下り出発4L",
+        "赤山町下り出発5L"
+      ],
+      "protects": [
+        "TH58_23イT",
+        "TH58_23ロT",
+        "TH58_24T",
+        "TH58_25T",
+        "TH58_2RAT",
+        "TH58_2RBT",
+        "TH58_9LCT",
+        "TH58_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "9LA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町上り場内9LB",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "赤山町下り出発3L",
+        "赤山町下り出発4L",
+        "赤山町下り出発5L"
+      ],
+      "protects": [
+        "TH58_23イT",
+        "TH58_23ロT",
+        "TH58_24T",
+        "TH58_25T",
+        "TH58_2RAT",
+        "TH58_2RBT",
+        "TH58_9LCT",
+        "TH58_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "9LB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町下り場内9LC",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "赤山町下り出発3L",
+        "赤山町下り出発4L",
+        "赤山町下り出発5L"
+      ],
+      "protects": [
+        "TH58_23イT",
+        "TH58_23ロT",
+        "TH58_24T",
+        "TH58_25T",
+        "TH58_2RAT",
+        "TH58_2RBT",
+        "TH58_9LCT",
+        "TH58_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "9LC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "赤山町入換31R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "31RD",
+          "source": "TH58_31RD"
+        },
+        {
+          "interlock": "赤山町連動装置",
+          "route": "31RE",
+          "source": "TH58_31RE"
+        }
+      ]
+    },
+    {
+      "name": "赤山町入換32L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "32LA",
+          "source": "TH58_32LA"
+        }
+      ]
+    },
+    {
+      "name": "赤山町入換33L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "赤山町連動装置",
+          "route": "33LA",
+          "source": "TH58_33LA"
+        }
+      ]
+    },
+    {
+      "name": "館浜上り出発1R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞6"
+      ],
+      "protects": [
+        "TH76_21イT",
+        "TH76_21ロT",
+        "TH76_22T",
+        "TH76_23T",
+        "TH76_24T",
+        "TH76_25T",
+        "TH76_26イT",
+        "TH76_26ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "館浜連動装置",
+          "route": "1R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "館浜上り出発2R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞6"
+      ],
+      "protects": [
+        "TH76_21イT",
+        "TH76_21ロT",
+        "TH76_22T",
+        "TH76_23T",
+        "TH76_24T",
+        "TH76_25T",
+        "TH76_26イT",
+        "TH76_26ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "館浜連動装置",
+          "route": "2R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "館浜上り出発3R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞6"
+      ],
+      "protects": [
+        "TH76_21イT",
+        "TH76_21ロT",
+        "TH76_22T",
+        "TH76_23T",
+        "TH76_24T",
+        "TH76_25T",
+        "TH76_26イT",
+        "TH76_26ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "館浜連動装置",
+          "route": "3R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "館浜上り出発4R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞6"
+      ],
+      "protects": [
+        "TH76_21イT",
+        "TH76_21ロT",
+        "TH76_22T",
+        "TH76_23T",
+        "TH76_24T",
+        "TH76_25T",
+        "TH76_26イT",
+        "TH76_26ロT"
+      ],
+      "routes": [
+        {
+          "interlock": "館浜連動装置",
+          "route": "4R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "館浜下り場内5L",
+      "type": "2灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LA",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LB",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LC",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LD",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "館浜下り場内5L中継2",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "館浜下り場内5L"
+      ],
+      "protects": [
+        "下り7T"
+      ],
+      "routes": [
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LA",
+          "source": "TH76_5LA"
+        },
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LB",
+          "source": "TH76_5LB"
+        },
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LC",
+          "source": "TH76_5LC"
+        },
+        {
+          "interlock": "館浜連動装置",
+          "route": "5LD",
+          "source": "TH76_5LD"
+        }
+      ]
+    },
+    {
+      "name": "駒野上り出発7R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞26"
+      ],
+      "protects": [
+        "TH75_49イT",
+        "TH75_49ロT",
+        "TH75_50イT",
+        "TH75_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "7R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野上り出発8R",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞26"
+      ],
+      "protects": [
+        "TH75_49イT",
+        "TH75_49ロT",
+        "TH75_50イT",
+        "TH75_SST"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "8R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野上り出発8R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "駒野上り出発8R"
+      ],
+      "protects": [
+        "TH75_46イT",
+        "TH75_5RBT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "8R",
+          "source": "TH75_8R"
+        }
+      ]
+    },
+    {
+      "name": "駒野上り場内1RD",
+      "type": "2灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "1RD5",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "1RD6",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野上り場内1RE",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野上り場内5RA",
+        "駒野上り場内5RB"
+      ],
+      "protects": [
+        "TH75_1RET",
+        "TH75_1RT",
+        "TH75_41ロT",
+        "TH75_43イT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "1RE",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野上り場内5RA",
+      "type": "2灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野上り出発7R"
+      ],
+      "protects": [
+        "TH75_46イT",
+        "TH75_46ロT",
+        "TH75_48T",
+        "TH75_5RAT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "5RA",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野上り場内5RB",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野上り出発8R"
+      ],
+      "protects": [
+        "TH75_46イT",
+        "TH75_5RBT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "5RB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り出発3L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞9"
+      ],
+      "protects": [
+        "TH75_41イT",
+        "TH75_41ロT",
+        "TH75_43イT",
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_45T",
+        "TH75_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "3L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り出発4L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞9"
+      ],
+      "protects": [
+        "TH75_41イT",
+        "TH75_41ロT",
+        "TH75_43イT",
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_45T",
+        "TH75_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "4L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り出発6L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "駒野下り第二出発2L"
+      ],
+      "protects": [
+        "TH75_6LT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "6L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り出発6L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "駒野下り出発6L"
+      ],
+      "protects": [
+        "TH75_50ロT",
+        "TH75_9LCT",
+        "TH75_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "6L",
+          "source": "TH75_6L"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り場内9LB",
+      "type": "2灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "9LA",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "9LB",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り場内9LC",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "駒野下り出発6L"
+      ],
+      "protects": [
+        "TH75_50ロT",
+        "TH75_9LCT",
+        "TH75_9LT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "9LC",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り場内9L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "駒野下り場内9LB",
+        "駒野下り場内9LC"
+      ],
+      "protects": [
+        "下り27T"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "9LA",
+          "source": "TH75_9LA"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "9LB",
+          "source": "TH75_9LB"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "9LC",
+          "source": "TH75_9LC"
+        }
+      ]
+    },
+    {
+      "name": "駒野下り第二出発2L",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞9"
+      ],
+      "protects": [
+        "TH75_41イT",
+        "TH75_41ロT",
+        "TH75_43イT",
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_45T",
+        "TH75_TST"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "2L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換11R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野入換13R",
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "protects": [
+        "TH75_1RET",
+        "TH75_41イT",
+        "TH75_41ロT",
+        "TH75_42イT",
+        "TH75_42ロT",
+        "TH75_43イT",
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_45T",
+        "TH75_5T",
+        "TH75_6T"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "11RD5",
+          "source": "TH75_11RD5"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "11RD6",
+          "source": "TH75_11RD6"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "11RE",
+          "source": "TH75_11RE"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換12L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "12L",
+          "source": "TH75_12L"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換13R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "13RA",
+          "source": "TH75_13RA"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "13RB",
+          "source": "TH75_13RB"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換14L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "駒野入換12L"
+      ],
+      "protects": [
+        "TH75_6LT"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "14L",
+          "source": "TH75_14L"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換15L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "駒野入換34L",
+        "駒野入換35L",
+        "駒野入換36L"
+      ],
+      "protects": [
+        "TH75_46ロT",
+        "TH75_48T",
+        "TH75_4T",
+        "TH75_5T",
+        "TH75_6T"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "15L4",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "15LD5",
+          "source": "操作対象名一覧"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "15LD6",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換24R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "24R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換25R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "25R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換26R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "26R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換27R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野入換24R",
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "protects": [
+        "TH75_34LT",
+        "TH75_41イT",
+        "TH75_41ロT",
+        "TH75_42イT",
+        "TH75_42ロT",
+        "TH75_43イT",
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_45T",
+        "TH75_4T",
+        "TH75_5T",
+        "TH75_6T"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "27R4",
+          "source": "TH75_27R4"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "27RD5",
+          "source": "TH75_27RD5"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "27RD6",
+          "source": "TH75_27RD6"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換28R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "protects": [
+        "TH75_41イT",
+        "TH75_41ロT",
+        "TH75_42イT",
+        "TH75_42ロT",
+        "TH75_43イT",
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_45T",
+        "TH75_5T",
+        "TH75_6T"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "28RD5",
+          "source": "TH75_28RD5"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "28RD6",
+          "source": "TH75_28RD6"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換29R",
+      "type": "入換信号機",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "protects": [
+        "TH75_41イT",
+        "TH75_41ロT",
+        "TH75_42イT",
+        "TH75_42ロT",
+        "TH75_43イT",
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_45T",
+        "TH75_5T",
+        "TH75_6T"
+      ],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "29RD5",
+          "source": "TH75_29RD5"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "29RD6",
+          "source": "TH75_29RD6"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換34L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "34L",
+          "source": "TH75_34L"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換35L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "35L7",
+          "source": "TH75_35L7"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "35L8",
+          "source": "TH75_35L8"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "35L9",
+          "source": "TH75_35L9"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "35LT",
+          "source": "TH75_35LT"
+        }
+      ]
+    },
+    {
+      "name": "駒野入換36L",
+      "type": "入換信号機",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [],
+      "routes": [
+        {
+          "interlock": "駒野連動装置",
+          "route": "36L7",
+          "source": "TH75_36L7"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "36L8",
+          "source": "TH75_36L8"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "36L9",
+          "source": "TH75_36L9"
+        },
+        {
+          "interlock": "駒野連動装置",
+          "route": "36LT",
+          "source": "TH75_36LT"
+        }
+      ]
+    },
+    {
+      "name": "高見沢上り出発14R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞218"
+      ],
+      "protects": [
+        "TH62_14RT",
+        "TH62_15RT",
+        "TH62_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "14R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "高見沢上り出発15R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞218"
+      ],
+      "protects": [
+        "TH62_14RT",
+        "TH62_15RT",
+        "TH62_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "15R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "高見沢上り場内12R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "高見沢上り出発14R"
+      ],
+      "protects": [
+        "TH62_12LT",
+        "TH62_12RT",
+        "TH62_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "12R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "高見沢上り場内13R",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "高見沢上り出発15R"
+      ],
+      "protects": [
+        "TH62_13LT",
+        "TH62_15LT"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "13R",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "高見沢下り出発12L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞209"
+      ],
+      "protects": [
+        "TH62_12LT",
+        "TH62_13LT",
+        "TH62_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "12L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "高見沢下り出発13L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞209"
+      ],
+      "protects": [
+        "TH62_12LT",
+        "TH62_13LT",
+        "TH62_21T"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "13L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "高見沢下り場内14L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "高見沢下り出発12L",
+        "高見沢下り出発13L"
+      ],
+      "protects": [
+        "TH62_12RT",
+        "TH62_14RT",
+        "TH62_15LT",
+        "TH62_15RT",
+        "TH62_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "14L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "高見沢下り場内15L",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "高見沢下り出発12L",
+        "高見沢下り出発13L"
+      ],
+      "protects": [
+        "TH62_12RT",
+        "TH62_14RT",
+        "TH62_15LT",
+        "TH62_15RT",
+        "TH62_22T"
+      ],
+      "routes": [
+        {
+          "interlock": "高見沢連動装置",
+          "route": "15L",
+          "source": "操作対象名一覧"
+        }
+      ]
+    },
+    {
+      "name": "上り閉塞6",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞8"
+      ],
+      "protects": [
+        "上り6T"
+      ]
+    },
+    {
+      "name": "上り閉塞8中継",
+      "type": "中継（色灯4灯YG式）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "上り閉塞8"
+      ],
+      "protects": [
+        "上り6T"
+      ]
+    },
+    {
+      "name": "上り閉塞8",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "駒野上り場内1RD",
+        "駒野上り場内1RE"
+      ],
+      "protects": [
+        "上り8T"
+      ]
+    },
+    {
+      "name": "上り閉塞26",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞30"
+      ],
+      "protects": [
+        "上り26T"
+      ]
+    },
+    {
+      "name": "上り閉塞30",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞36"
+      ],
+      "protects": [
+        "上り30T"
+      ]
+    },
+    {
+      "name": "上り閉塞36",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞42"
+      ],
+      "protects": [
+        "上り36T"
+      ]
+    },
+    {
+      "name": "上り閉塞42中継",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "上り閉塞42"
+      ],
+      "protects": [
+        "上り36T"
+      ]
+    },
+    {
+      "name": "上り閉塞42",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞48"
+      ],
+      "protects": [
+        "上り42T"
+      ]
+    },
+    {
+      "name": "上り閉塞48中継",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "上り閉塞48"
+      ],
+      "protects": [
+        "上り42T"
+      ]
+    },
+    {
+      "name": "上り閉塞48",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞56"
+      ],
+      "protects": [
+        "上り48T"
+      ]
+    },
+    {
+      "name": "上り閉塞56",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞62"
+      ],
+      "protects": [
+        "上り56T"
+      ]
+    },
+    {
+      "name": "上り閉塞62",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞68"
+      ],
+      "protects": [
+        "上り62T"
+      ]
+    },
+    {
+      "name": "上り閉塞68",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞74"
+      ],
+      "protects": [
+        "上り68T"
+      ]
+    },
+    {
+      "name": "上り閉塞74",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "津崎上り場内1RA",
+        "津崎上り場内1RB"
+      ],
+      "protects": [
+        "上り74T"
+      ]
+    },
+    {
+      "name": "上り閉塞86",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞92"
+      ],
+      "protects": [
+        "上り86T"
+      ]
+    },
+    {
+      "name": "上り閉塞92",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "浜園上り場内1R"
+      ],
+      "protects": [
+        "上り92T"
+      ]
+    },
+    {
+      "name": "上り閉塞102",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞108"
+      ],
+      "protects": [
+        "上り102T"
+      ]
+    },
+    {
+      "name": "上り閉塞108",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞114"
+      ],
+      "protects": [
+        "上り108T"
+      ]
+    },
+    {
+      "name": "上り閉塞114",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞120"
+      ],
+      "protects": [
+        "上り114T"
+      ]
+    },
+    {
+      "name": "上り閉塞120",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞124"
+      ],
+      "protects": [
+        "上り120T"
+      ]
+    },
+    {
+      "name": "上り閉塞124",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "新野崎上り場内1RA",
+        "新野崎上り場内1RB"
+      ],
+      "protects": [
+        "上り124T"
+      ]
+    },
+    {
+      "name": "上り閉塞124中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "上り閉塞124"
+      ],
+      "protects": [
+        "上り120T"
+      ]
+    },
+    {
+      "name": "上り閉塞136",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞142"
+      ],
+      "protects": [
+        "上り136T"
+      ]
+    },
+    {
+      "name": "上り閉塞142",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞146"
+      ],
+      "protects": [
+        "上り142T"
+      ]
+    },
+    {
+      "name": "上り閉塞142中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "上り閉塞142"
+      ],
+      "protects": [
+        "上り136T"
+      ]
+    },
+    {
+      "name": "上り閉塞146",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "江ノ原信号場上り場内1RA",
+        "江ノ原信号場上り場内1RB",
+        "江ノ原信号場上り場内1RC"
+      ],
+      "protects": [
+        "上り146T"
+      ]
+    },
+    {
+      "name": "上り閉塞156",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "大道寺上り場内1RTA",
+        "大道寺上り場内1RTB"
+      ],
+      "protects": [
+        "上り156T"
+      ]
+    },
+    {
+      "name": "上り閉塞166",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞172"
+      ],
+      "protects": [
+        "DF1T"
+      ],
+      "directionRoutes": [
+        "TH65_14F",
+        "TH64_11F"
+      ]
+    },
+    {
+      "name": "上り閉塞166中継",
+      "type": "中継（色灯3灯式）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "上り閉塞166"
+      ],
+      "protects": [
+        "TH65_44T",
+        "TH65_45T",
+        "TH65_47T",
+        "TH65_48T",
+        "TH65_49T",
+        "TH65_50イT",
+        "TH65_XT"
+      ]
+    },
+    {
+      "name": "上り閉塞172",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "藤江上り場内12R",
+        "藤江上り場内13R"
+      ],
+      "protects": [
+        "DF2T"
+      ],
+      "directionRoutes": [
+        "TH65_14F",
+        "TH64_11F"
+      ]
+    },
+    {
+      "name": "上り閉塞188",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "水越上り場内12R",
+        "水越上り場内13R"
+      ],
+      "protects": [
+        "FMT"
+      ],
+      "directionRoutes": [
+        "TH64_16F",
+        "TH63_11F"
+      ]
+    },
+    {
+      "name": "上り閉塞200",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞204"
+      ],
+      "protects": [
+        "MT1T"
+      ],
+      "directionRoutes": [
+        "TH63_16F",
+        "TH62_11F"
+      ]
+    },
+    {
+      "name": "上り閉塞204",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "高見沢上り場内12R",
+        "高見沢上り場内13R"
+      ],
+      "protects": [
+        "MT2T"
+      ],
+      "directionRoutes": [
+        "TH63_16F",
+        "TH62_11F"
+      ]
+    },
+    {
+      "name": "上り閉塞218",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞224"
+      ],
+      "protects": [
+        "TH1T"
+      ],
+      "directionRoutes": [
+        "TH62_16F",
+        "TH61_1F"
+      ]
+    },
+    {
+      "name": "上り閉塞224",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "日野森上り場内2RA",
+        "日野森上り場内2RB"
+      ],
+      "protects": [
+        "TH2T"
+      ],
+      "directionRoutes": [
+        "TH62_16F",
+        "TH61_1F"
+      ]
+    },
+    {
+      "name": "上り閉塞238",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞242"
+      ],
+      "protects": [
+        "上り238T"
+      ]
+    },
+    {
+      "name": "上り閉塞242",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞246"
+      ],
+      "protects": [
+        "上り242T"
+      ]
+    },
+    {
+      "name": "上り閉塞246",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞250"
+      ],
+      "protects": [
+        "上り246T"
+      ]
+    },
+    {
+      "name": "上り閉塞250",
+      "type": "4灯YG式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "西赤山上り場内11R"
+      ],
+      "protects": [
+        "上り250T"
+      ]
+    },
+    {
+      "name": "上り閉塞258",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞268"
+      ],
+      "protects": [
+        "NA1T"
+      ],
+      "directionRoutes": [
+        "TH59_14F",
+        "TH58_1F"
+      ]
+    },
+    {
+      "name": "上り閉塞268",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "赤山町上り場内2RA",
+        "赤山町上り場内2RB",
+        "赤山町上り場内2RC"
+      ],
+      "protects": [
+        "NA2T"
+      ],
+      "directionRoutes": [
+        "TH59_14F",
+        "TH58_1F"
+      ]
+    },
+    {
+      "name": "上り閉塞282",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "上り閉塞288"
+      ],
+      "protects": []
+    },
+    {
+      "name": "上り閉塞288",
+      "type": "3灯式",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": [
+        "三郷上り場内12R"
+      ],
+      "protects": [
+        "AS2T"
+      ]
+    },
+    {
+      "name": "上り閉塞306",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞312",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞314",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞320",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞324",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞334",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞336",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞346",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞360",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞372",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞384",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞398",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞404",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞406",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞416",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞420",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "上り閉塞424",
+      "direction": "上り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞7",
+      "type": "4灯YY式G無",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "館浜下り場内5L"
+      ],
+      "protects": [
+        "下り7T"
+      ]
+    },
+    {
+      "name": "下り閉塞7中継",
+      "type": "中継（色灯4灯YY式G無）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "下り閉塞7"
+      ],
+      "protects": [
+        "下り9T"
+      ]
+    },
+    {
+      "name": "下り閉塞9",
+      "type": "4灯YG式（距離不足）",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞7"
+      ],
+      "protects": [
+        "下り9T"
+      ]
+    },
+    {
+      "name": "下り閉塞27",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "駒野下り場内9LB",
+        "駒野下り場内9LC"
+      ],
+      "protects": [
+        "下り27T"
+      ]
+    },
+    {
+      "name": "下り閉塞35",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞27"
+      ],
+      "protects": [
+        "下り35T"
+      ]
+    },
+    {
+      "name": "下り閉塞41",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞35"
+      ],
+      "protects": [
+        "下り41T"
+      ]
+    },
+    {
+      "name": "下り閉塞45",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞41"
+      ],
+      "protects": [
+        "下り45T"
+      ]
+    },
+    {
+      "name": "下り閉塞49",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞45"
+      ],
+      "protects": [
+        "下り49T"
+      ]
+    },
+    {
+      "name": "下り閉塞55",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞49"
+      ],
+      "protects": [
+        "下り55T"
+      ]
+    },
+    {
+      "name": "下り閉塞59",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞55"
+      ],
+      "protects": [
+        "下り59T"
+      ]
+    },
+    {
+      "name": "下り閉塞67",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞59"
+      ],
+      "protects": [
+        "下り67T"
+      ]
+    },
+    {
+      "name": "下り閉塞71",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞67"
+      ],
+      "protects": [
+        "下り71T"
+      ]
+    },
+    {
+      "name": "下り閉塞75",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞71"
+      ],
+      "protects": [
+        "下り75T"
+      ]
+    },
+    {
+      "name": "下り閉塞89",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "津崎下り場内6LC",
+        "津崎下り場内6LD"
+      ],
+      "protects": [
+        "下り89T"
+      ]
+    },
+    {
+      "name": "下り閉塞103",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "浜園下り場内5L"
+      ],
+      "protects": [
+        "下り103T"
+      ]
+    },
+    {
+      "name": "下り閉塞105",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞103"
+      ],
+      "protects": [
+        "下り105T"
+      ]
+    },
+    {
+      "name": "下り閉塞111",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞105"
+      ],
+      "protects": [
+        "下り111T"
+      ]
+    },
+    {
+      "name": "下り閉塞117",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞111"
+      ],
+      "protects": [
+        "下り117T"
+      ]
+    },
+    {
+      "name": "下り閉塞117中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "下り閉塞117"
+      ],
+      "protects": [
+        "下り123T"
+      ]
+    },
+    {
+      "name": "下り閉塞123",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞117"
+      ],
+      "protects": [
+        "下り123T"
+      ]
+    },
+    {
+      "name": "下り閉塞137",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "新野崎下り場内10LC",
+        "新野崎下り場内10LD"
+      ],
+      "protects": [
+        "下り137T"
+      ]
+    },
+    {
+      "name": "下り閉塞143",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞137"
+      ],
+      "protects": [
+        "下り143T"
+      ]
+    },
+    {
+      "name": "下り閉塞145",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞143"
+      ],
+      "protects": [
+        "下り145T"
+      ]
+    },
+    {
+      "name": "下り閉塞151",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞145"
+      ],
+      "protects": [
+        "下り151T"
+      ]
+    },
+    {
+      "name": "下り閉塞171",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "大道寺下り場内13LC",
+        "大道寺下り場内13LD"
+      ],
+      "protects": [
+        "DF1T"
+      ],
+      "directionRoutes": [
+        "TH65_14F",
+        "TH64_11F"
+      ]
+    },
+    {
+      "name": "下り閉塞177",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞171"
+      ],
+      "protects": [
+        "DF2T"
+      ],
+      "directionRoutes": [
+        "TH65_14F",
+        "TH64_11F"
+      ]
+    },
+    {
+      "name": "下り閉塞193",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "藤江下り場内14L",
+        "藤江下り場内15L"
+      ],
+      "protects": [
+        "FMT"
+      ],
+      "directionRoutes": [
+        "TH64_16F",
+        "TH63_11F"
+      ]
+    },
+    {
+      "name": "下り閉塞203",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "水越下り場内15L",
+        "水越下り場内14L"
+      ],
+      "protects": [
+        "MT1T"
+      ],
+      "directionRoutes": [
+        "TH63_16F",
+        "TH62_11F"
+      ]
+    },
+    {
+      "name": "下り閉塞203中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "下り閉塞203"
+      ],
+      "protects": [
+        "MT2T"
+      ]
+    },
+    {
+      "name": "下り閉塞209",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞203"
+      ],
+      "protects": [
+        "MT2T"
+      ],
+      "directionRoutes": [
+        "TH63_16F",
+        "TH62_11F"
+      ]
+    },
+    {
+      "name": "下り閉塞223",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "高見沢下り場内14L",
+        "高見沢下り場内15L"
+      ],
+      "protects": [
+        "TH1T"
+      ],
+      "directionRoutes": [
+        "TH62_16F",
+        "TH61_1F"
+      ]
+    },
+    {
+      "name": "下り閉塞227",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞223"
+      ],
+      "protects": [
+        "TH2T"
+      ],
+      "directionRoutes": [
+        "TH62_16F",
+        "TH61_1F"
+      ]
+    },
+    {
+      "name": "下り閉塞237",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "日野森下り場内6L"
+      ],
+      "protects": [
+        "下り237T"
+      ]
+    },
+    {
+      "name": "下り閉塞241",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞237"
+      ],
+      "protects": [
+        "下り241T"
+      ]
+    },
+    {
+      "name": "下り閉塞245",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞241"
+      ],
+      "protects": [
+        "下り245T"
+      ]
+    },
+    {
+      "name": "下り閉塞249",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞245"
+      ],
+      "protects": [
+        "下り249T"
+      ]
+    },
+    {
+      "name": "下り閉塞267",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "西赤山下り場内13L"
+      ],
+      "protects": [
+        "NA1T"
+      ],
+      "directionRoutes": [
+        "TH59_14F",
+        "TH58_1F"
+      ]
+    },
+    {
+      "name": "下り閉塞277",
+      "type": "3灯式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "下り閉塞267"
+      ],
+      "protects": [
+        "NA2T"
+      ],
+      "directionRoutes": [
+        "TH59_14F",
+        "TH58_1F"
+      ]
+    },
+    {
+      "name": "下り閉塞287",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": [
+        "赤山町上り場内9LA",
+        "赤山町上り場内9LB",
+        "赤山町下り場内9LC"
+      ],
+      "protects": [
+        "AS1T"
+      ]
+    },
+    {
+      "name": "下り閉塞295",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞305",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞311",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞313",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞317",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞323",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞333",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞335",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞341",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞351",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞365",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞377",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞389",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞397",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞403",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞405",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞419",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "下り閉塞425",
+      "type": "4灯YG式",
+      "direction": "下り",
+      "isRepeater": false,
+      "next": []
+    },
+    {
+      "name": "浜園下り場内5L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "浜園下り場内5L"
+      ],
+      "protects": [
+        "下り103T"
+      ]
+    },
+    {
+      "name": "下り閉塞105中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "下り閉塞105"
+      ],
+      "protects": [
+        "下り111T"
+      ]
+    },
+    {
+      "name": "江ノ原信号場上り場内1R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "江ノ原信号場上り場内1RA",
+        "江ノ原信号場上り場内1RB",
+        "江ノ原信号場上り場内1RC"
+      ],
+      "protects": [
+        "上り146T"
+      ]
+    },
+    {
+      "name": "藤江下り場内15L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "藤江下り場内15L",
+        "藤江下り場内14L"
+      ],
+      "protects": [
+        "FMT"
+      ]
+    },
+    {
+      "name": "水越上り場内13R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "水越上り場内13R",
+        "水越上り場内12R"
+      ],
+      "protects": [
+        "FMT"
+      ]
+    },
+    {
+      "name": "高見沢下り場内15L中継_2",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "高見沢下り場内14L",
+        "高見沢下り場内15L"
+      ],
+      "protects": [
+        "TH1T"
+      ]
+    },
+    {
+      "name": "高見沢下り場内15L中継_3",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "高見沢下り場内14L",
+        "高見沢下り場内15L"
+      ],
+      "protects": [
+        "TH1T"
+      ]
+    },
+    {
+      "name": "日野森上り場内2R中継",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "日野森上り場内2RA",
+        "日野森上り場内2RB"
+      ],
+      "protects": [
+        "TH2T"
+      ]
+    },
+    {
+      "name": "日野森上り場内2R中継_2",
+      "type": "中継（灯列）",
+      "direction": "上り",
+      "isRepeater": true,
+      "next": [
+        "日野森上り場内2RA",
+        "日野森上り場内2RB"
+      ],
+      "protects": [
+        "TH2T"
+      ]
+    },
+    {
+      "name": "日野森下り場内6L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "日野森下り場内6L"
+      ],
+      "protects": [
+        "下り237T"
+      ]
+    },
+    {
+      "name": "西赤山下り場内13L中継",
+      "type": "中継（灯列）",
+      "direction": "下り",
+      "isRepeater": true,
+      "next": [
+        "西赤山下り場内13L"
+      ],
+      "protects": [
+        "NA1T"
+      ]
+    }
+  ]
+}

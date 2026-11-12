@@ -1,0 +1,21 @@
+// 進路を扱う停車場の設定。
+//   routeControl … true の駅は、サーバーが進路を開通させる（列車扱い・集中扱い・駅扱い）。false はゲームの自動のまま
+//   track        … 単線の駅か（参考の表示用）。交換の判断に使う単線区間は RouteRules.json の singleTrackSections
+//                  （単線は 大道寺〜日野森、西赤山〜赤山町だけ。館浜〜大道寺、日野森〜西赤山は複線）
+// 駅ID・連動装置名は Interlockings.json（操作対象名一覧）と同じ。三郷は赤山町より先がゲーム上未実装のため対象外。
+[
+  { "id": "TH76",  "name": "館浜",         "interlock": "館浜連動装置",         "track": "複線", "routeControl": true },
+  { "id": "TH75",  "name": "駒野",         "interlock": "駒野連動装置",         "track": "複線", "routeControl": true },
+  { "id": "TH71",  "name": "津崎",         "interlock": "津崎連動装置",         "track": "複線", "routeControl": true },
+  { "id": "TH70",  "name": "浜園",         "interlock": "浜園連動装置",         "track": "複線", "routeControl": true },
+  { "id": "TH67",  "name": "新野崎",       "interlock": "新野崎連動装置",       "track": "複線", "routeControl": true },
+  { "id": "TH66S", "name": "江ノ原信号場", "interlock": "江ノ原信号場連動装置", "track": "複線", "routeControl": true },
+  { "id": "TH65",  "name": "大道寺",       "interlock": "大道寺連動装置",       "track": "単線", "routeControl": true },
+  { "id": "TH64",  "name": "藤江",         "interlock": "藤江連動装置",         "track": "単線", "routeControl": true },
+  { "id": "TH63",  "name": "水越",         "interlock": "水越連動装置",         "track": "単線", "routeControl": true },
+  { "id": "TH62",  "name": "高見沢",       "interlock": "高見沢連動装置",       "track": "単線", "routeControl": true },
+  { "id": "TH61",  "name": "日野森",       "interlock": "日野森連動装置",       "track": "単線", "routeControl": true },
+  { "id": "TH59",  "name": "西赤山",       "interlock": "西赤山連動装置",       "track": "単線", "routeControl": true },
+  { "id": "TH58",  "name": "赤山町",       "interlock": "赤山町連動装置",       "track": "単線", "routeControl": true },
+  { "id": "TH57",  "name": "三郷",         "interlock": "三郷連動装置",         "track": "単線", "routeControl": false }
+]

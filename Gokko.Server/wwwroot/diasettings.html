@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ダイヤグラム</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --text: #1d2330; --muted: #6b7280; --line: #e3e6eb;
+    --accent: #2563eb; --danger: #c62828; --ok: #1b7f3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171c; --panel: #1d2128; --text: #e6e8eb; --muted: #9aa3ae; --line: #2e333c;
+      --accent: #6b9cff; --danger: #ff6b6b; --ok: #5fd08a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Yu Gothic UI", "Hiragino Sans", system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 1; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+  input, button, select { font: inherit; color: inherit; }
+  input, select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+  button { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .muted { color: var(--muted); }
+  .status { font-weight: bold; }
+  .ok { color: var(--ok); } .ng { color: var(--danger); }
+  table { border-collapse: collapse; }
+  td { padding: 3px 4px; border-bottom: 1px solid var(--line); }
+  #error { color: var(--danger); }
+</style>
+</head>
+<body>
+<header>
+  <h1>ダイヤグラム</h1>
+  <label>合言葉 <input id="key" type="password" size="16" autocomplete="off"></label>
+  <button id="saveKey">保存</button>
+  <span id="conn" class="status muted">未接続</span>
+  <span id="error"></span>
+</header>
+
+<main>
+  <section>
+    <div id="diagram" style="position:relative; touch-action:none"></div>
+    <div id="diagramTip" class="muted" style="min-height:1.5em"></div>
+  </section>
+  <section style="margin-top:16px">
+    <div id="orders"></div>
+  </section>
+</main>
+
+<script src="diapanel.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let key = "";
+  try { key = localStorage.getItem("gokkoDiaKey") || ""; } catch (e) {}
+  $("key").value = key;
+
+  // 中身が変わったときだけ描き直す（毎秒作り直すと、押している途中のボタンが消えて押し損ねるため）
+  function setHtml(el, html) {
+    if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; }
+  }
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  async function api(method, path, body) {
+    const res = await fetch("/api/dia" + path, {
+      method,
+      headers: { "X-Dia-Key": key, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store"
+    });
+    let json = null;
+    try { json = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((json && (json.message || json.detail)) || ("HTTP " + res.status));
+    return json;
+  }
+
+  async function act(method, path, body) {
+    try { await api(method, path, body); $("error").textContent = ""; await refresh(); }
+    catch (e) { $("error").textContent = e.message; }
+  }
+
+  // ---- ダイヤグラム（管理画面と同じ描き方） ----
+  const TYPE_COLORS = { "普通": "var(--text)", "準急": "#1e6fd9", "区急": "#18a33a", "急行": "#f08a00", "快急": "#b04fd0", "特急": "#d62828", "回送": "#888" };
+  const DG = { w: 1000, left: 92, right: 12, top: 18, rowPx: 17, pastMin: 10, futureMin: 30 };
+  let diagram = null;
+
+  function dgLayout(d) {
+    const ys = d.stations.map((s) => s.y);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const h = (maxY - minY) / 2 * DG.rowPx;
+    const now = new Date(d.now).getTime();
+    const t0 = now - DG.pastMin * 60000, t1 = now + DG.futureMin * 60000;
+    return {
+      height: DG.top + h + 24, now, t0, t1,
+      x: (t) => DG.left + (new Date(t).getTime() - t0) / (t1 - t0) * (DG.w - DG.left - DG.right),
+      y: (z) => DG.top + (z - minY) / 2 * DG.rowPx
+    };
+  }
+
+  function hhmm(ms, sec) {
+    const d = new Date(ms);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(d.getHours())}:${p(d.getMinutes())}${sec ? ":" + p(d.getSeconds()) : ""}`;
+  }
+
+  function closeTrackPopup() {
+    GokkoDia.closePopup();
+  }
+
+  function openTrackPopup(el) {
+    const tr = diagram.trains[Number(el.dataset.ti)], m = tr && tr.markers[Number(el.dataset.mi)];
+    if (!m) return;
+    GokkoDia.openPopup({ box: $("diagram"), anchor: el, train: tr.train, marker: m, diagram, act, onClose: () => renderDiagram(diagram) });
+  }
+
+  const orders = GokkoDia.orderEditor({ el: $("orders"), act });
+
+  function renderDiagram(d) {
+    diagram = d;
+    orders.update(d);
+    if (GokkoDia.isOpen()) return;
+    const L = dgLayout(d);
+    const parts = [];
+    parts.push(`<svg viewBox="0 0 ${DG.w} ${L.height}" width="100%" style="display:block">`);
+    for (const s of d.stations) {
+      const y = L.y(s.y);
+      parts.push(`<line x1="${DG.left}" x2="${DG.w - DG.right}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="${s.control ? 1.6 : 0.6}"/>`);
+      parts.push(`<text x="${DG.left - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="${s.control ? "var(--text)" : "var(--muted)"}" font-weight="${s.control ? 600 : 400}">${esc(s.name)}</text>`);
+    }
+    const first = Math.ceil(L.t0 / 60000) * 60000;
+    for (let t = first; t <= L.t1; t += 60000) {
+      const x = L.x(t), five = new Date(t).getMinutes() % 5 === 0;
+      parts.push(`<line x1="${x}" x2="${x}" y1="${DG.top - 6}" y2="${L.height - 18}" stroke="var(--line)" stroke-width="${five ? 1 : 0.4}"/>`);
+      if (five) parts.push(`<text x="${x}" y="${L.height - 4}" text-anchor="middle" font-size="10" fill="var(--muted)">${hhmm(t)}</text>`);
+    }
+    const nx = L.x(L.now);
+    parts.push(`<line x1="${nx}" x2="${nx}" y1="${DG.top - 10}" y2="${L.height - 18}" stroke="var(--danger)" stroke-width="1.2"/>`);
+    d.trains.forEach((tr, ti) => {
+      const color = TYPE_COLORS[tr.type] || "var(--text)";
+      const pts = (arr) => arr.map((p) => `${L.x(p.t).toFixed(1)},${L.y(p.y).toFixed(1)}`).join(" ");
+      if (tr.history.length > 1) parts.push(`<polyline points="${pts(tr.history)}" fill="none" stroke="${color}" stroke-width="2"/>`);
+      if (tr.forecast.length > 1) parts.push(`<polyline points="${pts(tr.forecast)}" fill="none" stroke="${color}" stroke-width="1.6" stroke-dasharray="5 4"/>`);
+      const cur = tr.forecast[0];
+      parts.push(`<text x="${L.x(cur.t) + 6}" y="${L.y(cur.y) - 5}" font-size="11" font-weight="600" fill="${color}">${esc(tr.train)}</text>`);
+      tr.markers.forEach((m, mi) => {
+        const x = L.x(m.t), y = L.y(m.y);
+        const fill = m.held ? "#c62828" : !m.editable ? "#999" : "#3aa0d8";
+        const trackText = m.track == null ? "通" : String(m.track);
+        const trackColor = m.trackSource === "集中" || m.trackSource === "駅扱い" ? "#e07000" : m.trackSource === "待避" ? "#b04fd0" : color;
+        const openText = m.openAt ? `・開通 ${m.openSource} ${hhmm(new Date(m.openAt).getTime(), true)}` : "";
+        const tip = `${tr.train} ${m.name}: ${m.track == null ? "通過" : m.track + "番線"}（${m.trackSource}）・${m.source} ${hhmm(new Date(m.t).getTime(), true)}${openText}（${m.status}）`;
+        parts.push(`<text x="${x + 8}" y="${y + 4}" font-size="11" font-weight="700" fill="${trackColor}" pointer-events="none">${esc(trackText)}</text>`);
+        parts.push(`<path d="M${x},${y - 7} L${x + 6},${y} L${x},${y + 7} L${x - 6},${y} Z" fill="${fill}" stroke="var(--panel)" stroke-width="1"
+          data-train="${esc(tr.train)}" data-ti="${ti}" data-mi="${mi}"
+          data-tip="${esc(tip)}" style="cursor:pointer"/>`);
+      });
+    });
+    parts.push(`</svg>`);
+    if (d.trains.length === 0) parts.push(`<div class="muted">在線共有モードで運転中の列車はいません</div>`);
+    setHtml($("diagram"), parts.join(""));
+  }
+
+  $("diagram").addEventListener("pointermove", (ev) => {
+    const m = ev.target.closest("path[data-train]");
+    $("diagramTip").textContent = m ? m.dataset.tip : "";
+  });
+  $("diagram").addEventListener("click", (ev) => {
+    if (ev.target.closest("[data-gokko-popup]")) return; // ◆の窓の中
+    const m = ev.target.closest("path[data-train]");
+    if (!m) { if (GokkoDia.isOpen()) { closeTrackPopup(); renderDiagram(diagram); } return; }
+    openTrackPopup(m);
+  });
+
+  async function refresh() {
+    if (!key) { $("conn").textContent = "合言葉を入力してください"; $("conn").className = "status muted"; return; }
+    try {
+      renderDiagram(await api("GET", "/diagram"));
+      $("conn").textContent = "接続中"; $("conn").className = "status ok";
+      $("error").textContent = "";
+    } catch (e) {
+      $("conn").textContent = "接続できません"; $("conn").className = "status ng";
+      $("error").textContent = e.message;
+    }
+  }
+
+  $("saveKey").onclick = () => {
+    key = $("key").value;
+    try { localStorage.setItem("gokkoDiaKey", key); } catch (e) {}
+    refresh();
+  };
+  $("key").addEventListener("keydown", (ev) => { if (ev.key === "Enter") $("saveKey").click(); });
+
+  refresh();
+  setInterval(refresh, 1000);
+})();
+</script>
+</body>
+</html>

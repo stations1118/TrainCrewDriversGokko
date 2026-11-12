@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Gokko.Client</RootNamespace>
+    <AssemblyName>GokkoClient</AssemblyName>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+
+    <!-- 配布用: dotnet publish -c Release で、exe 1つだけを出力する -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishDir>publish\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <!-- ServerAddress.Local.cs があれば、そこに書いた接続先を使う -->
+  <PropertyGroup Condition="Exists('ServerAddress.Local.cs')">
+    <DefineConstants>$(DefineConstants);LOCAL_SERVER_ADDRESS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gokko.Common\Gokko.Common.csproj" />
+  </ItemGroup>
+
+</Project>

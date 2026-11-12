@@ -1,0 +1,16 @@
+# 公開するのは、クライアント・共通・サーバーの3つのフォルダだけ
+/*
+!/.gitignore
+!/Gokko.Client/
+!/Gokko.Common/
+!/Gokko.Server/
+
+# ビルドの出力
+bin/
+obj/
+publish/
+.vs/
+*.user
+
+# 本番の接続先（公開しない）
+Gokko.Client/ServerAddress.Local.cs

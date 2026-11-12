@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Gokko.Server</RootNamespace>
+    <AssemblyName>Gokko.Server</AssemblyName>
+
+    <!-- 1GB のサーバー向け: メモリを多く確保するサーバーGCを使わない -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gokko.Common\Gokko.Common.csproj" />
+  </ItemGroup>
+
+  <!-- データファイルは exe の隣の Data フォルダに置く（サーバー上で書き換えて再起動すれば反映される） -->
+  <ItemGroup>
+    <Content Update="Data\**\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- 管理画面。exe の場所を基準に読むので、dotnet build の出力にもコピーする -->
+    <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

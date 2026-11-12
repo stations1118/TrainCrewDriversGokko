@@ -1,0 +1,5158 @@
+{
+  "trackCircuits": [
+    {
+      "name": "AS1T",
+      "upSignals": [
+        "上り閉塞282"
+      ],
+      "downSignals": [
+        "赤山町上り場内9LA",
+        "赤山町上り場内9LB",
+        "赤山町下り場内9LC"
+      ],
+      "stations": [
+        "TH58"
+      ],
+      "adjacent": [
+        "TH58_9LT",
+        "AS2T"
+      ]
+    },
+    {
+      "name": "AS2T",
+      "upSignals": [
+        "三郷上り場内12R"
+      ],
+      "downSignals": [
+        "下り閉塞287"
+      ],
+      "stations": [
+        "TH58"
+      ],
+      "adjacent": [
+        "AS1T"
+      ]
+    },
+    {
+      "name": "DF1T",
+      "upSignals": [
+        "上り閉塞172"
+      ],
+      "downSignals": [
+        "大道寺下り場内13LC",
+        "大道寺下り場内13LD"
+      ],
+      "stations": [
+        "TH65",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_XT",
+        "DF2T"
+      ]
+    },
+    {
+      "name": "DF2T",
+      "upSignals": [
+        "藤江上り場内12R",
+        "藤江上り場内13R"
+      ],
+      "downSignals": [
+        "下り閉塞171"
+      ],
+      "stations": [
+        "TH65",
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "DF1T",
+        "TH64_21T"
+      ]
+    },
+    {
+      "name": "FMT",
+      "upSignals": [
+        "水越上り場内12R",
+        "水越上り場内13R"
+      ],
+      "downSignals": [
+        "藤江下り場内14L",
+        "藤江下り場内15L"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_22T",
+        "TH63_21イT"
+      ]
+    },
+    {
+      "name": "JR1LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR1RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR3LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR3RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR上り1T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR上り2T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR上り3T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR上り4T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR上り5T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR上り浜園手前T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR下り1T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR下り2T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR下り3T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR下り4T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "JR下り5T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "KST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "MFT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "MT1T",
+      "upSignals": [
+        "上り閉塞204"
+      ],
+      "downSignals": [
+        "水越下り場内14L",
+        "水越下り場内15L"
+      ],
+      "stations": [
+        "TH64",
+        "TH63",
+        "TH62"
+      ],
+      "adjacent": [
+        "TH63_22ロT",
+        "MT2T"
+      ]
+    },
+    {
+      "name": "MT2T",
+      "upSignals": [
+        "高見沢上り場内12R",
+        "高見沢上り場内13R"
+      ],
+      "downSignals": [
+        "下り閉塞203"
+      ],
+      "stations": [
+        "TH63",
+        "TH62"
+      ],
+      "adjacent": [
+        "MT1T",
+        "TH62_21T"
+      ]
+    },
+    {
+      "name": "NA1T",
+      "upSignals": [
+        "上り閉塞268"
+      ],
+      "downSignals": [
+        "西赤山下り場内13L"
+      ],
+      "stations": [
+        "TH59",
+        "TH58"
+      ],
+      "adjacent": [
+        "TH59_21ロT",
+        "NA2T"
+      ]
+    },
+    {
+      "name": "NA2T",
+      "upSignals": [
+        "赤山町上り場内2RA",
+        "赤山町上り場内2RB",
+        "赤山町上り場内2RC"
+      ],
+      "downSignals": [
+        "下り閉塞267"
+      ],
+      "stations": [
+        "TH59",
+        "TH58"
+      ],
+      "adjacent": [
+        "NA1T",
+        "TH58_2RT"
+      ]
+    },
+    {
+      "name": "NMT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "SNT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "TH1T",
+      "upSignals": [
+        "上り閉塞224"
+      ],
+      "downSignals": [
+        "高見沢下り場内14L",
+        "高見沢下り場内15L"
+      ],
+      "stations": [
+        "TH62",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_22T",
+        "TH2T"
+      ]
+    },
+    {
+      "name": "TH2T",
+      "upSignals": [
+        "日野森上り場内2RA",
+        "日野森上り場内2RB"
+      ],
+      "downSignals": [
+        "下り閉塞223"
+      ],
+      "stations": [
+        "TH62",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH1T",
+        "TH61_2RT"
+      ]
+    },
+    {
+      "name": "TK1T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "TK2T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_1RAT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_1RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_2RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_3RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_9LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_10LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_21イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_21ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_22イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_22ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_23イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_23ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_24T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_OST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH45_SST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH45"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_1RAT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_1RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_2RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_3RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_10LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_11LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_12LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_31T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_32イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_32ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_33T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_34T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_35T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_36T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_37T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_OST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH46_TST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH46"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_1RBT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_1RCT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_1RDT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_1RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_4LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_8LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_9LAT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_9LET",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_9LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_21T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_22イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_22ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_23T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_24T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_25イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_25ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_26T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_27イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_27ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_SST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH48_TST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH48"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_12RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_14LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_23LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_24LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_31イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_31ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_33T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_33イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_34イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_34ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH50_TST",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH50"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH51_12RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH51"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH51_15LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH51"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH51_21イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH51"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH51_21ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH51"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH51_22イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH51"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH51_22ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH51"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH52_12RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH52"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH52_15LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH52"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH52_21T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH52"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH52_22イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH52"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH52_22ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH52"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_12LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_12RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_13LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_14RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_15LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_15RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_21T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH53_22T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH53"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH54_12RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH54"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH54_15LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH54"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH54_21イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH54"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH54_21ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH54"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH54_22イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH54"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH54_22ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH54"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH55S_11LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH55S"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH55S_11RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH55S"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH55S_21イT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH55S"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH55S_21ロT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH55S"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH57_12RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH57"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH57_13RT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH57"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH57_14LT",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH57",
+        "TH58"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH57_21T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH57",
+        "TH58"
+      ],
+      "adjacent": []
+    },
+    {
+      "name": "TH58_2RAT",
+      "upSignals": [
+        "赤山町上り出発6R",
+        "赤山町入換31R"
+      ],
+      "downSignals": [
+        "赤山町下り出発3L"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_21T"
+      ]
+    },
+    {
+      "name": "TH58_2RBT",
+      "upSignals": [
+        "赤山町上り出発7R"
+      ],
+      "downSignals": [
+        "赤山町下り出発4L"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_22イT"
+      ]
+    },
+    {
+      "name": "TH58_2RT",
+      "upSignals": [
+        "赤山町上り出発6R",
+        "赤山町上り出発7R",
+        "赤山町上り出発8R",
+        "赤山町入換31R"
+      ],
+      "downSignals": [
+        "下り閉塞277"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "NA2T",
+        "TH58_21T"
+      ]
+    },
+    {
+      "name": "TH58_9LCT",
+      "upSignals": [
+        "赤山町上り出発8R"
+      ],
+      "downSignals": [
+        "赤山町下り出発5L"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_22ロT",
+        "TH58_25T"
+      ]
+    },
+    {
+      "name": "TH58_9LT",
+      "upSignals": [
+        "上り閉塞282"
+      ],
+      "downSignals": [
+        "赤山町下り出発3L",
+        "赤山町下り出発4L",
+        "赤山町下り出発5L"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_25T",
+        "AS1T"
+      ]
+    },
+    {
+      "name": "TH58_21T",
+      "upSignals": [
+        "赤山町上り出発6R",
+        "赤山町上り出発7R",
+        "赤山町上り出発8R",
+        "赤山町入換31R"
+      ],
+      "downSignals": [
+        "下り閉塞277"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_2RT",
+        "TH58_2RAT",
+        "TH58_2RBT"
+      ]
+    },
+    {
+      "name": "TH58_22イT",
+      "upSignals": [
+        "赤山町上り出発7R"
+      ],
+      "downSignals": [
+        "下り閉塞277"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_21T",
+        "TH58_22ロT",
+        "TH58_2RBT"
+      ]
+    },
+    {
+      "name": "TH58_22ロT",
+      "upSignals": [
+        "赤山町上り出発8R"
+      ],
+      "downSignals": [
+        "下り閉塞277"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_9LCT",
+        "TH58_22イT"
+      ]
+    },
+    {
+      "name": "TH58_23イT",
+      "upSignals": [
+        "上り閉塞282"
+      ],
+      "downSignals": [
+        "赤山町下り出発3L"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_2RAT",
+        "TH58_23ロT",
+        "TH58_24T"
+      ]
+    },
+    {
+      "name": "TH58_23ロT",
+      "upSignals": [
+        "上り閉塞282"
+      ],
+      "downSignals": [
+        "赤山町下り出発4L"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_2RBT",
+        "TH58_23イT",
+        "TH58_25T"
+      ]
+    },
+    {
+      "name": "TH58_24T",
+      "upSignals": [],
+      "downSignals": [
+        "赤山町下り出発3L"
+      ],
+      "stations": [
+        "TH58"
+      ],
+      "adjacent": [
+        "TH58_23イT",
+        "TH58_DT",
+        "TH58_ET"
+      ]
+    },
+    {
+      "name": "TH58_25T",
+      "upSignals": [
+        "上り閉塞282"
+      ],
+      "downSignals": [
+        "赤山町下り出発3L",
+        "赤山町下り出発4L",
+        "赤山町下り出発5L"
+      ],
+      "stations": [
+        "TH58",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH58_23ロT",
+        "TH58_9LCT",
+        "TH58_9LT"
+      ]
+    },
+    {
+      "name": "TH58_DT",
+      "upSignals": [],
+      "downSignals": [
+        "赤山町入換32L"
+      ],
+      "stations": [
+        "TH58"
+      ],
+      "adjacent": [
+        "TH58_24T"
+      ]
+    },
+    {
+      "name": "TH58_ET",
+      "upSignals": [],
+      "downSignals": [
+        "赤山町入換33L"
+      ],
+      "stations": [
+        "TH58"
+      ],
+      "adjacent": [
+        "TH58_24T"
+      ]
+    },
+    {
+      "name": "TH59_11RT",
+      "upSignals": [
+        "西赤山上り出発13R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH59",
+        "TH58"
+      ],
+      "adjacent": [
+        "上り250T",
+        "TH59_21イT"
+      ]
+    },
+    {
+      "name": "TH59_12LT",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞249"
+      ],
+      "stations": [
+        "TH59",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH59_13LT",
+        "下り249T"
+      ]
+    },
+    {
+      "name": "TH59_13LT",
+      "upSignals": [],
+      "downSignals": [
+        "西赤山下り出発12L"
+      ],
+      "stations": [
+        "TH59"
+      ],
+      "adjacent": [
+        "TH59_12LT",
+        "TH59_21ロT"
+      ]
+    },
+    {
+      "name": "TH59_21イT",
+      "upSignals": [
+        "上り閉塞258"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH59",
+        "TH58"
+      ],
+      "adjacent": [
+        "TH59_11RT",
+        "TH59_21ロT"
+      ]
+    },
+    {
+      "name": "TH59_21ロT",
+      "upSignals": [
+        "上り閉塞258"
+      ],
+      "downSignals": [
+        "西赤山下り出発12L"
+      ],
+      "stations": [
+        "TH59",
+        "TH58"
+      ],
+      "adjacent": [
+        "TH59_13LT",
+        "TH59_21イT",
+        "NA1T"
+      ]
+    },
+    {
+      "name": "TH61_2RAT",
+      "upSignals": [],
+      "downSignals": [
+        "日野森下り出発3L"
+      ],
+      "stations": [
+        "TH61",
+        "TH62"
+      ],
+      "adjacent": [
+        "TH61_22T"
+      ],
+      "track": "up2"
+    },
+    {
+      "name": "TH61_2RBT",
+      "upSignals": [
+        "日野森上り出発5R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH61"
+      ],
+      "adjacent": [
+        "TH61_22T",
+        "TH61_5RT"
+      ]
+    },
+    {
+      "name": "TH61_2RT",
+      "upSignals": [
+        "日野森上り出発5R"
+      ],
+      "downSignals": [
+        "下り閉塞227"
+      ],
+      "stations": [
+        "TH61",
+        "TH62"
+      ],
+      "adjacent": [
+        "TH2T",
+        "TH61_21イT"
+      ]
+    },
+    {
+      "name": "TH61_5RT",
+      "upSignals": [
+        "上り閉塞238"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH61",
+        "TH59"
+      ],
+      "adjacent": [
+        "TH61_2RBT",
+        "上り238T"
+      ]
+    },
+    {
+      "name": "TH61_6LT",
+      "upSignals": [],
+      "downSignals": [
+        "日野森下り出発4L"
+      ],
+      "stations": [
+        "TH61",
+        "TH62"
+      ],
+      "adjacent": [
+        "TH61_21ロT",
+        "下り237T"
+      ]
+    },
+    {
+      "name": "TH61_21イT",
+      "upSignals": [
+        "日野森上り出発5R"
+      ],
+      "downSignals": [
+        "下り閉塞227"
+      ],
+      "stations": [
+        "TH61",
+        "TH62"
+      ],
+      "adjacent": [
+        "TH61_2RT",
+        "TH61_21ロT",
+        "TH61_22T"
+      ]
+    },
+    {
+      "name": "TH61_21ロT",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞227"
+      ],
+      "stations": [
+        "TH61",
+        "TH62"
+      ],
+      "adjacent": [
+        "TH61_6LT",
+        "TH61_21イT"
+      ]
+    },
+    {
+      "name": "TH61_22T",
+      "upSignals": [
+        "日野森上り出発5R"
+      ],
+      "downSignals": [
+        "下り閉塞227"
+      ],
+      "stations": [
+        "TH61",
+        "TH62"
+      ],
+      "adjacent": [
+        "TH61_21イT",
+        "TH61_2RAT",
+        "TH61_2RBT"
+      ]
+    },
+    {
+      "name": "TH62_12LT",
+      "upSignals": [
+        "高見沢上り出発14R"
+      ],
+      "downSignals": [
+        "下り閉塞209"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_21T",
+        "TH62_12RT"
+      ]
+    },
+    {
+      "name": "TH62_12RT",
+      "upSignals": [
+        "高見沢上り出発14R"
+      ],
+      "downSignals": [
+        "高見沢下り出発12L"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_12LT",
+        "TH62_14RT"
+      ]
+    },
+    {
+      "name": "TH62_13LT",
+      "upSignals": [
+        "高見沢上り出発15R"
+      ],
+      "downSignals": [
+        "下り閉塞209"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_21T",
+        "TH62_15LT"
+      ]
+    },
+    {
+      "name": "TH62_14RT",
+      "upSignals": [
+        "上り閉塞218"
+      ],
+      "downSignals": [
+        "高見沢下り出発12L"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_12RT",
+        "TH62_22T"
+      ]
+    },
+    {
+      "name": "TH62_15LT",
+      "upSignals": [
+        "高見沢上り出発15R"
+      ],
+      "downSignals": [
+        "高見沢下り出発13L"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_13LT",
+        "TH62_15RT"
+      ]
+    },
+    {
+      "name": "TH62_15RT",
+      "upSignals": [
+        "上り閉塞218"
+      ],
+      "downSignals": [
+        "高見沢下り出発13L"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_15LT",
+        "TH62_22T"
+      ]
+    },
+    {
+      "name": "TH62_21T",
+      "upSignals": [
+        "高見沢上り出発14R"
+      ],
+      "downSignals": [
+        "下り閉塞209"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "MT2T",
+        "TH62_12LT",
+        "TH62_13LT"
+      ]
+    },
+    {
+      "name": "TH62_22T",
+      "upSignals": [
+        "上り閉塞218"
+      ],
+      "downSignals": [
+        "高見沢下り出発13L"
+      ],
+      "stations": [
+        "TH62",
+        "TH63",
+        "TH61"
+      ],
+      "adjacent": [
+        "TH62_14RT",
+        "TH62_15RT",
+        "TH1T"
+      ]
+    },
+    {
+      "name": "TH63_12RT",
+      "upSignals": [
+        "水越上り出発14R"
+      ],
+      "downSignals": [
+        "水越下り出発12L"
+      ],
+      "stations": [
+        "TH63",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH63_21イT",
+        "TH63_22イT"
+      ]
+    },
+    {
+      "name": "TH63_15LT",
+      "upSignals": [
+        "水越上り出発15R"
+      ],
+      "downSignals": [
+        "水越下り出発13L"
+      ],
+      "stations": [
+        "TH63",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH63_21ロT",
+        "TH63_22ロT"
+      ]
+    },
+    {
+      "name": "TH63_21イT",
+      "upSignals": [
+        "水越上り出発14R",
+        "水越上り出発15R"
+      ],
+      "downSignals": [
+        "下り閉塞193"
+      ],
+      "stations": [
+        "TH63",
+        "TH64"
+      ],
+      "adjacent": [
+        "FMT",
+        "TH63_21ロT",
+        "TH63_12RT"
+      ]
+    },
+    {
+      "name": "TH63_21ロT",
+      "upSignals": [
+        "水越上り出発15R"
+      ],
+      "downSignals": [
+        "下り閉塞193"
+      ],
+      "stations": [
+        "TH63",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH63_15LT",
+        "TH63_21イT"
+      ]
+    },
+    {
+      "name": "TH63_22イT",
+      "upSignals": [
+        "上り閉塞200"
+      ],
+      "downSignals": [
+        "水越下り出発12L"
+      ],
+      "stations": [
+        "TH63",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH63_12RT",
+        "TH63_22ロT"
+      ]
+    },
+    {
+      "name": "TH63_22ロT",
+      "upSignals": [
+        "上り閉塞200"
+      ],
+      "downSignals": [
+        "水越下り出発12L",
+        "水越下り出発13L"
+      ],
+      "stations": [
+        "TH63",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH63_15LT",
+        "TH63_22イT",
+        "MT1T"
+      ]
+    },
+    {
+      "name": "TH64_12LT",
+      "upSignals": [
+        "藤江上り出発14R"
+      ],
+      "downSignals": [
+        "下り閉塞177"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_21T",
+        "TH64_12RT"
+      ]
+    },
+    {
+      "name": "TH64_12RT",
+      "upSignals": [
+        "藤江上り出発14R"
+      ],
+      "downSignals": [
+        "藤江下り出発12L"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_12LT",
+        "TH64_14RT"
+      ]
+    },
+    {
+      "name": "TH64_13LT",
+      "upSignals": [
+        "藤江上り出発15R"
+      ],
+      "downSignals": [
+        "下り閉塞177"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_21T",
+        "TH64_15LT"
+      ]
+    },
+    {
+      "name": "TH64_14RT",
+      "upSignals": [
+        "上り閉塞188"
+      ],
+      "downSignals": [
+        "藤江下り出発12L"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_12RT",
+        "TH64_22T"
+      ]
+    },
+    {
+      "name": "TH64_15LT",
+      "upSignals": [
+        "藤江上り出発15R"
+      ],
+      "downSignals": [
+        "藤江下り出発13L"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_13LT",
+        "TH64_15RT"
+      ]
+    },
+    {
+      "name": "TH64_15RT",
+      "upSignals": [
+        "上り閉塞188"
+      ],
+      "downSignals": [
+        "藤江下り出発13L"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_15LT",
+        "TH64_22T"
+      ]
+    },
+    {
+      "name": "TH64_21T",
+      "upSignals": [
+        "藤江上り出発14R",
+        "藤江上り出発15R"
+      ],
+      "downSignals": [
+        "下り閉塞177"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "DF2T",
+        "TH64_12LT",
+        "TH64_13LT"
+      ]
+    },
+    {
+      "name": "TH64_22T",
+      "upSignals": [
+        "上り閉塞188"
+      ],
+      "downSignals": [
+        "藤江下り出発13L",
+        "藤江下り出発12L"
+      ],
+      "stations": [
+        "TH64",
+        "TH63"
+      ],
+      "adjacent": [
+        "TH64_14RT",
+        "TH64_15RT",
+        "FMT"
+      ]
+    },
+    {
+      "name": "TH65_1RT",
+      "upSignals": [
+        "大道寺上り場内2R",
+        "大道寺上り場内3R",
+        "大道寺上り場内4R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH65",
+        "TH64"
+      ],
+      "adjacent": [
+        "上り156T",
+        "TH65_41T"
+      ]
+    },
+    {
+      "name": "TH65_2RT",
+      "upSignals": [
+        "大道寺上り出発7R",
+        "大道寺入換21R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH65",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_41T",
+        "TH65_49T"
+      ],
+      "track": "up2"
+    },
+    {
+      "name": "TH65_3RT",
+      "upSignals": [
+        "大道寺入換22R",
+        "大道寺上り出発8R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH65",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_41T",
+        "TH65_45T"
+      ],
+      "track": "up1"
+    },
+    {
+      "name": "TH65_5T",
+      "upSignals": [
+        "大道寺入換25R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH65"
+      ],
+      "adjacent": [
+        "TH65_44T"
+      ]
+    },
+    {
+      "name": "TH65_6T",
+      "upSignals": [
+        "大道寺入換26R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH65"
+      ],
+      "adjacent": [
+        "TH65_44T"
+      ]
+    },
+    {
+      "name": "TH65_11LT",
+      "upSignals": [
+        "大道寺入換23R",
+        "大道寺上り出発9R"
+      ],
+      "downSignals": [
+        "大道寺下り出発5L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_42ロT",
+        "TH65_45T"
+      ],
+      "track": "down1"
+    },
+    {
+      "name": "TH65_12LT",
+      "upSignals": [
+        "大道寺上り出発10R",
+        "大道寺入換24R"
+      ],
+      "downSignals": [
+        "大道寺下り出発6L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_42イT",
+        "TH65_44T"
+      ],
+      "track": "down2"
+    },
+    {
+      "name": "TH65_41T",
+      "upSignals": [
+        "大道寺上り場内2R",
+        "大道寺上り場内3R",
+        "大道寺上り場内4R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH65",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_1RT",
+        "TH65_42ロT",
+        "TH65_2RT",
+        "TH65_3RT"
+      ]
+    },
+    {
+      "name": "TH65_42イT",
+      "upSignals": [],
+      "downSignals": [
+        "江ノ原信号場下り場内5LE",
+        "江ノ原信号場下り場内5LD"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH65_12LT",
+        "TH65_42ロT",
+        "TH65_12LT"
+      ]
+    },
+    {
+      "name": "TH65_42ロT",
+      "upSignals": [
+        "大道寺上り場内4R"
+      ],
+      "downSignals": [
+        "江ノ原信号場下り場内5LE",
+        "江ノ原信号場下り場内5LD"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_41T",
+        "TH65_42イT",
+        "TH65_11LT"
+      ]
+    },
+    {
+      "name": "TH65_44T",
+      "upSignals": [
+        "大道寺入換30R",
+        "上り閉塞166"
+      ],
+      "downSignals": [
+        "大道寺下り場内12L",
+        "大道寺入換28L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_12LT",
+        "TH65_5T",
+        "TH65_6T",
+        "TH65_48T"
+      ]
+    },
+    {
+      "name": "TH65_45T",
+      "upSignals": [
+        "大道寺入換30R",
+        "上り閉塞166"
+      ],
+      "downSignals": [
+        "大道寺下り場内11L",
+        "大道寺入換27L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_3RT",
+        "TH65_11LT",
+        "TH65_47T"
+      ]
+    },
+    {
+      "name": "TH65_47T",
+      "upSignals": [
+        "大道寺入換30R",
+        "上り閉塞166"
+      ],
+      "downSignals": [
+        "大道寺下り場内11L",
+        "大道寺下り場内12L",
+        "大道寺入換27L",
+        "大道寺入換28L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_45T",
+        "TH65_48T",
+        "TH65_49T"
+      ]
+    },
+    {
+      "name": "TH65_48T",
+      "upSignals": [
+        "上り閉塞166",
+        "大道寺入換30R"
+      ],
+      "downSignals": [
+        "大道寺下り場内11L",
+        "大道寺下り場内12L",
+        "大道寺入換27L",
+        "大道寺入換28L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_44T",
+        "TH65_47T",
+        "TH65_ET"
+      ]
+    },
+    {
+      "name": "TH65_49T",
+      "upSignals": [
+        "上り閉塞166"
+      ],
+      "downSignals": [
+        "大道寺下り場内11L",
+        "大道寺下り場内12L",
+        "大道寺入換27L",
+        "大道寺入換28L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_2RT",
+        "TH65_47T",
+        "TH65_50イT"
+      ]
+    },
+    {
+      "name": "TH65_50イT",
+      "upSignals": [
+        "上り閉塞166"
+      ],
+      "downSignals": [
+        "大道寺下り場内11L",
+        "大道寺下り場内12L",
+        "大道寺入換27L",
+        "大道寺入換28L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_49T",
+        "TH65_50ロT",
+        "TH65_XT"
+      ]
+    },
+    {
+      "name": "TH65_50ロT",
+      "upSignals": [],
+      "downSignals": [
+        "大道寺入換29L",
+        "大道寺入換27L",
+        "大道寺入換28L"
+      ],
+      "stations": [
+        "TH65"
+      ],
+      "adjacent": [
+        "TH65_ET",
+        "TH65_50イT",
+        "TH65_YT"
+      ]
+    },
+    {
+      "name": "TH65_ET",
+      "upSignals": [
+        "大道寺入換30R"
+      ],
+      "downSignals": [
+        "大道寺入換29L"
+      ],
+      "stations": [
+        "TH65"
+      ],
+      "adjacent": [
+        "TH65_48T",
+        "TH65_50ロT"
+      ]
+    },
+    {
+      "name": "TH65_TST",
+      "upSignals": [],
+      "downSignals": [
+        "江ノ原信号場下り場内5LE",
+        "江ノ原信号場下り場内5LD"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_5LT",
+        "TH65_42イT"
+      ]
+    },
+    {
+      "name": "TH65_XT",
+      "upSignals": [
+        "上り閉塞166"
+      ],
+      "downSignals": [
+        "大道寺入換31L"
+      ],
+      "stations": [
+        "TH65",
+        "TH66S",
+        "TH64"
+      ],
+      "adjacent": [
+        "TH65_50イT"
+      ]
+    },
+    {
+      "name": "TH65_YT",
+      "upSignals": [],
+      "downSignals": [
+        "大道寺入換32L"
+      ],
+      "stations": [
+        "TH65"
+      ],
+      "adjacent": [
+        "TH65_50ロT"
+      ]
+    },
+    {
+      "name": "TH66S_1RAT",
+      "upSignals": [],
+      "downSignals": [
+        "江ノ原信号場下り出発3L",
+        "江ノ原検車区入換15L"
+      ],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_56T"
+      ]
+    },
+    {
+      "name": "TH66S_1RBT",
+      "upSignals": [],
+      "downSignals": [
+        "江ノ原信号場下り出発4L",
+        "江ノ原検車区入換16L"
+      ],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_57T"
+      ]
+    },
+    {
+      "name": "TH66S_1RCT",
+      "upSignals": [
+        "上り閉塞156"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "TH66S_55T",
+        "上り156T"
+      ]
+    },
+    {
+      "name": "TH66S_1RT",
+      "upSignals": [
+        "上り閉塞156"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "上り146T",
+        "TH66S_51ロT"
+      ]
+    },
+    {
+      "name": "TH66S_5LDT",
+      "upSignals": [
+        "江ノ原信号場入換11R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_51イT"
+      ]
+    },
+    {
+      "name": "TH66S_5LET",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S",
+        "TH67"
+      ],
+      "adjacent": [
+        "TH66S_53T",
+        "下り151T"
+      ]
+    },
+    {
+      "name": "TH66S_5LT",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S",
+        "TH67"
+      ],
+      "adjacent": [
+        "TH66S_53T",
+        "TH65_TST"
+      ]
+    },
+    {
+      "name": "TH66S_13T",
+      "upSignals": [
+        "江ノ原信号場上り出発2R",
+        "江ノ原信号場入換13R"
+      ],
+      "downSignals": [
+        "江ノ原信号場内入換"
+      ],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "TH66S_51イT",
+        "TH66S_54T"
+      ]
+    },
+    {
+      "name": "TH66S_51イT",
+      "upSignals": [
+        "江ノ原信号場上り出発2R",
+        "江ノ原信号場入換13R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_5LDT",
+        "TH66S_51ロT",
+        "TH66S_13T"
+      ]
+    },
+    {
+      "name": "TH66S_51ロT",
+      "upSignals": [
+        "上り閉塞156"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "TH66S_1RT",
+        "TH66S_51イT",
+        "TH66S_52T"
+      ]
+    },
+    {
+      "name": "TH66S_52T",
+      "upSignals": [
+        "上り閉塞156"
+      ],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "TH66S_51ロT",
+        "TH66S_53T",
+        "TH66S_55T"
+      ]
+    },
+    {
+      "name": "TH66S_53T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S",
+        "TH67"
+      ],
+      "adjacent": [
+        "TH66S_5LDT",
+        "TH66S_52T",
+        "TH66S_5LET"
+      ]
+    },
+    {
+      "name": "TH66S_54T",
+      "upSignals": [
+        "上り閉塞156"
+      ],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "TH66S_13T",
+        "TH66S_55T",
+        "TH66S_57T"
+      ]
+    },
+    {
+      "name": "TH66S_55T",
+      "upSignals": [
+        "上り閉塞156"
+      ],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "TH66S_52T",
+        "TH66S_54T",
+        "TH66S_1RCT"
+      ]
+    },
+    {
+      "name": "TH66S_56T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_1RAT",
+        "TH66S_57T"
+      ]
+    },
+    {
+      "name": "TH66S_57T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞151"
+      ],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_1RBT",
+        "TH66S_56T"
+      ]
+    },
+    {
+      "name": "TH66S_1T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_69T"
+      ]
+    },
+    {
+      "name": "TH66S_2T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_3T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_4T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_5T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_6T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_7T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_8T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_9T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_61T"
+      ]
+    },
+    {
+      "name": "TH66S_21T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_73T"
+      ]
+    },
+    {
+      "name": "TH66S_22T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_72T"
+      ]
+    },
+    {
+      "name": "TH66S_23T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_72T"
+      ]
+    },
+    {
+      "name": "TH66S_27T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_76T"
+      ]
+    },
+    {
+      "name": "TH66S_28T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_76T"
+      ]
+    },
+    {
+      "name": "TH66S_29T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_76T"
+      ]
+    },
+    {
+      "name": "TH66S_30T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_76T"
+      ]
+    },
+    {
+      "name": "TH66S_61T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_69T",
+        "TH66S_56T"
+      ]
+    },
+    {
+      "name": "TH66S_69T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_71T",
+        "TH66S_61T",
+        "TH66S_1T"
+      ]
+    },
+    {
+      "name": "TH66S_70T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_73T",
+        "TH66S_71T",
+        "TH66S_76T"
+      ]
+    },
+    {
+      "name": "TH66S_71T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_72T",
+        "TH66S_69T",
+        "TH66S_70T"
+      ]
+    },
+    {
+      "name": "TH66S_72T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_71T",
+        "TH66S_22T",
+        "TH66S_23T"
+      ]
+    },
+    {
+      "name": "TH66S_73T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_21T",
+        "TH66S_70T",
+        "TH66S_74T"
+      ]
+    },
+    {
+      "name": "TH66S_74T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_73T"
+      ]
+    },
+    {
+      "name": "TH66S_76T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH66S_70T",
+        "TH66S_27T",
+        "TH66S_28T",
+        "TH66S_29T",
+        "TH66S_30T"
+      ]
+    },
+    {
+      "name": "TH67_1RAT",
+      "upSignals": [
+        "新野崎上り出発8R",
+        "新野崎入換23R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_32T",
+        "TH67_33イT"
+      ],
+      "track": "up2"
+    },
+    {
+      "name": "TH67_1RBT",
+      "upSignals": [
+        "新野崎上り出発9R",
+        "新野崎入換24R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_32T",
+        "TH67_33ロT"
+      ],
+      "track": "up1"
+    },
+    {
+      "name": "TH67_1RT",
+      "upSignals": [
+        "新野崎上り出発8R",
+        "新野崎上り出発9R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "上り124T",
+        "TH67_32T"
+      ]
+    },
+    {
+      "name": "TH67_4LT",
+      "upSignals": [
+        "新野崎上り出発6R"
+      ],
+      "downSignals": [
+        "新野崎下り出発2L"
+      ],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_31T",
+        "TH67_34T"
+      ],
+      "track": "down1"
+    },
+    {
+      "name": "TH67_5LT",
+      "upSignals": [
+        "新野崎上り出発7R"
+      ],
+      "downSignals": [
+        "新野崎下り出発3L"
+      ],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_31T",
+        "TH67_34T"
+      ],
+      "track": "down2"
+    },
+    {
+      "name": "TH67_10LT",
+      "upSignals": [],
+      "downSignals": [
+        "新野崎下り場内4L",
+        "新野崎下り場内5L"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "TH67_35イT",
+        "下り137T"
+      ]
+    },
+    {
+      "name": "TH67_23RT",
+      "upSignals": [],
+      "downSignals": [
+        "新野崎入換25L"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "TH67_36ロT"
+      ]
+    },
+    {
+      "name": "TH67_31T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞123"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "TH67_TST",
+        "TH67_4LT",
+        "TH67_5LT"
+      ]
+    },
+    {
+      "name": "TH67_32T",
+      "upSignals": [
+        "新野崎上り出発8R",
+        "新野崎上り出発9R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_1RT",
+        "TH67_1RAT",
+        "TH67_1RBT"
+      ]
+    },
+    {
+      "name": "TH67_33イT",
+      "upSignals": [
+        "上り閉塞136"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_1RAT",
+        "TH67_33ロT",
+        "TH67_36ロT"
+      ]
+    },
+    {
+      "name": "TH67_33ロT",
+      "upSignals": [
+        "上り閉塞136"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_1RBT",
+        "TH67_33イT",
+        "TH67_35ロT"
+      ]
+    },
+    {
+      "name": "TH67_34T",
+      "upSignals": [
+        "上り閉塞136"
+      ],
+      "downSignals": [
+        "新野崎下り場内4L",
+        "新野崎下り場内5L",
+        "新野崎入換21L",
+        "新野崎入換22L"
+      ],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_4LT",
+        "TH67_5LT",
+        "TH67_35イT"
+      ]
+    },
+    {
+      "name": "TH67_35イT",
+      "upSignals": [
+        "上り閉塞136"
+      ],
+      "downSignals": [
+        "新野崎下り場内4L",
+        "新野崎下り場内5L",
+        "新野崎入換21L",
+        "新野崎入換22L"
+      ],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_34T",
+        "TH67_35ロT",
+        "TH67_10LT"
+      ]
+    },
+    {
+      "name": "TH67_35ロT",
+      "upSignals": [
+        "上り閉塞136"
+      ],
+      "downSignals": [
+        "新野崎入換21L",
+        "新野崎入換22L"
+      ],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_33ロT",
+        "TH67_35イT",
+        "TH67_36イT"
+      ]
+    },
+    {
+      "name": "TH67_36イT",
+      "upSignals": [
+        "上り閉塞136"
+      ],
+      "downSignals": [
+        "新野崎入換21L",
+        "新野崎入換22L"
+      ],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_35ロT",
+        "TH67_36ロT",
+        "TH67_SST"
+      ]
+    },
+    {
+      "name": "TH67_36ロT",
+      "upSignals": [],
+      "downSignals": [
+        "新野崎入換21L",
+        "新野崎入換22L"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "TH67_33イT",
+        "TH67_36イT",
+        "TH67_23RT"
+      ]
+    },
+    {
+      "name": "TH67_SST",
+      "upSignals": [
+        "上り閉塞136"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67",
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_36イT",
+        "上り136T"
+      ]
+    },
+    {
+      "name": "TH67_TST",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞123"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "下り123T",
+        "TH67_31T"
+      ]
+    },
+    {
+      "name": "TH70_1RAT",
+      "upSignals": [
+        "浜園上り出発3R",
+        "浜園入換11R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH70"
+      ],
+      "adjacent": [
+        "上り92T",
+        "TH70_21ロT"
+      ]
+    },
+    {
+      "name": "TH70_2LT",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞89"
+      ],
+      "stations": [
+        "TH70",
+        "TH71"
+      ],
+      "adjacent": [
+        "下り89T",
+        "TH70_5LBT"
+      ]
+    },
+    {
+      "name": "TH70_5LBT",
+      "upSignals": [
+        "浜園上り出発4R"
+      ],
+      "downSignals": [
+        "浜園下り出発2L"
+      ],
+      "stations": [
+        "TH70",
+        "TH71"
+      ],
+      "adjacent": [
+        "TH70_2LT",
+        "TH70_21イT"
+      ]
+    },
+    {
+      "name": "TH70_5LT",
+      "upSignals": [],
+      "downSignals": [
+        "浜園下り出発2L"
+      ],
+      "stations": [
+        "TH70",
+        "TH71"
+      ],
+      "adjacent": [
+        "TH70_21イT",
+        "下り103T"
+      ]
+    },
+    {
+      "name": "TH70_21イT",
+      "upSignals": [
+        "上り閉塞102"
+      ],
+      "downSignals": [
+        "浜園下り出発2L"
+      ],
+      "stations": [
+        "TH70",
+        "TH71"
+      ],
+      "adjacent": [
+        "TH70_5LBT",
+        "TH70_21ロT",
+        "TH70_5LT"
+      ]
+    },
+    {
+      "name": "TH70_21ロT",
+      "upSignals": [
+        "上り閉塞102"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH70"
+      ],
+      "adjacent": [
+        "TH70_1RAT",
+        "TH70_21イT",
+        "TH70_SST"
+      ]
+    },
+    {
+      "name": "TH70_SST",
+      "upSignals": [
+        "上り閉塞102"
+      ],
+      "downSignals": [
+        "浜園入換12L"
+      ],
+      "stations": [
+        "TH70"
+      ],
+      "adjacent": [
+        "TH70_21ロT",
+        "上り102T"
+      ]
+    },
+    {
+      "name": "TH71_1RAT",
+      "upSignals": [
+        "津崎上り出発4R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71",
+        "TH70"
+      ],
+      "adjacent": [
+        "TH71_21T",
+        "TH71_23T"
+      ],
+      "track": "up2"
+    },
+    {
+      "name": "TH71_1RBT",
+      "upSignals": [
+        "津崎上り出発5R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71",
+        "TH70"
+      ],
+      "adjacent": [
+        "TH71_21T",
+        "TH71_23T"
+      ],
+      "track": "up1"
+    },
+    {
+      "name": "TH71_1RT",
+      "upSignals": [
+        "津崎上り出発4R",
+        "津崎上り出発5R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71",
+        "TH70"
+      ],
+      "adjacent": [
+        "上り74T",
+        "TH71_21T"
+      ]
+    },
+    {
+      "name": "TH71_6LCT",
+      "upSignals": [],
+      "downSignals": [
+        "津崎下り出発2L"
+      ],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "TH71_22T",
+        "TH71_24T"
+      ],
+      "track": "down1"
+    },
+    {
+      "name": "TH71_6LDT",
+      "upSignals": [],
+      "downSignals": [
+        "津崎下り出発3L"
+      ],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "TH71_22T",
+        "TH71_24T"
+      ],
+      "track": "down2"
+    },
+    {
+      "name": "TH71_6LT",
+      "upSignals": [],
+      "downSignals": [
+        "津崎下り出発2L",
+        "津崎下り出発3L"
+      ],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "TH71_24T",
+        "下り89T"
+      ]
+    },
+    {
+      "name": "TH71_21T",
+      "upSignals": [
+        "津崎上り出発4R",
+        "津崎上り出発5R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71",
+        "TH70"
+      ],
+      "adjacent": [
+        "TH71_1RT",
+        "TH71_1RAT",
+        "TH71_1RBT"
+      ]
+    },
+    {
+      "name": "TH71_22T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞75"
+      ],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "TH71_TST",
+        "TH71_6LCT",
+        "TH71_6LDT"
+      ]
+    },
+    {
+      "name": "TH71_23T",
+      "upSignals": [
+        "上り閉塞86"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71",
+        "TH70"
+      ],
+      "adjacent": [
+        "TH71_1RAT",
+        "TH71_1RBT",
+        "TH71_SST"
+      ]
+    },
+    {
+      "name": "TH71_24T",
+      "upSignals": [],
+      "downSignals": [
+        "津崎下り出発2L",
+        "津崎下り出発3L"
+      ],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "TH71_6LCT",
+        "TH71_6LDT",
+        "TH71_6LT"
+      ]
+    },
+    {
+      "name": "TH71_SST",
+      "upSignals": [
+        "上り閉塞86"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71",
+        "TH70"
+      ],
+      "adjacent": [
+        "TH71_23T",
+        "上り86T"
+      ]
+    },
+    {
+      "name": "TH71_TST",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞75"
+      ],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "下り75T",
+        "TH71_22T"
+      ]
+    },
+    {
+      "name": "TH75_1RET",
+      "upSignals": [
+        "駒野上り場内5RA",
+        "駒野上り場内5RB",
+        "駒野入換13R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_43イT",
+        "TH75_46イT"
+      ]
+    },
+    {
+      "name": "TH75_1RT",
+      "upSignals": [
+        "駒野上り場内5RA",
+        "駒野上り場内5RB"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "上り8T",
+        "TH75_41ロT"
+      ]
+    },
+    {
+      "name": "TH75_4T",
+      "upSignals": [
+        "駒野入換24R"
+      ],
+      "downSignals": [
+        "駒野入換34L"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_34LT",
+        "TH75_48T"
+      ]
+    },
+    {
+      "name": "TH75_5RAT",
+      "upSignals": [
+        "駒野上り出発7R"
+      ],
+      "downSignals": [
+        "駒野入換15L"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_46ロT",
+        "TH75_49イT"
+      ],
+      "track": "up2"
+    },
+    {
+      "name": "TH75_5RBT",
+      "upSignals": [
+        "駒野上り出発8R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_46イT",
+        "TH75_49ロT"
+      ],
+      "track": "up1"
+    },
+    {
+      "name": "TH75_5T",
+      "upSignals": [
+        "駒野入換25R"
+      ],
+      "downSignals": [
+        "駒野下り出発3L",
+        "駒野入換35L"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_44T",
+        "TH75_48T"
+      ]
+    },
+    {
+      "name": "TH75_6LT",
+      "upSignals": [],
+      "downSignals": [
+        "駒野下り第二出発2L",
+        "駒野入換12L"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_41イT",
+        "TH75_9LCT"
+      ]
+    },
+    {
+      "name": "TH75_6T",
+      "upSignals": [
+        "駒野入換26R"
+      ],
+      "downSignals": [
+        "駒野下り出発4L",
+        "駒野入換36L"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_45T",
+        "TH75_48T"
+      ]
+    },
+    {
+      "name": "TH75_7T",
+      "upSignals": [
+        "駒野入換27R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_42イT"
+      ]
+    },
+    {
+      "name": "TH75_8T",
+      "upSignals": [
+        "駒野入換28R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_42ロT"
+      ]
+    },
+    {
+      "name": "TH75_9LCT",
+      "upSignals": [],
+      "downSignals": [
+        "駒野下り出発6L",
+        "駒野入換14L"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_50ロT",
+        "TH75_6LT"
+      ],
+      "track": "down1"
+    },
+    {
+      "name": "TH75_9LT",
+      "upSignals": [],
+      "downSignals": [
+        "駒野下り出発6L"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_50ロT",
+        "下り27T"
+      ]
+    },
+    {
+      "name": "TH75_9T",
+      "upSignals": [
+        "駒野入換29R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_43ロT"
+      ]
+    },
+    {
+      "name": "TH75_34LT",
+      "upSignals": [
+        "駒野入換24R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_42イT",
+        "TH75_4T"
+      ]
+    },
+    {
+      "name": "TH75_41イT",
+      "upSignals": [
+        "駒野入換13R",
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [
+        "下り閉塞9"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_TST",
+        "TH75_41ロT",
+        "TH75_6LT"
+      ]
+    },
+    {
+      "name": "TH75_41ロT",
+      "upSignals": [
+        "駒野上り場内5RA",
+        "駒野上り場内5RB",
+        "駒野入換13R",
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [
+        "下り閉塞9"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_1RT",
+        "TH75_43イT",
+        "TH75_41イT"
+      ]
+    },
+    {
+      "name": "TH75_42イT",
+      "upSignals": [
+        "駒野入換24R",
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_7T",
+        "TH75_42ロT",
+        "TH75_34LT"
+      ]
+    },
+    {
+      "name": "TH75_42ロT",
+      "upSignals": [
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_8T",
+        "TH75_42イT",
+        "TH75_44T"
+      ]
+    },
+    {
+      "name": "TH75_43イT",
+      "upSignals": [
+        "駒野上り場内5RA",
+        "駒野上り場内5RB",
+        "駒野入換13R",
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [
+        "下り閉塞9"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_41ロT",
+        "TH75_43ロT",
+        "TH75_1RET"
+      ]
+    },
+    {
+      "name": "TH75_43ロT",
+      "upSignals": [
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [
+        "下り閉塞9"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_9T",
+        "TH75_43イT",
+        "TH75_45T"
+      ]
+    },
+    {
+      "name": "TH75_44T",
+      "upSignals": [
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [
+        "下り閉塞9"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_42ロT",
+        "TH75_45T",
+        "TH75_5T"
+      ]
+    },
+    {
+      "name": "TH75_45T",
+      "upSignals": [
+        "駒野入換25R",
+        "駒野入換26R"
+      ],
+      "downSignals": [
+        "下り閉塞9"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_43ロT",
+        "TH75_44T",
+        "TH75_6T"
+      ]
+    },
+    {
+      "name": "TH75_46イT",
+      "upSignals": [
+        "駒野上り出発7R",
+        "駒野上り出発8R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_1RET",
+        "TH75_46ロT",
+        "TH75_5RBT"
+      ]
+    },
+    {
+      "name": "TH75_46ロT",
+      "upSignals": [
+        "駒野上り出発7R"
+      ],
+      "downSignals": [
+        "駒野入換34L",
+        "駒野入換35L",
+        "駒野入換36L"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_48T",
+        "TH75_5RAT",
+        "TH75_46イT"
+      ]
+    },
+    {
+      "name": "TH75_48T",
+      "upSignals": [
+        "駒野上り出発7R"
+      ],
+      "downSignals": [
+        "駒野入換36L",
+        "駒野入換35L",
+        "駒野入換34L"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_4T",
+        "TH75_5T",
+        "TH75_6T"
+      ]
+    },
+    {
+      "name": "TH75_49イT",
+      "upSignals": [
+        "上り閉塞26"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_5RAT",
+        "TH75_49ロT"
+      ]
+    },
+    {
+      "name": "TH75_49ロT",
+      "upSignals": [
+        "上り閉塞26"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_5RBT",
+        "TH75_49イT",
+        "TH75_50イT"
+      ]
+    },
+    {
+      "name": "TH75_50イT",
+      "upSignals": [
+        "上り閉塞26"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_49ロT",
+        "TH75_50ロT",
+        "TH75_SST"
+      ]
+    },
+    {
+      "name": "TH75_50ロT",
+      "upSignals": [],
+      "downSignals": [
+        "駒野下り出発6L"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_9LCT",
+        "TH75_50イT",
+        "TH75_9LT"
+      ]
+    },
+    {
+      "name": "TH75_SST",
+      "upSignals": [
+        "上り閉塞26"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH75_50イT",
+        "上り26T"
+      ]
+    },
+    {
+      "name": "TH75_TST",
+      "upSignals": [
+        "駒野入換11R"
+      ],
+      "downSignals": [
+        "下り閉塞9"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "下り9T",
+        "TH75_41イT"
+      ]
+    },
+    {
+      "name": "TH76_5LAT",
+      "upSignals": [
+        "館浜上り出発1R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_22T"
+      ],
+      "track": "up4"
+    },
+    {
+      "name": "TH76_5LBT",
+      "upSignals": [
+        "館浜上り出発2R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_23T"
+      ],
+      "track": "up3"
+    },
+    {
+      "name": "TH76_5LCT",
+      "upSignals": [
+        "館浜上り出発3R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_21イT"
+      ],
+      "track": "up2"
+    },
+    {
+      "name": "TH76_5LDT",
+      "upSignals": [
+        "館浜上り出発4R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_21ロT"
+      ],
+      "track": "up1"
+    },
+    {
+      "name": "TH76_21イT",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_5LCT",
+        "TH76_24T"
+      ]
+    },
+    {
+      "name": "TH76_21ロT",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_5LDT",
+        "TH76_24T"
+      ]
+    },
+    {
+      "name": "TH76_22T",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_5LAT",
+        "TH76_26イT",
+        "TH76_26ロT"
+      ]
+    },
+    {
+      "name": "TH76_23T",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_5LBT",
+        "TH76_24T",
+        "TH76_25T",
+        "TH76_21イT"
+      ]
+    },
+    {
+      "name": "TH76_24T",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_21ロT",
+        "TH76_23T",
+        "TH76_27T"
+      ]
+    },
+    {
+      "name": "TH76_25T",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_22T",
+        "TH76_23T",
+        "TH76_26イT"
+      ]
+    },
+    {
+      "name": "TH76_26イT",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_25T",
+        "TH76_26ロT",
+        "TH76_27T"
+      ]
+    },
+    {
+      "name": "TH76_26ロT",
+      "upSignals": [
+        "上り閉塞6"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH76",
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_22T",
+        "TH76_26イT",
+        "上り6T"
+      ]
+    },
+    {
+      "name": "TH76_27T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [
+        "TH76"
+      ],
+      "adjacent": [
+        "TH76_26イT",
+        "TH76_24T",
+        "下り7T"
+      ]
+    },
+    {
+      "name": "上り6T",
+      "upSignals": [
+        "上り閉塞8",
+        "上り閉塞8中継"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "TH76_26ロT",
+        "上り8T"
+      ]
+    },
+    {
+      "name": "上り8T",
+      "upSignals": [
+        "駒野上り場内1RD",
+        "駒野上り場内1RE"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "上り6T",
+        "TH75_1RT"
+      ]
+    },
+    {
+      "name": "上り26T",
+      "upSignals": [
+        "上り閉塞30"
+      ],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": [
+        "TH75_SST",
+        "上り30T"
+      ]
+    },
+    {
+      "name": "上り30T",
+      "upSignals": [
+        "上り閉塞36"
+      ],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": [
+        "上り26T",
+        "上り36T"
+      ]
+    },
+    {
+      "name": "上り36T",
+      "upSignals": [
+        "上り閉塞42"
+      ],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": [
+        "上り30T",
+        "上り42T"
+      ]
+    },
+    {
+      "name": "上り42T",
+      "upSignals": [
+        "上り閉塞48"
+      ],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": [
+        "上り36T",
+        "上り48T"
+      ]
+    },
+    {
+      "name": "上り48T",
+      "upSignals": [
+        "上り閉塞56"
+      ],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": [
+        "上り42T",
+        "上り56T"
+      ]
+    },
+    {
+      "name": "上り56T",
+      "upSignals": [
+        "上り閉塞62"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "上り48T",
+        "上り62T"
+      ]
+    },
+    {
+      "name": "上り62T",
+      "upSignals": [
+        "上り閉塞68"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "上り56T",
+        "上り68T"
+      ]
+    },
+    {
+      "name": "上り68T",
+      "upSignals": [
+        "上り閉塞74"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "上り62T",
+        "上り74T"
+      ]
+    },
+    {
+      "name": "上り74T",
+      "upSignals": [
+        "津崎上り場内1RA",
+        "津崎上り場内1RB"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH71",
+        "TH70"
+      ],
+      "adjacent": [
+        "上り68T",
+        "TH71_1RT"
+      ]
+    },
+    {
+      "name": "上り86T",
+      "upSignals": [
+        "上り閉塞92"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH70"
+      ],
+      "adjacent": [
+        "TH71_SST",
+        "上り92T"
+      ]
+    },
+    {
+      "name": "上り92T",
+      "upSignals": [
+        "浜園上り場内1R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH70"
+      ],
+      "adjacent": [
+        "上り86T",
+        "TH70_1RAT"
+      ]
+    },
+    {
+      "name": "上り102T",
+      "upSignals": [
+        "上り閉塞108"
+      ],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": [
+        "TH70_SST",
+        "上り108T"
+      ]
+    },
+    {
+      "name": "上り108T",
+      "upSignals": [
+        "上り閉塞114"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "上り102T",
+        "上り114T"
+      ]
+    },
+    {
+      "name": "上り114T",
+      "upSignals": [
+        "上り閉塞120"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "上り108T",
+        "上り120T"
+      ]
+    },
+    {
+      "name": "上り120T",
+      "upSignals": [
+        "上り閉塞124"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "上り114T",
+        "上り124T"
+      ]
+    },
+    {
+      "name": "上り124T",
+      "upSignals": [
+        "新野崎上り場内1RA",
+        "新野崎上り場内1RB"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "上り120T",
+        "TH67_1RT"
+      ]
+    },
+    {
+      "name": "上り136T",
+      "upSignals": [
+        "上り閉塞142"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S"
+      ],
+      "adjacent": [
+        "TH67_SST",
+        "上り142T"
+      ]
+    },
+    {
+      "name": "上り142T",
+      "upSignals": [
+        "上り閉塞146"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "上り136T",
+        "上り146T"
+      ]
+    },
+    {
+      "name": "上り146T",
+      "upSignals": [
+        "江ノ原信号場上り場内1RA",
+        "江ノ原信号場上り場内1RB",
+        "江ノ原信号場上り場内1RC"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH66S",
+        "TH65"
+      ],
+      "adjacent": [
+        "上り142T",
+        "TH66S_1RT"
+      ]
+    },
+    {
+      "name": "上り156T",
+      "upSignals": [
+        "大道寺上り場内1RTA",
+        "大道寺上り場内1RTB"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH65"
+      ],
+      "adjacent": [
+        "TH66S_1RCT",
+        "TH65_1RT"
+      ]
+    },
+    {
+      "name": "上り238T",
+      "upSignals": [
+        "上り閉塞242"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH59"
+      ],
+      "adjacent": [
+        "TH61_5RT",
+        "上り242T"
+      ]
+    },
+    {
+      "name": "上り242T",
+      "upSignals": [
+        "上り閉塞246"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH59"
+      ],
+      "adjacent": [
+        "上り238T",
+        "上り246T"
+      ]
+    },
+    {
+      "name": "上り246T",
+      "upSignals": [
+        "上り閉塞250"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH59"
+      ],
+      "adjacent": [
+        "上り242T",
+        "上り250T"
+      ]
+    },
+    {
+      "name": "上り250T",
+      "upSignals": [
+        "西赤山上り場内11R"
+      ],
+      "downSignals": [],
+      "stations": [
+        "TH59"
+      ],
+      "adjacent": [
+        "上り246T",
+        "TH59_11RT"
+      ]
+    },
+    {
+      "name": "上り306T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り312T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り314T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り320T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り324T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り398T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り404T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り406T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り416T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り420T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "上り424T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り7T",
+      "upSignals": [],
+      "downSignals": [
+        "館浜下り場内5L"
+      ],
+      "stations": [
+        "TH76"
+      ],
+      "adjacent": [
+        "TH76_27T",
+        "下り9T"
+      ]
+    },
+    {
+      "name": "下り9T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞7",
+        "下り閉塞7中継"
+      ],
+      "stations": [
+        "TH76"
+      ],
+      "adjacent": [
+        "下り7T",
+        "TH75_TST"
+      ]
+    },
+    {
+      "name": "下り27T",
+      "upSignals": [],
+      "downSignals": [
+        "駒野下り場内9LB",
+        "駒野下り場内9LC"
+      ],
+      "stations": [
+        "TH75",
+        "TH76"
+      ],
+      "adjacent": [
+        "TH75_9LT",
+        "下り35T"
+      ]
+    },
+    {
+      "name": "下り35T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞27"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "下り27T",
+        "下り41T"
+      ]
+    },
+    {
+      "name": "下り41T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞35"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "下り35T",
+        "下り45T"
+      ]
+    },
+    {
+      "name": "下り45T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞41"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "下り41T",
+        "下り49T"
+      ]
+    },
+    {
+      "name": "下り49T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞45"
+      ],
+      "stations": [
+        "TH75"
+      ],
+      "adjacent": [
+        "下り45T",
+        "下り55T"
+      ]
+    },
+    {
+      "name": "下り55T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞49"
+      ],
+      "stations": [],
+      "adjacent": [
+        "下り49T",
+        "下り59T"
+      ]
+    },
+    {
+      "name": "下り59T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞55"
+      ],
+      "stations": [],
+      "adjacent": [
+        "下り55T",
+        "下り67T"
+      ]
+    },
+    {
+      "name": "下り67T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞59"
+      ],
+      "stations": [],
+      "adjacent": [
+        "下り59T",
+        "下り71T"
+      ]
+    },
+    {
+      "name": "下り71T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞67"
+      ],
+      "stations": [],
+      "adjacent": [
+        "下り67T",
+        "下り75T"
+      ]
+    },
+    {
+      "name": "下り75T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞71"
+      ],
+      "stations": [],
+      "adjacent": [
+        "下り71T",
+        "TH71_TST"
+      ]
+    },
+    {
+      "name": "下り89T",
+      "upSignals": [],
+      "downSignals": [
+        "津崎下り場内6LC",
+        "津崎下り場内6LD"
+      ],
+      "stations": [
+        "TH71"
+      ],
+      "adjacent": [
+        "TH71_6LT",
+        "TH70_2LT"
+      ]
+    },
+    {
+      "name": "下り103T",
+      "upSignals": [],
+      "downSignals": [
+        "浜園下り場内5L"
+      ],
+      "stations": [
+        "TH70",
+        "TH71"
+      ],
+      "adjacent": [
+        "TH70_5LT",
+        "下り105T"
+      ]
+    },
+    {
+      "name": "下り105T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞103"
+      ],
+      "stations": [
+        "TH70",
+        "TH71"
+      ],
+      "adjacent": [
+        "下り103T",
+        "下り111T"
+      ]
+    },
+    {
+      "name": "下り111T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞105"
+      ],
+      "stations": [
+        "TH70"
+      ],
+      "adjacent": [
+        "下り105T",
+        "下り117T"
+      ]
+    },
+    {
+      "name": "下り117T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞111"
+      ],
+      "stations": [
+        "TH70"
+      ],
+      "adjacent": [
+        "下り117T",
+        "下り123T"
+      ]
+    },
+    {
+      "name": "下り123T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞117"
+      ],
+      "stations": [],
+      "adjacent": [
+        "下り117T",
+        "TH67_TST"
+      ]
+    },
+    {
+      "name": "下り137T",
+      "upSignals": [],
+      "downSignals": [
+        "新野崎下り場内10LC",
+        "新野崎下り場内10LD"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "TH67_10LT",
+        "下り143T"
+      ]
+    },
+    {
+      "name": "下り143T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞137"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "下り137T",
+        "下り145T"
+      ]
+    },
+    {
+      "name": "下り145T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞143"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "下り143T",
+        "下り151T"
+      ]
+    },
+    {
+      "name": "下り151T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞145"
+      ],
+      "stations": [
+        "TH67"
+      ],
+      "adjacent": [
+        "下り145T",
+        "TH66S_5LET"
+      ]
+    },
+    {
+      "name": "下り237T",
+      "upSignals": [],
+      "downSignals": [
+        "日野森下り場内6L"
+      ],
+      "stations": [
+        "TH61"
+      ],
+      "adjacent": [
+        "TH61_6LT",
+        "下り241T"
+      ]
+    },
+    {
+      "name": "下り241T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞237"
+      ],
+      "stations": [
+        "TH61"
+      ],
+      "adjacent": [
+        "下り237T",
+        "下り245T"
+      ]
+    },
+    {
+      "name": "下り245T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞241"
+      ],
+      "stations": [
+        "TH61"
+      ],
+      "adjacent": [
+        "下り241T",
+        "下り249T"
+      ]
+    },
+    {
+      "name": "下り249T",
+      "upSignals": [],
+      "downSignals": [
+        "下り閉塞245"
+      ],
+      "stations": [
+        "TH61"
+      ],
+      "adjacent": [
+        "下り245T",
+        "TH59_12LT"
+      ]
+    },
+    {
+      "name": "下り305T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り311T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り313T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り317T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り323T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り397T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り403T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り405T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り419T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    },
+    {
+      "name": "下り425T",
+      "upSignals": [],
+      "downSignals": [],
+      "stations": [],
+      "adjacent": []
+    }
+  ]
+}
