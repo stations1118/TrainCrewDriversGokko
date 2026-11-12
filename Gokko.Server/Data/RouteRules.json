@@ -47,5 +47,11 @@
   // 標準の停車時分（秒）
   "defaultDwellSeconds": 20,
   // 待避線（passingStations の番線）に入ったときの、最低の停車時分（秒）。着いてからこの時間がたつまで出発を開通させない
-  "minLoopDwellSeconds": 90
+  "minLoopDwellSeconds": 90,
+
+  // 番線に入りきってから、出発を開通させるまで待つ秒数（駅 → 方向 → 番線）。
+  // 待っている間も、単線区間の交換（相手の駅の対向列車・対向の出発進路）は判断する
+  "departDelaySeconds": {
+    "TH65": { "上り": { "1": 120 } }
+  }
 }

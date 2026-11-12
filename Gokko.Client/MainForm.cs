@@ -28,6 +28,9 @@ public sealed class MainForm : Form
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 500 };
     private readonly Dictionary<string, int> _trackChoices = new();
 
+    /// <summary>番線を選んだときの列車番号（列車が替わったら、選んだ番線を捨てる）。</summary>
+    private string _choicesTrain = "";
+
     private readonly TextBox _passwordBox = new() { UseSystemPasswordChar = true };
     private readonly TextBox _trainBox = new() { PlaceholderText = "空欄ならシナリオの列番" };
     private readonly Button _confirmButton = new() { Text = "確定" };
@@ -361,6 +364,15 @@ public sealed class MainForm : Form
             _game.PlayerTrainNumber = _confirmedTrain;
             var trainNumber = EffectiveTrainNumber(game);
             var shared = _mode == ShareMode.Shared;
+
+            // 列車が替わった・運転画面を出た（シナリオを開き直した）ら、前の列車で選んだ番線は捨てる
+            // （残っていると、次の列車の番線がダイヤや所定ではなく、前の選択になってしまう）
+            var driving = gameConnected && game?.InGame == true;
+            if (trainNumber != _choicesTrain || !driving)
+            {
+                _choicesTrain = trainNumber;
+                _trackChoices.Clear();
+            }
 
             // 使う列番（確定した列番、空ならシナリオの列番）が変わったら、ダイヤにあるか確かめる
             if (shared && _server.IsJoined && trainNumber.Length > 0 && trainNumber != _checkedTrain && !_checking)

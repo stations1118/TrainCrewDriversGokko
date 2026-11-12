@@ -254,6 +254,7 @@
     },
     {
       "number": "1053", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1153", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "11:00:40", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "11:02:20", "track": null },
@@ -758,6 +759,7 @@
     },
     {
       "number": "1153", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1253", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "12:00:40", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "12:02:20", "track": null },
@@ -853,6 +855,7 @@
     },
     {
       "number": "1178", "type": "普通", "label": "普通", "dest": "新野崎",
+      "next": { "number": "回1178", "st": "TH67", "name": "新野崎" },
       "stops": [
         { "st": "TH76", "name": "館浜", "stop": "停", "arr": null, "dep": "11:13:00", "track": 4 },
         { "st": "TH75", "name": "駒野", "stop": "停", "arr": "11:15:15", "dep": "11:15:45", "track": 2 },
@@ -1206,6 +1209,7 @@
     },
     {
       "number": "1253", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1353", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "13:00:40", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "13:02:20", "track": null },
@@ -1647,6 +1651,7 @@
     },
     {
       "number": "1353", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1453", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "14:00:40", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "14:02:20", "track": null },
@@ -2088,6 +2093,7 @@
     },
     {
       "number": "1453", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1553", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "15:00:40", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "15:02:20", "track": null },
@@ -2386,6 +2392,7 @@
     },
     {
       "number": "1541", "type": "普通", "label": "普通", "dest": "大道寺",
+      "next": { "number": "回1641", "st": "TH65", "name": "大道寺" },
       "stops": [
         { "st": "TH45", "name": "大路", "stop": "停", "arr": null, "dep": "15:35:00", "track": 2 },
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": "15:36:40", "dep": "15:37:10", "track": 3 },
@@ -2533,6 +2540,7 @@
     },
     {
       "number": "1553", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1653", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "16:00:40", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "16:02:20", "track": null },
@@ -2831,6 +2839,7 @@
     },
     {
       "number": "1643", "type": "普通", "label": "普通", "dest": "大道寺",
+      "next": { "number": "回1743", "st": "TH65", "name": "大道寺" },
       "stops": [
         { "st": "TH48", "name": "東井", "stop": "停", "arr": null, "dep": "16:20:00", "track": 4, "note": "(接)特館⑤12着" },
         { "st": "TH49", "name": "白石町", "stop": "停", "arr": null, "dep": "16:21:40", "track": null },
@@ -2924,6 +2933,7 @@
     },
     {
       "number": "1651", "type": "普通", "label": "普通", "dest": "大道寺",
+      "next": { "number": "回1651", "st": "TH65", "name": "大道寺" },
       "stops": [
         { "st": "TH61", "name": "日野森", "stop": "停", "arr": null, "dep": "16:31:30", "track": 1, "note": "(待)特館③30通" },
         { "st": "TH62", "name": "高見沢", "stop": "停", "arr": "16:33:45", "dep": "16:34:05", "track": 1, "note": "×普路②30着" },
@@ -2983,6 +2993,7 @@
     },
     {
       "number": "1653S", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1853S", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "18:42:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "18:43:50", "track": null },
@@ -4120,6 +4131,7 @@
     },
     {
       "number": "1889D", "type": "区急", "label": "区急", "dest": "名田",
+      "next": { "number": "回2089", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "19:59:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "20:00:50", "track": null },
@@ -4406,6 +4418,7 @@
     },
     {
       "number": "1966", "type": "普通", "label": "普通", "dest": "新野崎",
+      "next": { "number": "回2066", "st": "TH67", "name": "新野崎" },
       "stops": [
         { "st": "TH76", "name": "館浜", "stop": "停", "arr": null, "dep": "19:32:00", "track": 4 },
         { "st": "TH75", "name": "駒野", "stop": "停", "arr": "19:34:40", "dep": "19:36:40", "track": 1, "note": "(待)急手②35通" },
@@ -6365,6 +6378,7 @@
     },
     {
       "number": "3653B", "type": "急行", "label": "急行", "dest": "名田",
+      "next": { "number": "回3753", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "07:00:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "07:01:40", "track": null },
@@ -6385,6 +6399,7 @@
     },
     {
       "number": "3683", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回3883", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "08:15:10", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "08:16:50", "track": null },
@@ -6679,6 +6694,7 @@
     },
     {
       "number": "4681D", "type": "区急", "label": "区急", "dest": "名田",
+      "next": { "number": "回4881", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "17:59:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "18:00:50", "track": null },
@@ -6699,6 +6715,7 @@
     },
     {
       "number": "4717T", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回4917T", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "19:42:00", "track": 3 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "19:43:55", "track": null },
@@ -6776,6 +6793,7 @@
     },
     {
       "number": "4823T", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回5023T", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "20:42:00", "track": 3 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "20:43:55", "track": null },
@@ -6809,6 +6827,7 @@
     },
     {
       "number": "4887D", "type": "区急", "label": "区急", "dest": "名田",
+      "next": { "number": "回4987", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "18:59:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "19:00:50", "track": null },
@@ -6931,6 +6950,7 @@
     },
     {
       "number": "503SB", "type": "急行", "label": "急行", "dest": "名田",
+      "next": { "number": "回703S", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "07:25:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "07:26:50", "track": null },
@@ -7260,6 +7280,7 @@
     },
     {
       "number": "581", "type": "普通", "label": "普通", "dest": "館浜",
+      "next": { "number": "581C", "st": "TH70", "name": "浜園" },
       "stops": [
         { "st": "TH65", "name": "大道寺", "stop": "停", "arr": null, "dep": "05:10:00", "track": 4, "note": "入換" },
         { "st": "TH66S", "name": "江原信", "stop": "通", "arr": null, "dep": "05:10:45", "track": null },
@@ -7395,6 +7416,7 @@
     },
     {
       "number": "592C", "type": "準急", "label": "準急", "dest": "大手橋",
+      "next": { "number": "592", "st": "TH70", "name": "浜園" },
       "stops": [
         { "st": "TH76", "name": "館浜", "stop": "停", "arr": null, "dep": "05:00:00", "track": 3 },
         { "st": "TH75", "name": "駒野", "stop": "停", "arr": "05:02:15", "dep": "05:02:45", "track": 2, "note": "(接)普浜①04発" },
@@ -8070,6 +8092,7 @@
     },
     {
       "number": "725SD", "type": "区急", "label": "区急", "dest": "名田",
+      "next": { "number": "回925S", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "09:00:30", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "09:02:10", "track": null },
@@ -8699,6 +8722,7 @@
     },
     {
       "number": "853", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回853", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH45", "name": "大路", "stop": "停", "arr": null, "dep": "08:35:00", "track": 2 },
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": "08:36:40", "dep": "08:37:10", "track": 4 },
@@ -9049,6 +9073,7 @@
     },
     {
       "number": "895C", "type": "準急", "label": "準急", "dest": "大道寺",
+      "next": { "number": "回1095", "st": "TH65", "name": "大道寺" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "09:49:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "09:50:50", "track": null },
@@ -9341,6 +9366,7 @@
     },
     {
       "number": "953", "type": "普通", "label": "普通", "dest": "名田",
+      "next": { "number": "回1053", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "10:00:40", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "10:02:20", "track": null },
@@ -9629,6 +9655,7 @@
     },
     {
       "number": "995C", "type": "準急", "label": "準急", "dest": "大道寺",
+      "next": { "number": "回1095", "st": "TH65", "name": "大道寺" },
       "stops": [
         { "st": "TH46", "name": "新大路", "stop": "停", "arr": null, "dep": "09:49:00", "track": 4 },
         { "st": "TH47", "name": "桜坂", "stop": "停", "arr": null, "dep": "09:50:50", "track": null },
@@ -9700,6 +9727,7 @@
     },
     {
       "number": "回1052", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1052", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "10:29:45", "track": 1, "note": "灰色;×特館②19通;(待)特手②29通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "10:31:30", "dep": "10:31:55", "track": 1, "note": "灰色;×普道②27着" },
@@ -9762,6 +9790,7 @@
     },
     {
       "number": "回1152", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1152", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "11:29:45", "track": 1, "note": "灰色;×特館②19通;(待)特手②28通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "11:31:30", "dep": "11:31:55", "track": 1, "note": "灰色;×普道②29着" },
@@ -9798,6 +9827,7 @@
     },
     {
       "number": "回1252", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1252", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "12:29:45", "track": 1, "note": "灰色;×特館②19通;(待)特手②28通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "12:31:30", "dep": "12:31:55", "track": 1, "note": "灰色;×普道②29着" },
@@ -9834,6 +9864,7 @@
     },
     {
       "number": "回1352", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1352", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "13:29:45", "track": 1, "note": "灰色;×特館②19通;(待)特手②28通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "13:31:30", "dep": "13:31:55", "track": 1, "note": "灰色;×普道②29着" },
@@ -9870,6 +9901,7 @@
     },
     {
       "number": "回1452", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1452", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "14:29:45", "track": 1, "note": "灰色;×特館②19通;(待)特手②28通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "14:31:30", "dep": "14:31:55", "track": 1, "note": "灰色;×普道②29着" },
@@ -9906,6 +9938,7 @@
     },
     {
       "number": "回1552", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1552", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "15:29:45", "track": 1, "note": "灰色;×特館②19通;(待)特手②28通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "15:31:30", "dep": "15:31:55", "track": 1, "note": "灰色;×普道②29着" },
@@ -9956,6 +9989,7 @@
     },
     {
       "number": "回1652", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1652", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "16:29:45", "track": 1, "note": "灰色;×特館②19通;(待)特手②28通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "16:31:30", "dep": "16:31:55", "track": 1, "note": "灰色;×普道②29着" },
@@ -10003,6 +10037,7 @@
     },
     {
       "number": "回1750", "type": "回送", "label": "回送", "dest": "大路",
+      "next": { "number": "1750", "st": "TH65", "name": "大道寺" },
       "stops": [
         { "st": "TH67", "name": "新野崎", "stop": "停", "arr": null, "dep": "17:00:00", "track": 4, "note": "灰色" },
         { "st": "TH66S", "name": "江原信", "stop": "通", "arr": null, "dep": "17:02:05", "track": null },
@@ -10101,6 +10136,7 @@
     },
     {
       "number": "回1952S", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "1952S", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH53", "name": "下吉沢", "stop": "停", "arr": null, "dep": "19:11:00", "track": 2, "note": "灰色;(待)特手①04通;×区道①08着" },
         { "st": "TH52", "name": "名田", "stop": "停", "arr": "19:12:55", "dep": "19:16:00", "track": 1, "note": "灰色;×区名②13着" }
@@ -10143,6 +10179,7 @@
     },
     {
       "number": "回2088", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "2088C", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "20:35:00", "track": 1, "note": "灰色;×特館②23通;(待)特手②28通;×準駒②31着" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "20:36:40", "dep": "20:36:40", "track": 1, "note": "灰色;スタフ通り" },
@@ -10273,6 +10310,7 @@
     },
     {
       "number": "回3752", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "3752", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "07:34:00", "track": 1, "note": "灰色;×特館②22通;(待)特手②26通;(待)特手②30通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "07:35:45", "dep": "07:36:10", "track": 1, "note": "灰色;×急館②35着" },
@@ -10288,6 +10326,7 @@
     },
     {
       "number": "回3882", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "3882D", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH53", "name": "下吉沢", "stop": "停", "arr": null, "dep": "08:35:00", "track": 2, "note": "灰色;×特館①23通;(待)特手①30通" },
         { "st": "TH52", "name": "名田", "stop": "停", "arr": "08:36:55", "dep": "08:39:20", "track": 1, "note": "灰色;×普館②38着" }
@@ -10302,6 +10341,7 @@
     },
     {
       "number": "回469", "type": "回送", "label": "回送", "dest": "浜園",
+      "next": { "number": "569", "st": "TH70", "name": "浜園" },
       "stops": [
         { "st": "TH66S", "name": "江原検", "stop": "停", "arr": null, "dep": "04:54:00", "track": 11, "note": "灰色" },
         { "st": "TH67", "name": "新野崎", "stop": "通", "arr": null, "dep": "04:56:45", "track": 3 },
@@ -10322,6 +10362,7 @@
     },
     {
       "number": "回4880", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "4880D", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "18:35:00", "track": 1, "note": "灰色;×特館②23通;(待)特手②28通;×普道②31着" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "18:36:40", "dep": "18:36:40", "track": 1, "note": "灰色;スタフ通り" },
@@ -10344,6 +10385,7 @@
     },
     {
       "number": "回4986", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "4986D", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "19:35:00", "track": 1, "note": "灰色;×特館②23通;(待)特手②28通;×準館②31着" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "19:36:40", "dep": "19:36:40", "track": 1, "note": "灰色;スタフ通り" },
@@ -10352,6 +10394,7 @@
     },
     {
       "number": "回5016T", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "5016T", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH53", "name": "下吉沢", "stop": "停", "arr": null, "dep": "20:11:00", "track": 2, "note": "灰色;(待)特手①04通;×区道②08着" },
         { "st": "TH52", "name": "名田", "stop": "停", "arr": "20:12:55", "dep": "20:16:00", "track": 1, "note": "灰色;×区名②13着" }
@@ -10370,6 +10413,7 @@
     },
     {
       "number": "回5122", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "5122", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH53", "name": "下吉沢", "stop": "停", "arr": null, "dep": "21:09:00", "track": 2, "note": "灰色;(待)特手①02通;×区野②07着" },
         { "st": "TH52", "name": "名田", "stop": "停", "arr": "21:10:55", "dep": "21:14:00", "track": 1, "note": "灰色;×特館②13通" }
@@ -10451,6 +10495,7 @@
     },
     {
       "number": "回6746", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "6746D", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH53", "name": "下吉沢", "stop": "停", "arr": null, "dep": "07:02:00", "track": 2, "note": "灰色;×特館①52通;(待)快手①54通;(待)特手①00通" },
         { "st": "TH52", "name": "名田", "stop": "停", "arr": "07:03:55", "dep": "07:04:25", "track": 1, "note": "灰色;×区館②00着" }
@@ -10510,6 +10555,7 @@
     },
     {
       "number": "回765", "type": "回送", "label": "回送", "dest": "浜園",
+      "next": { "number": "765", "st": "TH70", "name": "浜園" },
       "stops": [
         { "st": "TH66S", "name": "江原検", "stop": "停", "arr": null, "dep": "07:24:00", "track": 12, "note": "灰色" },
         { "st": "TH67", "name": "新野崎", "stop": "通", "arr": null, "dep": "07:26:45", "track": 3 },
@@ -10544,6 +10590,7 @@
     },
     {
       "number": "回802S", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "802SD", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "08:09:00", "track": 1, "note": "灰色;(待)特手②58通" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "08:10:45", "dep": "08:11:15", "track": 1, "note": "灰色;×普道②11着" },
@@ -10591,6 +10638,7 @@
     },
     {
       "number": "回924S", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "924SC", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "09:28:30", "track": 1, "note": "灰色;×特館②21通;(待)特手②25通;×普道②28着" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "09:30:10", "dep": "09:30:35", "track": 1, "note": "灰色" },
@@ -10606,6 +10654,7 @@
     },
     {
       "number": "回952", "type": "回送", "label": "回送", "dest": "名田",
+      "next": { "number": "952", "st": "TH52", "name": "名田" },
       "stops": [
         { "st": "TH54", "name": "上吉沢", "stop": "停", "arr": null, "dep": "09:08:00", "track": 1, "note": "灰色;×急道②06着" },
         { "st": "TH53", "name": "下吉沢", "stop": "運停", "arr": "09:09:40", "dep": "09:10:05", "track": 1, "note": "灰色" },

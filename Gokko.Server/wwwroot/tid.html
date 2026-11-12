@@ -113,7 +113,9 @@
           L.stops.push({ name, x: cxm, y: up.y - 2.1 });
         }
       }
-      if (e.section) L.sections.push({ a: e.section[0], b: e.section[1], x: cx + e.section[2], y: e.section[3] });
+      // 単線区間: 走行順の表の位置と、方向てこの表示の位置（線の上・区間の中ほど）
+      if (e.section) L.sections.push({ a: e.section[0], b: e.section[1], x: cx + e.section[2], y: e.section[3],
+        leverX: cx + e.gap / 2, leverY: Math.min(...e.lines.map((ln) => Math.min(...ln.y))) - 1 });
       cx += e.gap;
     }
     return L;
@@ -296,6 +298,8 @@
       .stop { font-size: 12px; fill: var(--text); text-anchor: middle; }
       .num { font-size: 11px; fill: var(--muted); text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
       .boxTitle { font-size: 12px; font-weight: 700; fill: var(--muted); }
+      .lever { font-size: 12px; fill: var(--muted); text-anchor: middle; }
+      .lever.on { fill: var(--route); font-weight: 700; }
       .arrow { font-size: 14px; fill: var(--text); text-anchor: middle; }
       .chip { font-size: 12px; font-weight: 700; text-anchor: middle; }
     </style>`);
@@ -338,6 +342,14 @@
       const o = s.orders.find((x) => x.station === d.station);
       const rows = o ? o.trains.filter((t) => t.direction === d.direction) : [];
       p.push(orderBox(d.x, d.y, `${stationName(d.station)}${d.direction}到着`, rows, d.direction));
+    }
+    // 単線区間の方向てこ: 下り（左向き）は「◀ 区間方向」、上り（右向き）は「区間方向 ▶」。
+    // いま使われている（鎖錠されている）ときは濃い色と塗りつぶしの矢印、使われていないときは薄い色と白抜きの矢印
+    for (const sec of layout.sections) {
+      const lv = (s.tid.levers || []).find((x) => (x.a === sec.a && x.b === sec.b) || (x.a === sec.b && x.b === sec.a));
+      const dir = lv && lv.direction, locked = lv && lv.locked;
+      const text = dir === "下り" ? `${locked ? "◀" : "◁"} 区間方向` : dir === "上り" ? `区間方向 ${locked ? "▶" : "▷"}` : "区間方向 －";
+      p.push(`<text x="${X(sec.leverX)}" y="${Y(sec.leverY)}" class="lever${locked ? " on" : ""}">${text}</text>`);
     }
     // 単線区間: 上下まとめた走行順
     for (const sec of layout.sections) {

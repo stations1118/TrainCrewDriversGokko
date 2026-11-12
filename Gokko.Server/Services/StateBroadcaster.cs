@@ -86,6 +86,7 @@ public sealed class StateBroadcaster : BackgroundService
         var now = DateTimeOffset.UtcNow;
         var gameTime = _clock.NowText;
         var shared = players.Where(p => p.Mode == ShareMode.Shared && p.InGame).ToList();
+        var leverStops = _routes.LeverStopSignals();
 
         var sends = new List<Task>(players.Count);
         foreach (var p in players)
@@ -108,6 +109,14 @@ public sealed class StateBroadcaster : BackgroundService
                 // 信号: 自分以外の在線共有の列車がいる軌道回路から
                 var others = shared.Where(o => o.ConnectionId != p.ConnectionId).SelectMany(o => o.TrackCircuits).ToHashSet();
                 state.Signals = _signals.Calculate(others);
+
+                // 単線区間の閉塞信号機は、方向てこと逆向きなら停止に固定する。
+                // 取り消した進路の信号機は、ゲームから進路が消えるのを待たずに、すぐ停止にする
+                foreach (var name in leverStops.Concat(_routes.StopSignals(p.ConnectionId)))
+                {
+                    state.Signals.RemoveAll(s => s.Name == name);
+                    state.Signals.Add(new SignalCommand { Name = name, Phase = "R" });
+                }
 
                 if (_routes.GetOutput(p.ConnectionId) is { } output)
                 {

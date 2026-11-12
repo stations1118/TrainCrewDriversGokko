@@ -9,6 +9,8 @@
 //              連動表の場内進路の鎖錠欄に、同じ番線から同じ方向への出発があるもの。入換（shunt）は書かなくても常に出発停止
 // turnback   … arrive に付ける。行き止まり（折り返し）として選べる番線。選ぶと列車はその駅で打ち切り、先の駅は扱わない
 //              （ダイヤグラムの線もその駅で切る）
+// shuntOut … 終着の列車の入換（from 番線 → label の線路。引上線・検車区など）。番線に入りきった列車が「入換要求」で使う。
+//              同じ番線に複数あれば、最初が列車のボタンの既定。ほかは管理画面の駅扱いから選ぶ
 // 送る順番（出発→場内 など）は、サーバーの側で決める。ここには「どの進路が必要か」だけを書く。
 {
   "stations": [
@@ -72,11 +74,15 @@
       "id": "TH70", "name": "浜園", "interlock": "浜園連動装置",
       "down": {
         "arrive": [ { "track": 2, "routes": ["5L"] } ],
-        "depart": [ { "track": 2, "routes": ["2L"] } ]
+        "depart": [ { "track": 2, "routes": ["2L"] } ],
+        // 始発の入換: 新大路方の本線（SST）から2番線へ。出発要求ボタンが「入換要求」になる
+        "shunt": [ { "fromCircuit": "TH70_SST", "fromLabel": "本線（新大路方）", "to": 2, "routes": ["12L"] } ]
       },
       "up": {
         "arrive": [ { "track": 1, "routes": ["1R"] } ],
-        "depart": [ { "track": 1, "routes": ["3R"] }, { "track": 2, "routes": ["4R"] } ]
+        "depart": [ { "track": 1, "routes": ["3R"] }, { "track": 2, "routes": ["4R"] } ],
+        // 浜園止めの入換: 1番線から新大路方の本線へ引き上げる（そのあと下り列車として、入換 12L で2番線へ）
+        "shuntOut": [ { "from": 1, "label": "本線（新大路方）", "routes": ["11R"] } ]
       },
       "notes": ["上りの2番線発（4R）は、下りで着いた列車の折り返し"]
     },
@@ -96,7 +102,9 @@
         "depart": [
           { "track": 1, "routes": ["8R"] }, { "track": 2, "routes": ["9R"] },
           { "track": 3, "routes": ["6R"] }, { "track": 4, "routes": ["7R"] }
-        ]
+        ],
+        // 新野崎止めの入換: 1・2番線から5番線（引上線）へ
+        "shuntOut": [ { "from": 1, "label": "5番線（引上線）", "routes": ["23R"] }, { "from": 2, "label": "5番線（引上線）", "routes": ["24R"] } ]
       },
       "notes": [
         "下りは場内が2段（10LC/10LD で 34T まで、4L/5L で番線へ）",
@@ -108,14 +116,15 @@
       "id": "TH66S", "name": "江ノ原信号場", "interlock": "江ノ原信号場連動装置",
       "down": {
         "through": ["5LE"],
-        "arrive": [ { "track": 10, "routes": ["5LD"], "note": "江ノ原検車区へ入区" } ],
+        "arrive": [ { "track": 10, "routes": ["5LD"], "turnback": true, "note": "江ノ原検車区へ入区。この先へは進めない" } ],
         "depart": [ { "track": 11, "routes": ["3L"] }, { "track": 12, "routes": ["4L"] } ],
         // 始発の入換: 13番線から 11・12番線へ（下りで出る列車）
         "shunt": [ { "from": 13, "to": 11, "routes": ["13RA"] }, { "from": 13, "to": 12, "routes": ["13RB"] } ]
       },
       "up": {
         "through": ["1RC"],
-        "arrive": [ { "track": 11, "routes": ["1RA"] }, { "track": 12, "routes": ["1RB"] } ],
+        // 11・12番線は行き止まり（新大路方へは出られない）。入ると江ノ原信号場で打ち切り
+        "arrive": [ { "track": 11, "routes": ["1RA"], "turnback": true }, { "track": 12, "routes": ["1RB"], "turnback": true } ],
         "depart": [ { "track": 13, "routes": ["2R"], "note": "江ノ原検車区から出区" } ],
         // 始発の入換: 10・11・12番線から 13番線へ（上りで出区する列車。先に入換で13番線に入ってから出発）
         "shunt": [
@@ -142,6 +151,11 @@
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LE", "29LD"], "requireFree": ["TH65_ET"], "via": "E線" },
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 3, "routes": ["32LC"] },
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LD"] }
+        ],
+        // 大道寺止めの入換: 3・4番線から入換Y線（既定）・E線へ
+        "shuntOut": [
+          { "from": 3, "label": "入換Y線", "routes": ["23RY"] }, { "from": 3, "label": "E線", "routes": ["23RE"] },
+          { "from": 4, "label": "入換Y線", "routes": ["24RY"] }, { "from": 4, "label": "E線", "routes": ["24RE"] }
         ]
       },
       "up": {
@@ -162,6 +176,12 @@
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 2, "routes": ["32LB"] },
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 3, "routes": ["32LC"] },
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LD"] }
+        ],
+        // 大道寺止めの入換: 1・2・3番線から入換Y線（既定）・E線へ
+        "shuntOut": [
+          { "from": 1, "label": "入換Y線", "routes": ["21RY"] },
+          { "from": 2, "label": "入換Y線", "routes": ["22RY"] }, { "from": 2, "label": "E線", "routes": ["22RE"] },
+          { "from": 3, "label": "入換Y線", "routes": ["23RY"] }, { "from": 3, "label": "E線", "routes": ["23RE"] }
         ]
       },
       "notes": [

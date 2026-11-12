@@ -50,6 +50,12 @@ public sealed class StationDirRoutes
     /// <summary>始発の入換（引上線・検車区などからホームへ）。</summary>
     public List<ShuntDef> Shunts { get; } = new();
 
+    /// <summary>
+    /// 終着の列車の入換（ホームから引上線・検車区などへ。TrackRoutes.json の shuntOut）。
+    /// 同じ番線に複数あれば、書いた順（最初が、列車の「入換要求」ボタンで使う既定）。
+    /// </summary>
+    public List<ShuntOutDef> ShuntOuts { get; } = new();
+
     /// <summary>出発停止の番線（その番線に入る場内進路を開通させている間は、出発を開通できない。TrackRoutes.json の arrive の departStop）。</summary>
     public HashSet<int> DepartStop { get; } = new();
 
@@ -68,6 +74,9 @@ public sealed class StationDirRoutes
 /// </summary>
 public sealed record ShuntDef(string FromLabel, int? From, string? FromCircuit, int To, List<RouteDef> Routes, List<string> RequireFree, string? Via);
 
+/// <summary>終着の列車の入換1つ（番線 From から、Label の線路へ）。</summary>
+public sealed record ShuntOutDef(int From, string Label, List<RouteDef> Routes);
+
 public sealed class StationDef
 {
     public required string Id { get; init; }
@@ -76,6 +85,12 @@ public sealed class StationDef
     public required bool SingleTrackStation { get; init; }
     public required bool RouteControl { get; init; }
     public Dictionary<Dir, StationDirRoutes> Routes { get; } = new() { [Dir.Down] = new(), [Dir.Up] = new() };
+
+    /// <summary>
+    /// 番線に入りきってから、出発を開通させるまで待つ秒数（RouteRules.json の departDelaySeconds。方向・番線ごと）。
+    /// 例: 大道寺の上り1番線は、入ってから120秒たつまで出発信号を出さない。
+    /// </summary>
+    public Dictionary<(Dir Dir, int Track), int> DepartDelay { get; } = new();
 
     /// <summary>番線 → その番線の軌道回路。</summary>
     public Dictionary<int, string> TrackCircuit { get; } = new();
@@ -92,6 +107,12 @@ public sealed class SignalDef
     public bool IsRepeater { get; init; }
     public IReadOnlyList<string> Next { get; init; } = [];
     public IReadOnlyList<string> Protects { get; init; } = [];
+
+    /// <summary>
+    /// 単線区間の閉塞信号機が従う方向てこ（区間の両端の駅の方向てこ。例: TH65_14F・TH64_11F ＝ 大道寺〜藤江）。
+    /// 方向てこがこの信号機の向き（Direction）でない間は、この信号機は停止のまま。
+    /// </summary>
+    public IReadOnlyList<string> DirectionRoutes { get; init; } = [];
 }
 
 /// <summary>待避する駅と、方向ごとの待避の番線。</summary>
@@ -113,6 +134,11 @@ public sealed class DiaTrain
 
     /// <summary>進路を扱う駅で終わるなら、その駅（江原検 → 江ノ原信号場）。路線の外で終わるなら null。</summary>
     public string? TerminalId { get; set; }
+
+    /// <summary>
+    /// 途中駅で列番が変わる列車の、次の列番と、変わる駅（例: 1651 は大道寺から 回1651）。なければ null。
+    /// </summary>
+    public (string Number, string StationId)? Next { get; set; }
 
     /// <summary>駅ID → 停車するか・番線（書かれていなければ null）。</summary>
     public Dictionary<string, (string StopType, int? Track)> Stations { get; } = new();
@@ -263,6 +289,9 @@ public sealed class RailData
                             target.Shunts.Add(new ShuntDef(label, from, fromCircuit, sh.GetProperty("to").GetInt32(), Resolve(List(sh, "routes")),
                                 List(sh, "requireFree"), via));
                         }
+                    if (e.TryGetProperty("shuntOut", out var outs))
+                        foreach (var so in outs.EnumerateArray())
+                            target.ShuntOuts.Add(new ShuntOutDef(so.GetProperty("from").GetInt32(), Str(so, "label"), Resolve(List(so, "routes"))));
                     foreach (var (prop, map) in new[] { ("arrive", target.Arrive), ("depart", target.Depart) })
                     {
                         if (!e.TryGetProperty(prop, out var arr)) continue;
@@ -313,6 +342,18 @@ public sealed class RailData
             data.PassingToleranceSeconds = root.GetProperty("passingToleranceSeconds").GetInt32();
             data.DefaultDwellSeconds = root.GetProperty("defaultDwellSeconds").GetInt32();
             if (root.TryGetProperty("minLoopDwellSeconds", out var ml)) data.MinLoopDwellSeconds = ml.GetInt32();
+
+            if (root.TryGetProperty("departDelaySeconds", out var dd))
+                foreach (var st in dd.EnumerateObject())
+                {
+                    if (!data.Stations.TryGetValue(st.Name, out var station)) continue;
+                    foreach (var (label, d) in new[] { ("下り", Dir.Down), ("上り", Dir.Up) })
+                    {
+                        if (!st.Value.TryGetProperty(label, out var m)) continue;
+                        foreach (var t in m.EnumerateObject())
+                            if (int.TryParse(t.Name, out var track)) station.DepartDelay[(d, track)] = t.Value.GetInt32();
+                    }
+                }
         }
 
         // ---- 信号（Signals.json / SignalTypes.json） ----
@@ -328,7 +369,8 @@ public sealed class RailData
                     Direction = dirText == "下り" ? Dir.Down : dirText == "上り" ? Dir.Up : null,
                     IsRepeater = s.TryGetProperty("isRepeater", out var rep) && rep.GetBoolean(),
                     Next = List(s, "next"),
-                    Protects = List(s, "protects")
+                    Protects = List(s, "protects"),
+                    DirectionRoutes = List(s, "directionRoutes")
                 };
             }
         }
@@ -364,6 +406,10 @@ public sealed class RailData
                     var type = Str(t, "type") == "試運転" ? "回送" : Str(t, "type");
                     data.Dia[number] = cur = new DiaTrain { Number = number, Type = type, TypeLabel = Str(t, "label") };
                 }
+
+                if (t.TryGetProperty("next", out var nx) && nx.ValueKind == JsonValueKind.Object
+                    && NormalizeTrain(Str(nx, "number")) is { Length: > 0 } nextNumber && Str(nx, "st") is { Length: > 0 } nextStation)
+                    cur.Next = (nextNumber, nextStation);
 
                 string? lastStation = null;
                 foreach (var s in t.GetProperty("stops").EnumerateArray())
