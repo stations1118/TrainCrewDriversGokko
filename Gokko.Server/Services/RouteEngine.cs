@@ -193,6 +193,12 @@ public sealed class RouteEngine
     {
         public required string ConnId { get; set; }
         public required string Train { get; init; }
+
+        /// <summary>
+        /// ゲームの列番（同じ列番の列車がほかにいて、サーバーでは Train に接尾辞 X・Y・Z を付けて呼び分けているときの、元の列番）。
+        /// ゲームへ送る進路の列番はこちら（そのプレイヤーのゲームには、その列車しかいないため）
+        /// </summary>
+        public string GameTrain { get; init; } = "";
         public required string Type { get; init; }
         public required Dir Dir { get; init; }
 
@@ -336,10 +342,13 @@ public sealed class RouteEngine
             foreach (var id in _renumber.Keys.Where(id => snapshot.All(p => p.ConnectionId != id || p.TrainNumber != _renumber[id].From)).ToList())
                 _renumber.Remove(id);
             _appear.Clear();
+            foreach (var id in _assigned.Keys.Where(id => snapshot.All(p => p.ConnectionId != id)).ToList()) _assigned.Remove(id);
             foreach (var p in snapshot)
             {
-                // サーバーで使う列番: 読み替えていれば、読み替えた先（ゲームから届く列番は元のまま）
-                var number = _renumber.TryGetValue(p.ConnectionId, out var rn) ? rn.To : p.TrainNumber;
+                // サーバーで使う列番: 読み替えていれば、読み替えた先（ゲームから届く列番は元のまま）。
+                // 同じ列番の列車がほかにいれば、2本目以降に接尾辞 X・Y・Z を付けて呼び分ける
+                var requested = _renumber.TryGetValue(p.ConnectionId, out var rn) ? rn.To : p.TrainNumber;
+                var number = UniqueNumber(p.ConnectionId, requested);
                 if (_runs.TryGetValue(p.ConnectionId, out var existing) && existing.Train == number)
                 {
                     existing.Player = p;
@@ -364,10 +373,10 @@ public sealed class RouteEngine
                 }
 
                 if (TrainInfo(number) is not { } info) continue;
-                var dia = _data.DiaOf(number);
+                var dia = _data.DiaOf(number) ?? _data.DiaOf(requested); // 接尾辞を付けた列車は、元の列番のダイヤで走る
                 _runs[p.ConnectionId] = new TrainRun
                 {
-                    ConnId = p.ConnectionId, Train = number, Type = dia?.Type ?? info.Type, Dir = info.Dir, Player = p,
+                    ConnId = p.ConnectionId, Train = number, GameTrain = requested, Type = dia?.Type ?? info.Type, Dir = info.Dir, Player = p,
                     Dia = dia, Indicator = dia != null ? IndicatorOf(dia.TypeLabel) : ""
                 };
             }
@@ -512,6 +521,35 @@ public sealed class RouteEngine
         run.ConnId = to;
         _runs[to] = run;
         if (_renumber.Remove(from, out var rn)) _renumber[to] = rn;
+        if (_assigned.Remove(from, out var asg)) _assigned[to] = asg;
+    }
+
+    /// <summary>接続ごとに割り振ったサーバーの列番（ゲームの列番 → サーバーの列番）。ゲームの列番が変わるまで同じものを使う。</summary>
+    private readonly Dictionary<string, (string Game, string Server)> _assigned = new();
+
+    /// <summary>
+    /// 同じ列番の列車がほかにいるとき、2本目以降のサーバーの列番を決める（列車番号の付け方の「接尾辞」: 2本目 X、3本目 Y、4本目 Z）。
+    /// 例: 3643K が4本 → 3643K・3643KX・3643KY・3643KZ。先に走っていた列車が元の列番のまま。
+    /// ダイヤに別の列車としてある列番（1683CX など）と、ほかの接続が使っている列番は使わない。全部ふさがっていれば「#2」などを付ける。
+    /// 進路・集中扱いの指示・順序はサーバーの列番で別々に扱い、ゲームへ送る進路の列番は元の列番のまま。
+    /// </summary>
+    private string UniqueNumber(string conn, string requested)
+    {
+        if (_assigned.TryGetValue(conn, out var a) && a.Game == requested) return a.Server;
+        var used = _runs.Values.Where(r => r.ConnId != conn).Select(r => r.Train)
+            .Concat(_assigned.Where(kv => kv.Key != conn).Select(kv => kv.Value.Server)).ToHashSet();
+        var server = requested;
+        if (used.Contains(requested))
+        {
+            var stem = Regex.Replace(requested, "[XYZ]$", "");
+            server = new[] { "X", "Y", "Z" }.Select(x => stem + x)
+                         .FirstOrDefault(c => c != requested && !used.Contains(c) && _data.DiaOf(c) == null)
+                     ?? Enumerable.Range(2, 98).Select(i => $"{requested}#{i}").First(c => !used.Contains(c));
+            _log.Note($"同じ列番: {requested} がすでに走っているため、サーバーでは {server} として扱います");
+        }
+
+        _assigned[conn] = (requested, server);
+        return server;
     }
     private readonly List<string> _routeLog = new();
 
@@ -626,15 +664,25 @@ public sealed class RouteEngine
         lock (_lock) return RunByTrain(train)?.Dir ?? TrainInfo(train)?.Dir;
     }
 
+    /// <summary>
+    /// 列番から種別と向きを読む（列車番号の付け方: 接頭辞 + 始発時刻2桁 + 運番下2桁 + 社局 + 種別 + 接尾辞）。
+    /// ・呼び分けの「#2」など、接尾辞（X・Y・Z）は除く
+    /// ・向き: 数字の最後の桁（奇数＝下り、偶数＝上り）
+    /// ・種別: 接頭辞が「回」（定期回送）「試」（試運転）なら回送。それ以外（「臨」を含む）は、数字のあとの文字の最後（社局 T・S の後ろ）
+    ///   A＝特急、B＝急行、C＝準急、D＝区急、K＝快急、なし（社局 T・S だけも）＝普通
+    /// </summary>
     private static (string Type, Dir Dir)? TrainInfo(string train)
     {
-        var digits = Regex.Match(train, @"(\d+)(?!.*\d)");
+        var body = Regex.Replace(train.Trim(), @"#\d+$", "");
+        body = Regex.Replace(body, "[XYZ]$", "", RegexOptions.IgnoreCase);
+        var digits = Regex.Match(body, @"(\d+)(?!.*\d)");
         if (!digits.Success) return null;
         var dir = int.Parse(digits.Groups[1].Value[^1..]) % 2 == 1 ? Dir.Down : Dir.Up;
         string type;
-        if (train.StartsWith("回")) type = "回送";
+        if (body.StartsWith("回") || body.StartsWith("試")) type = "回送";
+        else if (body.Length == 0) type = "普通";
         else
-            type = char.ToUpperInvariant(train[^1]) switch
+            type = char.ToUpperInvariant(body[^1]) switch
             {
                 'A' => "特急", 'B' => "急行", 'C' => "準急", 'D' => "区急", 'K' => "快急", _ => "普通"
             };
@@ -2087,7 +2135,7 @@ public sealed class RouteEngine
                     Id = r.Id, Interlocking = r.Def.Interlock, RouteName = r.Def.Name,
                     Indicator = r.Def.IsDepartureSignal ? run.Indicator : r.Def.Indicator, // 出発は列選（ダイヤの種別表記。なければクライアントがゲームの種別から）
                     UseTrainType = r.Def.IsDepartureSignal,
-                    TrainNumber = run.Train,
+                    TrainNumber = run.GameTrain.Length > 0 ? run.GameTrain : run.Train, // ゲームには元の列番で送る
                     StopType = r.Station.DepartStop && r.Station.StopType == "通過" ? "停車" : r.Station.StopType // 出発停止の番線では止める
                 }).ToList();
 
@@ -2132,7 +2180,9 @@ public sealed class RouteEngine
             var label = shunting ? "入換要求" : "出発要求";
             // 終着の列車: 番線に入りきっていて、引上げの入換があれば「入換要求」
             if (ShuntOutStation(run) != null) (canDepart, label) = (true, "入換要求");
-            var message = run.HasPosition ? null : "位置が分かりません（運転画面で列車を動かすと分かります）";
+            var message = !run.HasPosition ? "位置が分かりません（運転画面で列車を動かすと分かります）"
+                : run.GameTrain.Length > 0 && run.Train != run.GameTrain ? $"同じ列番の列車が走っているため、サーバーでは {run.Train} として扱います"
+                : null;
             _outputs[run.ConnId] = new Output(routes, deletes, plan, canDepart, label, message);
         }
 

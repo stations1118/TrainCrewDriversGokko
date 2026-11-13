@@ -283,7 +283,10 @@
     const t = String(train || "");
     const gray = { bg: "#bebebe", fg: "#000" };
     if (/^[回試]/.test(t)) return gray;
-    const last = t.slice(-1).toUpperCase();
+    // 接尾辞（X・Y・Z。同じ列番の2本目以降）と呼び分けの「#2」など、種別の文字がないときの社局（T・S）は除いて、最後の文字で種別を決める
+    // （1237T・1234S は普通、1238TB は急行、1235SC は準急）
+    const body = t.replace(/#\d+$/, "").replace(/[XYZ]$/i, "").replace(/(\d)[TS]$/i, "$1");
+    const last = body.slice(-1).toUpperCase();
     if (/[0-9]/.test(last)) return { bg: "#ffffff", fg: "#000" };
     return ({
       C: { bg: "#0080ff", fg: "#fff" }, D: { bg: "#0da900", fg: "#fff" }, B: { bg: "#ff8000", fg: "#fff" },
