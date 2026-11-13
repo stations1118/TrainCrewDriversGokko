@@ -35,6 +35,8 @@ public static class AdminEndpoints
 
     public sealed record IdRequest(string Id);
 
+    public sealed record ModeRequest(bool Dia);
+
     /// <summary>手動進路（管理者用）。進路名を直接指定する。</summary>
     public sealed record ManualRouteRequest(string Train, string Interlock, string Route, bool Set);
 
@@ -254,6 +256,17 @@ public static class AdminEndpoints
         g.MapPost("/route/manual-route", (ManualRouteRequest req, RouteEngine engine) =>
             Results.Ok(new { ok = true, message = engine.ManualRoute(req.Train ?? "", req.Interlock ?? "", req.Route ?? "", req.Set) }));
 
+        // 運転モード（フリー運転・ダイヤ運転）の切り替え
+        g.MapPost("/mode", (ModeRequest req, CentralControl central) =>
+        {
+            central.SetDiaMode(req.Dia);
+            return Results.Ok(new { ok = true });
+        });
+
+        // つながっている参加者を強制的に切断する（次の報告のときに接続を切る）
+        g.MapPost("/players/kick", (IdRequest req, PlayerRegistry players) =>
+            players.Kick(req.Id) ? Results.Ok(new { ok = true }) : Results.NotFound(new { message = "その参加者はもういません" }));
+
         // 継続乗務で残している在線を消す
         g.MapPost("/continue/delete", (IdRequest req, PlayerRegistry players) =>
             players.RemoveGhost(req.Id) ? Results.Ok(new { ok = true }) : Results.NotFound(new { message = "その継続乗務申請はもうありません" }));
@@ -283,6 +296,18 @@ public static class AdminEndpoints
                 until = x.UntilUtc
             }),
             appear = engine.AppearView(),
+            diaMode = central.DiaMode,
+            // つながっている参加者（強制切断の一覧用）
+            players = players.Snapshot().Where(p => !p.ConnectionId.StartsWith(PlayerRegistry.GhostPrefix)).OrderBy(p => p.JoinedUtc).Select(p => new
+            {
+                id = p.ConnectionId,
+                train = p.TrainNumber,
+                typed = p.TrainNumberTyped,
+                mode = p.Mode == Gokko.Common.ShareMode.Shared ? "在線共有" : "特発のみ",
+                inGame = p.InGame,
+                position = rail.Line.DescribeZones(p.Zones),
+                appear = p.AppearReason
+            }),
             // 駅の扱いと自動退避の数値
             stationModes = rail.ControlStations.Select(s => new { id = s.Id, name = s.Name, central = central.IsCentral(s.Id) }),
             passing = new { marginSeconds = rail.PassingMarginSeconds, toleranceSeconds = rail.PassingToleranceSeconds }

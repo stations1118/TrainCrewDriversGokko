@@ -436,7 +436,8 @@ public sealed class MainForm : Form
                     TrainCrewConnected = gameConnected,
                     InGame = gameConnected && game?.InGame == true,
                     TrackCircuits = gameConnected && game != null ? game.TrackCircuits : new List<string>(),
-                    ContinueDuty = shared && _continueButton.Checked
+                    ContinueDuty = shared && _continueButton.Checked,
+                    TrainNumberTyped = _confirmedTrain.Length > 0 // 入力欄の列番か（ダイヤ運転中は手入力が要る）
                 };
                 if (shared && gameConnected && game != null)
                 {
@@ -605,8 +606,21 @@ public sealed class MainForm : Form
             _departButton.ForeColor = _departButton.Enabled ? Color.White : SystemColors.GrayText;
         }
 
+        // ダイヤ運転中は継続乗務を常に入（ボタンは押せない）。フリー運転に戻ったら、元の入・切に戻す
+        var dia = shared && state?.DiaMode == true;
+        if (dia != _diaShown)
+        {
+            _diaShown = dia;
+            if (dia) { _continueBefore = _continueButton.Checked; _continueButton.Checked = true; }
+            else _continueButton.Checked = _continueBefore;
+            _continueButton.Enabled = !dia;
+        }
+
         if (DateTime.UtcNow > _messageUntil) _messageLabel.Text = "";
     }
+
+    private bool _diaShown;
+    private bool _continueBefore;
 
     private static void IgnoreWheel(object? sender, MouseEventArgs e)
     {
@@ -662,7 +676,7 @@ public sealed class MainForm : Form
             if (!(_planGrid.CurrentCell == trackCell && _planGrid.IsCurrentCellInEditMode) && !Equals(trackCell.Value, trackText))
                 trackCell.Value = trackText;
             row.DefaultCellStyle.BackColor = p.Status.Contains("待") ? Color.FromArgb(255, 245, 225)
-                : p.Status.Contains("開通") ? Color.FromArgb(232, 245, 233) : SystemColors.Window;
+                : p.Status.Contains("開通") || p.Status == "進路確定" ? Color.FromArgb(232, 245, 233) : SystemColors.Window;
         }
     }
 

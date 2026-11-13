@@ -61,7 +61,8 @@
       <button id="clockPause">停止</button>
       <button id="clockResume">再開</button>
     </div>
-    <div class="muted">設定した時刻から実時間と同じ速さで進みます。今はフリーモードのため、進路の開通には使いません（ダイヤモードで使う予定）。</div>
+    <div class="muted">設定した時刻から実時間と同じ速さで進みます。ダイヤ運転のときに、時刻の基準として使います。</div>
+    <div id="mode" style="margin-top:10px"></div>
   </section>
 
   <section>
@@ -264,13 +265,14 @@
   const orders = GokkoDia.orderEditor({ el: $("orders"), act });
   const queue = GokkoDia.queuePanel({ el: $("queue"), api });
   const continues = GokkoDia.continuePanel({ el: $("continues"), act });
+  const mode = GokkoDia.modePanel({ el: $("mode"), act });
   const trainSettings = GokkoDia.trainEditor({ el: $("trains"), act });
   const stationModes = GokkoDia.stationModePanel({ el: $("stationModes"), act, help: true });
   const passing = GokkoDia.passingPanel({ el: $("passing"), act, help: true });
   const manual = GokkoDia.manualRoutePanel({ el: $("manual"), api, after: () => refresh(), help: true });
   let lastRoutes = null;
   function renderDiagram(d) {
-    orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); stationModes.update(d); passing.update(d);
+    orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); mode.update(d); stationModes.update(d); passing.update(d);
   }
 
   async function refresh() {

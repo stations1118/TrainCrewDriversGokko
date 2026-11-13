@@ -48,6 +48,7 @@
 
 <main>
   <section class="wide">
+    <div id="mode" style="margin-bottom:8px"></div>
     <div id="diagramFilter" class="row"></div>
     <div id="diagram" style="position:relative; touch-action:none"></div>
     <div id="diagramTip" class="muted" style="min-height:1.5em"></div>
@@ -127,12 +128,13 @@
   const trainSettings = GokkoDia.trainEditor({ el: $("trains"), act });
   const queue = GokkoDia.queuePanel({ el: $("queue"), api, help: false });
   const continues = GokkoDia.continuePanel({ el: $("continues"), act, help: false });
+  const mode = GokkoDia.modePanel({ el: $("mode"), act, help: false });
   const stationModes = GokkoDia.stationModePanel({ el: $("stationModes"), act });
   const passing = GokkoDia.passingPanel({ el: $("passing"), act });
   // 手動進路構成: 不用意に取り消さないよう、取消のたびに「通告は完了したか？」を確かめる（開通は確かめない）
   const manual = GokkoDia.manualRoutePanel({ el: $("manual"), api, after: () => refresh(), confirm: true });
   function renderDiagram(d) {
-    orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); stationModes.update(d); passing.update(d);
+    orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); mode.update(d); stationModes.update(d); passing.update(d);
   }
 
   // 作動中の特発（解除だけ）

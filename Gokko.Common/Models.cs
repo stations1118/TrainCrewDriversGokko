@@ -72,6 +72,9 @@ public sealed class ClientReport
     /// （同じ番線から次のシナリオを始めると、その列番の列車として続ける）。
     /// </summary>
     public bool ContinueDuty { get; set; }
+
+    /// <summary>列車番号を入力欄で手入力したか（false ならシナリオの列番）。ダイヤ運転中は、手入力していない列車を出現させない。</summary>
+    public bool TrainNumberTyped { get; set; }
 }
 
 /// <summary>停車駅1つ分（ゲームの stationList の要素から、時刻を除いたもの）。</summary>
@@ -99,6 +102,9 @@ public sealed class RouteKey
 public sealed class ClientState
 {
     public DateTimeOffset ServerTime { get; set; }
+
+    /// <summary>ダイヤ運転中か（false ならフリー運転）。ダイヤ運転中は列車番号の手入力が要り、継続乗務は常に入。</summary>
+    public bool DiaMode { get; set; }
 
     /// <summary>ロープレ上の時刻（"HH:mm:ss"）。管理画面で設定するまでは null。</summary>
     public string? GameTime { get; set; }
@@ -224,6 +230,9 @@ public sealed class StationPlanView
     /// <summary>番線が確定して、もう選べないか。</summary>
     public bool Locked { get; set; }
 
-    /// <summary>状態（未開通 / 場内開通 / 出発待ち（理由）/ 開通 / 通過済み など）。</summary>
+    /// <summary>運転士に見せる状態: 「出発要求待ち」（入換なら「入換要求待ち」）「進路確定」「進路未確定」の3段階だけ。</summary>
     public string Status { get; set; } = "";
+
+    /// <summary>詳しい状態（待ちの理由など。管理・試験用。クライアントの画面には出さない）。</summary>
+    public string Detail { get; set; } = "";
 }

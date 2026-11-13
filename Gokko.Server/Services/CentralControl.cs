@@ -148,6 +148,27 @@ public sealed class CentralControl
         Changed?.Invoke($"集中扱い: {train} {station} 発車時刻 → {(utc?.ToLocalTime().ToString("HH:mm:ss") ?? "指定解除")}");
     }
 
+    // ---- 運転モード（フリー運転・ダイヤ運転） ----
+
+    private bool _diaMode;
+
+    /// <summary>ダイヤ運転中か。ダイヤ運転中は、列車番号の手入力が要り、継続乗務は常に入（時間で消さない）。</summary>
+    public bool DiaMode
+    {
+        get { lock (_lock) return _diaMode; }
+    }
+
+    public void SetDiaMode(bool dia)
+    {
+        lock (_lock)
+        {
+            if (_diaMode == dia) return;
+            _diaMode = dia;
+        }
+
+        Changed?.Invoke($"運転モード: {(dia ? "ダイヤ運転" : "フリー運転")}に切り替え");
+    }
+
     // ---- 臨時停車・臨時通過・打ち切り（サーバーの扱いだけ。ゲームの停車駅は変わらない） ----
 
     private readonly Dictionary<(string Train, string Station), string> _stops = new();

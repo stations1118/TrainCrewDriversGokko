@@ -22,9 +22,12 @@ public sealed class StateBroadcaster : BackgroundService
     private readonly ILogger<StateBroadcaster> _logger;
     private readonly SemaphoreSlim _wake = new(0, 1);
 
+    private readonly CentralControl _central;
+
     public StateBroadcaster(IHubContext<GameHub> hub, PlayerRegistry players, IncidentManager incidents, GameClock clock,
-        GameData data, RouteEngine routes, SignalCalculator signals, ServerOptions options, ILogger<StateBroadcaster> logger)
+        GameData data, RouteEngine routes, SignalCalculator signals, ServerOptions options, CentralControl central, ILogger<StateBroadcaster> logger)
     {
+        _central = central;
         _hub = hub;
         _players = players;
         _incidents = incidents;
@@ -94,6 +97,7 @@ public sealed class StateBroadcaster : BackgroundService
             var state = new ClientState
             {
                 ServerTime = now,
+                DiaMode = _central.DiaMode,
                 GameTime = gameTime,
                 Position = _data.Line.DescribeZones(p.Zones),
                 ActiveCrossings = activeNames,

@@ -37,6 +37,9 @@ public sealed class PlayerInfo
     /// <summary>継続乗務ボタンが押されているか（最後の報告）。</summary>
     public bool ContinueDuty { get; set; }
 
+    /// <summary>列車番号を手入力したか（最後の報告）。ダイヤ運転中は、手入力していない列車を出現させない。</summary>
+    public bool TrainNumberTyped { get; set; }
+
 
     /// <summary>出現待ちの理由（継続乗務の開始番線が違う）。あれば、サーバーの列車として扱わない。</summary>
     public string? AppearReason { get; set; }
@@ -57,8 +60,25 @@ public sealed class PlayerInfo
 }
 
 /// <summary>参加中のプレイヤーの一覧。SignalR の接続ごとに1人。</summary>
-public sealed class PlayerRegistry(GameData data)
+public sealed class PlayerRegistry(GameData data, CentralControl central)
 {
+    /// <summary>ダイヤ運転中に列車番号を手入力していない列車の、出現待ちの理由。</summary>
+    public const string NeedTypedNumber = "ダイヤ運転中は列車番号を手入力してください（シナリオの列番は使いません）";
+
+    // ---- 強制切断（管理画面・ダイヤグラムの設定画面から） ----
+    private readonly ConcurrentDictionary<string, bool> _kicked = new();
+
+    /// <summary>参加者を強制的に切断する（次の報告のときに接続を切る）。参加していなければ false。</summary>
+    public bool Kick(string connectionId)
+    {
+        if (!_players.ContainsKey(connectionId)) return false;
+        _kicked[connectionId] = true;
+        Changed?.Invoke($"強制切断: {(_players.TryGetValue(connectionId, out var p) ? p.TrainNumber : "")}（{connectionId[..Math.Min(6, connectionId.Length)]}）");
+        return true;
+    }
+
+    public bool IsKicked(string connectionId) => _kicked.ContainsKey(connectionId);
+
     private const int MaxCircuits = 200;
     private const int MaxNameLength = 64;
 
@@ -77,9 +97,11 @@ public sealed class PlayerRegistry(GameData data)
     /// <summary>退出。継続乗務ボタンを押したまま運転中だったら、在線を残す（つなぎ直して同じ番線から始めれば引き継ぐ）。</summary>
     public void Remove(string connectionId)
     {
+        var kicked = _kicked.TryRemove(connectionId, out _);
         if (!_players.TryRemove(connectionId, out var p)) return;
         lock (p)
-            if (p.ContinueDuty && p.Mode == ShareMode.Shared && p.InGame && p.TrackCircuits.Count > 0 && p.TrainNumber.Length > 0)
+            if (!kicked && (p.ContinueDuty || central.DiaMode) && p.Mode == ShareMode.Shared && p.InGame && p.TrackCircuits.Count > 0 && p.TrainNumber.Length > 0
+                && p.AppearReason == null)
                 AddGhost(p);
     }
 
@@ -139,6 +161,7 @@ public sealed class PlayerRegistry(GameData data)
 
     private void ExpireGhosts()
     {
+        if (central.DiaMode) return; // ダイヤ運転中は時間で消さない（管理画面・ダイヤグラムの設定画面から消す）
         var now = DateTime.UtcNow;
         foreach (var g in _ghosts.Values.Where(g => g.UntilUtc <= now).ToList())
         {
@@ -161,10 +184,10 @@ public sealed class PlayerRegistry(GameData data)
         lock (_ghosts)
         {
             foreach (var old in _ghosts.Values.Where(g => g.Owner == from.ConnectionId).ToList()) _ghosts.Remove(old.Id);
-            _ghosts[id] = new Ghost(id, from.ConnectionId, info, now, now + GhostLife);
+            _ghosts[id] = new Ghost(id, from.ConnectionId, info, now, central.DiaMode ? DateTime.MaxValue : now + GhostLife);
         }
 
-        Changed?.Invoke($"継続乗務: {info.TrainNumber} の在線を5分間残します");
+        Changed?.Invoke(central.DiaMode ? $"継続乗務: {info.TrainNumber} の在線を残します（ダイヤ運転中は消すまで残す）" : $"継続乗務: {info.TrainNumber} の在線を5分間残します");
     }
 
     /// <summary>
@@ -210,11 +233,17 @@ public sealed class PlayerRegistry(GameData data)
             // 継続乗務: ボタンを押したまま運転画面を出たら、最後の在線を残す。運転画面に入ったら、残した在線を引き継ぐか確かめる
             var wasIn = p.InGame && p.TrackCircuits.Count > 0;
             var nowIn = report.InGame && circuits.Count > 0;
-            if (wasIn && !nowIn && p.Mode == ShareMode.Shared && (p.ContinueDuty || report.ContinueDuty) && p.TrainNumber.Length > 0)
+            // ダイヤ運転中は、継続乗務ボタンによらず残す（出現待ちだった列車は、在線がないので残さない）
+            if (wasIn && !nowIn && p.Mode == ShareMode.Shared && (p.ContinueDuty || report.ContinueDuty || central.DiaMode) && p.TrainNumber.Length > 0
+                && p.AppearReason == null)
                 AddGhost(p);
             p.ContinueDuty = report.ContinueDuty;
+            p.TrainNumberTyped = report.TrainNumberTyped;
             var number = Truncate(NormalizeName(report.TrainNumber));
+            // ダイヤ運転中に列車番号を手入力していなければ、出現待ち（残した在線は引き継がず、消しも踏みつぶしもしない）
+            var mustType = central.DiaMode && p.Mode == ShareMode.Shared && !report.TrainNumberTyped;
             if (!nowIn) p.AppearReason = null;
+            else if (mustType) p.AppearReason = NeedTypedNumber;
             else if (p.Mode == ShareMode.Shared && (!wasIn || p.AppearReason != null))
             {
                 p.TrackCircuits = circuits;

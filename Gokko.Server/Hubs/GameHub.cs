@@ -44,6 +44,14 @@ public sealed class GameHub(
     [HubMethodName(Protocol.Report)]
     public bool Report(ClientReport report)
     {
+        // 管理画面・ダイヤグラムの設定画面から強制切断された参加者は、ここで接続を切る
+        if (players.IsKicked(Context.ConnectionId))
+        {
+            logger.LogInformation("強制切断 {ConnectionId}", Context.ConnectionId);
+            Context.Abort();
+            return false;
+        }
+
         return players.ApplyReport(Context.ConnectionId, report);
     }
 

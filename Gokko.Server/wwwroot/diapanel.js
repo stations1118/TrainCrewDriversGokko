@@ -581,26 +581,65 @@
 
   // 継続乗務申請（運転画面を出たあとも残している在線。5分で消える）と、出現待ちの列車
   function continuePanel({ el, act, help = true }) {
+    // 誤操作を防ぐため、在線を消す・参加者を切断するのどちらも「はい／いいえ」で確かめる
     el.addEventListener("click", async (ev) => {
-      const b = ev.target.closest("button[data-ghost]");
-      if (!b) return;
-      if (!confirm(`${b.dataset.train} の継続乗務申請を消して、残している在線をなくしますか？`)) return;
-      await act("POST", "/continue/delete", { id: b.dataset.ghost });
+      const g = ev.target.closest("button[data-ghost]");
+      if (g) {
+        if (await ask("残している在線を消しますか？", `${g.dataset.train} の継続乗務申請（残している在線）を消します。元に戻せません`))
+          await act("POST", "/continue/delete", { id: g.dataset.ghost });
+        return;
+      }
+      const k = ev.target.closest("button[data-kick]");
+      if (k && await ask("この参加者を切断しますか？", `${k.dataset.train || "列番なし"} の接続を切ります（その人のクライアントは、つなぎ直すまで切れたままになります）`))
+        await act("POST", "/players/kick", { id: k.dataset.kick });
     });
     return {
       update(d) {
-        const c = (d && d.continues) || [], a = (d && d.appear) || [];
+        const c = (d && d.continues) || [], a = (d && d.appear) || [], ps = (d && d.players) || [];
         const left = (t) => Math.max(0, Math.round((Date.parse(t) - Date.now()) / 1000));
+        const until = (x) => new Date(x.until).getFullYear() > 9000 ? "消すまで残す（ダイヤ運転中）"
+          : `あと${Math.floor(left(x.until) / 60)}分${left(x.until) % 60}秒`;
         const html = `<div class="row" style="margin-bottom:4px"><b>継続乗務申請</b>
-            ${help ? `<span class="muted">（運転画面を出たあとも在線を残している列車。同じ番線から次のシナリオを始めると、新しいシナリオの列番で始めます）</span>` : ""}</div>
+            ${help ? `<span class="muted">（運転画面を出たあとも在線を残している列車。同じ番線から次のシナリオを始めると、新しいシナリオの列番で始めます。ダイヤ運転中は必ず残し、消すまで残します）</span>` : ""}</div>
           ${c.length === 0 ? `<div class="muted">継続乗務申請はありません</div>` : `<table>${c.map((x) =>
             `<tr><td><b>${esc(x.train)}</b></td><td class="muted">${esc(x.circuits.join(" "))}</td>
-              <td>${hhmm(Date.parse(x.since), true)} から・あと${Math.floor(left(x.until) / 60)}分${left(x.until) % 60}秒</td>
-              <td><button data-ghost="${esc(x.id)}" data-train="${esc(x.train)}">消す</button></td></tr>`).join("")}</table>`}
+              <td>${hhmm(Date.parse(x.since), true)} から・${until(x)}</td>
+              <td><button class="danger" data-ghost="${esc(x.id)}" data-train="${esc(x.train)}">在線を消す</button></td></tr>`).join("")}</table>`}
           <div class="row" style="margin:8px 0 4px"><b>出現待ち</b>
-            ${help ? `<span class="muted">（他の列車の在線・進路の上に現れた列車。先の列車が抜けるまで、サーバーの列車として扱いません）</span>` : ""}</div>
+            ${help ? `<span class="muted">（他の列車の在線・進路の上に現れた列車、ダイヤ運転中に列車番号を手入力していない列車。サーバーの列車として扱いません）</span>` : ""}</div>
           ${a.length === 0 ? `<div class="muted">出現待ちの列車はいません</div>` : `<table>${a.map((x) =>
-            `<tr><td><b>${esc(x.train)}</b></td><td class="muted">${esc(x.reason)}</td></tr>`).join("")}</table>`}`;
+            `<tr><td><b>${esc(x.train)}</b></td><td class="muted">${esc(x.reason)}</td></tr>`).join("")}</table>`}
+          <div class="row" style="margin:8px 0 4px"><b>つながっている参加者</b>
+            ${help ? `<span class="muted">（切断すると、その人のクライアントの接続を切ります）</span>` : ""}</div>
+          ${ps.length === 0 ? `<div class="muted">参加者はいません</div>` : `<table>${ps.map((p) =>
+            `<tr><td><b>${esc(p.train || "（列番なし）")}</b>${p.train && !p.typed ? ` <span class="muted">（シナリオの列番）</span>` : ""}</td>
+              <td class="muted">${esc(p.mode)}・${p.inGame ? esc(p.position || "位置不明") : "運転画面の外"}${p.appear ? "・出現待ち" : ""}</td>
+              <td><button class="danger" data-kick="${esc(p.id)}" data-train="${esc(p.train)}">切断</button></td></tr>`).join("")}</table>`}`;
+        if (el.dataset.key === html) return;
+        el.dataset.key = html;
+        el.innerHTML = html;
+      }
+    };
+  }
+
+  // ---- 運転モード（フリー運転・ダイヤ運転）の切り替え。切り替えるときは「はい／いいえ」で確かめる ----
+  function modePanel({ el, act, help = true }) {
+    el.addEventListener("click", async (ev) => {
+      const b = ev.target.closest("button[data-dia]");
+      if (!b) return;
+      const dia = b.dataset.dia === "1";
+      if (await ask(`${dia ? "ダイヤ運転" : "フリー運転"}に切り替えますか？`,
+        dia ? "ダイヤ運転中は、列車番号を手入力していない列車を出現させず、継続乗務は必ず残します" : "列車番号の手入力は要らなくなり、継続乗務は5分で消えるようになります"))
+        await act("POST", "/mode", { dia });
+    });
+    return {
+      update(d) {
+        const dia = !!(d && d.diaMode);
+        const html = `<div class="row" style="margin:0">
+            <b>運転モード</b>
+            <button data-dia="0" class="${dia ? "" : "primary"}" ${dia ? "" : "disabled"}>フリー運転</button>
+            <button data-dia="1" class="${dia ? "primary" : ""}" ${dia ? "disabled" : ""}>ダイヤ運転</button>
+            ${help ? `<span class="muted">ダイヤ運転中は、列車番号の手入力が要り、継続乗務は必ず残します</span>` : ""}</div>`;
         if (el.dataset.key === html) return;
         el.dataset.key = html;
         el.innerHTML = html;
@@ -744,5 +783,5 @@
     };
   }
 
-  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, diagramView, queuePanel, continuePanel, stationModePanel, passingPanel, manualRoutePanel, ask, TYPE_COLORS, esc, hhmm };
+  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, diagramView, queuePanel, continuePanel, modePanel, stationModePanel, passingPanel, manualRoutePanel, ask, TYPE_COLORS, esc, hhmm };
 })();

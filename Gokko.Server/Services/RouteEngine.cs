@@ -2228,7 +2228,8 @@ public sealed class RouteEngine
                 TrackOptions = s.Options,
                 TrackSource = s.TrackSource,
                 Locked = s.Locked,
-                Status = Status(run, s)
+                Status = ClientStatus(run, s), // 運転士には3段階だけ
+                Detail = Status(run, s)        // 詳しい状態（画面には出さない）
             }).ToList();
 
             var start = run.Stations.FirstOrDefault(s => s.IsStart && !s.Done);
@@ -2245,6 +2246,35 @@ public sealed class RouteEngine
 
         foreach (var (conn, a) in _appear)
             _outputs[conn] = new Output(new(), new(), new(), false, "出発要求", $"出現待ち: {a.Reason}");
+    }
+
+    /// <summary>
+    /// クライアント（運転士）に出す状態。運転中は目の前の信号機しか見えないので、進路の中身（待ちの理由・抑止・順番など）は伏せ、
+    /// 「出発要求待ち」（引上線からなら「入換要求待ち」）「進路確定」「進路未確定」の3段階だけにする。
+    /// 進路確定: その駅でその列車に要る進路（場内、終着でなければ出発。通過なら両方）が全部開通した。管理画面には Status を出す
+    /// </summary>
+    private string ClientStatus(TrainRun run, StationRun s)
+    {
+        bool Opened(GroupState g, List<RouteDef> path)
+        {
+            if (path.Count == 0) return true;
+            if (g != GroupState.Requested) return false;
+            var reqs = run.Requests.Where(r => r.Station == s && path.Contains(r.Def) && !r.Released && r.CancelledUtc == null).ToList();
+            return reqs.Count > 0 && reqs.All(r => r.Seen || Acknowledged(run, r));
+        }
+
+        if (IsCutOff(run, s)) return "進路未確定";
+        if (s.IsStart && s.ShuntFrom != null)
+            return !s.ShuntRequested ? "入換要求待ち"
+                : s.Shunt == GroupState.Requested && run.Requests.Where(r => r.Station == s && !r.Departure && !r.Released).All(r => r.Seen || Acknowledged(run, r)) ? "進路確定" : "進路未確定";
+        if (ShuntOutOptions(run, s).Count > 0 && (s.IsStart || FullyInTrack(run, s)))
+            return s.ShuntOutChoice == null ? "入換要求待ち" : s.ShuntOut == GroupState.Requested ? "進路確定" : "進路未確定";
+        if (s.IsStart && !s.Locked) return s.Terminal ? "進路確定" : "出発要求待ち";
+        if (!s.Locked) return "進路未確定";
+        var needDepart = !s.Terminal && !IsTurnbackTrack(run, s);
+        var arriveOk = s.IsStart || Opened(s.Arrive, s.ArrivePath);
+        var departOk = !needDepart || Opened(s.Depart, s.DepartPath);
+        return arriveOk && departOk ? "進路確定" : "進路未確定";
     }
 
     private string Status(TrainRun run, StationRun s)
