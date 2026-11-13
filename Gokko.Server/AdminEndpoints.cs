@@ -219,7 +219,7 @@ public static class AdminEndpoints
             return Results.Ok(new { ok = true });
         });
 
-        // 手動進路構成（管理画面・ダイヤグラムの設定画面。設定画面は操作のたびに「通告は完了したか？」を確かめる）: 駅ごとの全進路の一覧と、進路名を直接指定した開通・取消
+        // 手動進路構成（管理画面・ダイヤグラムの設定画面。設定画面は取消のたびに「通告は完了したか？」を確かめる）: 駅ごとの全進路の一覧と、進路名を直接指定した開通・取消
         g.MapGet("/route/catalog", (RailData rail) => Results.Ok(rail.ControlStations.Select(s => new
         {
             id = s.Id,

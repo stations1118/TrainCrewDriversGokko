@@ -667,7 +667,7 @@
   }
 
   // ---- 手動進路構成（進路名を直接選んで、その列車のゲームに開通・取消させる） ----
-  // confirm: true なら、操作のたびに「通告は完了したか？」を聞き、「はい」のときだけ実行する
+  // confirm: true なら、取消のたびに「通告は完了したか？」を聞き、「はい」のときだけ実行する（開通は聞かない）
   function manualRoutePanel({ el, api, after, confirm = false, help = false }) {
     el.innerHTML = (help ? `<div class="muted" style="margin-bottom:8px">進路名を直接選んで、その列車のゲームに開通・取消させます。連動の確認も、列車が接近しているかの確認もしません（運営中に詰んだとき用の強制の操作）。取り消した駅は、自動で開き直さないように抑止になります。</div>` : "")
       + `<div class="row">
@@ -707,7 +707,7 @@
       const train = q("train").value;
       if (!train || !route) return;
       const st = catalog.find((s) => s.interlock === interlock);
-      if (confirm && !(await ask("通告は完了したか？", `${train} ${st ? st.name : interlock} ${route} を${set ? "開通" : "取消"}します`))) {
+      if (confirm && !set && !(await ask("通告は完了したか？", `${train} ${st ? st.name : interlock} ${route} を取消します`))) {
         q("result").textContent = "取りやめました";
         return;
       }
