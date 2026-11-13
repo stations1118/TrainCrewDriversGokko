@@ -58,7 +58,7 @@ public static class AdminEndpoints
         });
 
         // ダイヤグラムの設定画面（diasettings.html。他の参加者に公開する用）。ヘッダー X-Dia-Key に DiaPassword を付けて呼ぶ。
-        // できるのはダイヤグラムの表示と操作だけ（特発・ロープレ時刻・駅の扱い・待避の数値などは触れない）
+        // できるのはダイヤグラムの表示と操作だけ（特発の作動・ロープレ時刻・手動進路などは触れない。特発の解除はできる）
         var dia = app.MapGroup("/api/dia").AddEndpointFilter(async (ctx, next) =>
         {
             if (string.IsNullOrEmpty(options.DiaPassword))
@@ -174,13 +174,6 @@ public static class AdminEndpoints
             passing = new { marginSeconds = rail.PassingMarginSeconds, toleranceSeconds = rail.PassingToleranceSeconds }
         }));
 
-        admin.MapPost("/route/station-mode", (StationModeRequest req, CentralControl central, RailData rail) =>
-        {
-            if (!rail.Stations.ContainsKey(req.Station)) return Results.BadRequest(new { ok = false, message = "駅IDが違います" });
-            central.SetCentral(req.Station, req.Central);
-            return Results.Ok(new { ok = true });
-        });
-
         // 手動進路（管理者用）: 駅ごとの全進路の一覧と、進路名を直接指定した開通・取消
         admin.MapGet("/route/catalog", (RailData rail) => Results.Ok(rail.ControlStations.Select(s => new
         {
@@ -194,14 +187,6 @@ public static class AdminEndpoints
 
         admin.MapPost("/route/manual-route", (ManualRouteRequest req, RouteEngine engine) =>
             Results.Ok(new { ok = true, message = engine.ManualRoute(req.Train ?? "", req.Interlock ?? "", req.Route ?? "", req.Set) }));
-
-        admin.MapPost("/route/passing", (PassingRequest req, RailData rail, IncidentManager incidents) =>
-        {
-            if (req.MarginSeconds is { } m) rail.PassingMarginSeconds = Math.Clamp(m, 0, 900);
-            if (req.ToleranceSeconds is { } t) rail.PassingToleranceSeconds = Math.Clamp(t, 0, 900);
-            incidents.Note($"待避の数値: 余裕 {rail.PassingMarginSeconds}秒、許容の遅れ {rail.PassingToleranceSeconds}秒");
-            return Results.Ok(new { ok = true });
-        });
 
         admin.MapPost("/clock", (ClockRequest req, GameClock clock, IncidentManager incidents) =>
         {
@@ -232,11 +217,27 @@ public static class AdminEndpoints
     /// <summary>ダイヤグラムの表示と、そこからできる操作（管理画面と、ダイヤグラムの設定画面で共通）。</summary>
     private static void MapDiagramControls(RouteGroupBuilder g)
     {
+        // 駅の扱い（列車扱い・集中扱い）と自動退避の数値（管理画面・ダイヤグラムの設定画面の両方から）
+        g.MapPost("/route/station-mode", (StationModeRequest req, CentralControl central, RailData rail) =>
+        {
+            if (!rail.Stations.ContainsKey(req.Station)) return Results.BadRequest(new { ok = false, message = "駅IDが違います" });
+            central.SetCentral(req.Station, req.Central);
+            return Results.Ok(new { ok = true });
+        });
+
+        g.MapPost("/route/passing", (PassingRequest req, RailData rail, IncidentManager incidents) =>
+        {
+            if (req.MarginSeconds is { } m) rail.PassingMarginSeconds = Math.Clamp(m, 0, 900);
+            if (req.ToleranceSeconds is { } t) rail.PassingToleranceSeconds = Math.Clamp(t, 0, 900);
+            incidents.Note($"待避の数値: 余裕 {rail.PassingMarginSeconds}秒、許容の遅れ {rail.PassingToleranceSeconds}秒");
+            return Results.Ok(new { ok = true });
+        });
+
         // 継続乗務で残している在線を消す
         g.MapPost("/continue/delete", (IdRequest req, PlayerRegistry players) =>
             players.RemoveGhost(req.Id) ? Results.Ok(new { ok = true }) : Results.NotFound(new { message = "その継続乗務申請はもうありません" }));
 
-        g.MapGet("/diagram", (RouteEngine engine, RailData rail, PlayerRegistry players) => Results.Ok(new
+        g.MapGet("/diagram", (RouteEngine engine, RailData rail, PlayerRegistry players, CentralControl central) => Results.Ok(new
         {
             now = DateTimeOffset.UtcNow,
             stations = rail.Line.StationIds.Select(id => new
@@ -260,7 +261,10 @@ public static class AdminEndpoints
                 since = x.SinceUtc,
                 until = x.UntilUtc
             }),
-            appear = engine.AppearView()
+            appear = engine.AppearView(),
+            // 駅の扱いと自動退避の数値
+            stationModes = rail.ControlStations.Select(s => new { id = s.Id, name = s.Name, central = central.IsCentral(s.Id) }),
+            passing = new { marginSeconds = rail.PassingMarginSeconds, toleranceSeconds = rail.PassingToleranceSeconds }
         }));
 
         // スジずらし: ◆を横にずらして、その駅の発車時刻を決める（time が null なら指定解除）

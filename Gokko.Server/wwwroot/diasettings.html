@@ -17,7 +17,10 @@
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Yu Gothic UI", "Hiragino Sans", system-ui, sans-serif; }
   header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 1; }
   header h1 { font-size: 16px; margin: 0 12px 0 0; }
-  main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+  main { display: grid; gap: 16px; padding: 16px; grid-template-columns: 1fr 1fr; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+  section.wide { grid-column: 1 / -1; }
+  h2 { font-size: 14px; margin: 0 0 10px; }
   section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
   input, button, select { font: inherit; color: inherit; }
   input, select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
@@ -44,27 +47,36 @@
 </header>
 
 <main>
-  <section>
+  <section class="wide">
     <div id="diagramFilter" class="row"></div>
     <div id="diagram" style="position:relative; touch-action:none"></div>
     <div id="diagramTip" class="muted" style="min-height:1.5em"></div>
   </section>
-  <section style="margin-top:16px">
+  <section class="wide">
+    <h2>出発順序・単線区間の走行順</h2>
     <div id="orders"></div>
   </section>
-  <section style="margin-top:16px">
+  <section class="wide">
     <div id="queue"></div>
   </section>
-  <section style="margin-top:16px">
+  <section class="wide">
+    <h2>列車別設定</h2>
+    <div id="trains"></div>
+  </section>
+  <section class="wide">
     <div id="continues"></div>
   </section>
-  <section style="margin-top:16px">
-    <div class="status" style="margin-bottom:8px">作動中の特発 <span class="muted">（ここでは解除だけできます）</span></div>
-    <div id="incidents"></div>
+  <section>
+    <h2>駅の扱い</h2>
+    <div id="stationModes"></div>
   </section>
-  <section style="margin-top:16px">
-    <div class="status" style="margin-bottom:8px">列車別設定</div>
-    <div id="trains"></div>
+  <section>
+    <h2>自動退避設定</h2>
+    <div id="passing"></div>
+  </section>
+  <section class="wide">
+    <h2>作動中の特発</h2>
+    <div id="incidents"></div>
   </section>
 </main>
 
@@ -104,13 +116,17 @@
   }
 
 
-  // ---- ダイヤグラム（diapanel.js の共通の描き方。◆のずらし・絞り込みつき）・順序・列車別設定・進路を取る順番 ----
+  // ---- ダイヤグラム・順序・進路を取る順番・列車別設定・継続乗務申請・駅の扱い・自動退避設定（diapanel.js の共通部品。管理画面と同じ） ----
   const diagramView = GokkoDia.diagramView({ box: $("diagram"), tip: $("diagramTip"), filter: $("diagramFilter"), act });
   const orders = GokkoDia.orderEditor({ el: $("orders"), act });
   const trainSettings = GokkoDia.trainEditor({ el: $("trains"), act });
-  const queue = GokkoDia.queuePanel({ el: $("queue"), api });
-  const continues = GokkoDia.continuePanel({ el: $("continues"), act });
-  function renderDiagram(d) { orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); }
+  const queue = GokkoDia.queuePanel({ el: $("queue"), api, help: false });
+  const continues = GokkoDia.continuePanel({ el: $("continues"), act, help: false });
+  const stationModes = GokkoDia.stationModePanel({ el: $("stationModes"), act });
+  const passing = GokkoDia.passingPanel({ el: $("passing"), act });
+  function renderDiagram(d) {
+    orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); stationModes.update(d); passing.update(d);
+  }
 
   // 作動中の特発（解除だけ）
   function renderIncidents(list) {

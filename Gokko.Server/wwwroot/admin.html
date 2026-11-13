@@ -17,7 +17,8 @@
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Yu Gothic UI", "Hiragino Sans", system-ui, sans-serif; }
   header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 1; }
   header h1 { font-size: 16px; margin: 0 12px 0 0; }
-  main { display: grid; gap: 16px; padding: 16px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); max-width: 1400px; margin: 0 auto; }
+  main { display: grid; gap: 16px; padding: 16px; grid-template-columns: 1fr 1fr; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
   section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
   section.wide { grid-column: 1 / -1; }
   h2 { font-size: 14px; margin: 0 0 10px; }
@@ -64,7 +65,7 @@
   </section>
 
   <section>
-    <h2>ランダム特発</h2>
+    <h2>ランダム特発設定</h2>
     <div class="row"><span id="randomState" class="status">-</span>
       <button id="randomOn" class="primary">開始</button><button id="randomOff">停止</button></div>
     <div class="row">
@@ -87,19 +88,6 @@
     </table></div>
   </section>
 
-  <section class="wide">
-    <h2>踏切 <span id="activeCount" class="muted"></span></h2>
-    <div class="row">
-      <label>理由 <select id="reasonSelect"></select></label>
-      <input id="reasonText" placeholder="自由入力（入れるとこちらを優先）" size="30">
-      <button id="releaseAll" class="danger">すべて復帰</button>
-    </div>
-    <div class="scroll"><table>
-      <thead><tr><th>踏切</th><th>区間</th><th>状態</th><th>理由</th><th></th></tr></thead>
-      <tbody id="crossings"></tbody>
-    </table></div>
-  </section>
-
   <section>
     <h2>記録</h2>
     <div id="log"></div>
@@ -111,7 +99,7 @@
       進路は「2つ手前の駅に着いた」ときに開通します（フリーモードでは時刻に依らない）。開通の時刻は◆にマウスを乗せると出ます。
       行き止まりの番線（駒野の下り1・2番線、日野森の上り1番線）を選ぶと、列車はその駅で打ち切りになり、線もそこで切れます。
       ◆の右の数字は番線（通＝通過、<span style="color:#e07000">橙</span>＝集中扱いの指定・駅扱い、<span style="color:#b04fd0">紫</span>＝待避）。◆をクリックすると番線を変えられます。開通済みでも、列車がまだ進路に入っていなければ取り直します。
-      ◆の窓では、駅扱い（「本線→1番線」など。連動に問題がなければ抑止・待ちを無視して開通）、場内抑止・出発抑止、その駅の出発順序（上下とも）と、単線区間の走行順を指定できます。
+      ◆の窓では、駅扱い（「本線→1番線」など。連動に問題がなければ抑止・待ちを無視して開通）、場内抑止・出発抑止、その駅の出発順序と、単線区間の走行順を指定できます。
       <span style="color:#3aa0d8">◆</span>見込み <span style="color:#e0a800">◆</span>指定 <span style="color:#c62828">◆</span>抑止中 <span style="color:#999">◆</span>開通済み。
       ◆を左右にドラッグすると、その駅の発車時刻をずらせます（早めることもできます。進路は発車時刻の30秒前まで開通させません）。ダブルクリックで元に戻します。</div>
     <div id="diagramFilter" class="row"></div>
@@ -121,32 +109,27 @@
 
   <section class="wide">
     <h2>出発順序・単線区間の走行順</h2>
-    <div class="muted" style="margin-bottom:8px">駅を選ぶと、その駅をこれから通る列車（上下とも）を、出発順序に並べ替えて指定できます。進路が競合する列車どうしは、先の列車が駅を抜けるまで後の列車を出発させません（競合しない番線の場内・出発は開けます）。
-      番線もここで変えられます。単線区間を選ぶと、その区間を通る順番（例: 1051 → 903A → 1040）を指定できます。</div>
+    <div class="muted" style="margin-bottom:8px">「出発順序」は上り・下りを別々に、駅を選んでその向きの列車を並べ替えます。進路が競合する列車どうしは、先の列車が駅を抜けるまで後の列車を出発させません（競合しない番線の場内・出発は開けます）。
+      番線と発車時刻もここで変えられます。「単線区間の走行順」は、区間を選んで上下の列車をまとめて並べ替えます（例: 1051 → 903A → 1040）。</div>
     <div id="orders"></div>
   </section>
 
   <section class="wide">
-    <h2>進路を取る順番・進路の記録</h2>
     <div id="queue"></div>
   </section>
 
   <section class="wide">
-    <h2>継続乗務申請・出現待ち</h2>
-    <div id="continues"></div>
-  </section>
-
-  <section class="wide">
-    <h2>進路・集中扱い <span id="trainCount" class="muted"></span></h2>
-    <div class="muted" style="margin-bottom:8px">在線共有モードの列車の、この先の駅ごとの番線と状態です。番線はダイヤ（列車一覧）を基本にし、ダイヤにない列車は種別ごとの所定です。番線を選ぶと集中扱いの指定になり、列車扱い（ユーザーの選択・ダイヤ・所定・待避）より優先されます。
-      「場内抑止」「出発抑止」はその駅のその信号を出させません。すでに開通している進路は、列車がまだ接近していなければ取り消します（運転士の目の前で信号が急に変わる範囲に来ていれば、取り消さずに残します）。
+    <h2>列車別設定</h2>
+    <div class="muted" style="margin-bottom:8px">列車を選ぶと、この先の駅ごとの番線と状態が出ます。番線を選ぶと集中扱いの指定になり、列車扱い（ユーザーの選択・ダイヤ・所定・待避）より優先されます。
+      停車の欄で臨時停車・臨時通過・打ち切りを選べます（サーバーの扱いだけ。ゲームの停車駅は変わりません）。
+      「場内抑止」「出発抑止」はその駅のその信号を出させません。すでに開通している進路は、列車がまだ接近していなければ取り消します。
       「自動開通」は抑止を外し、手前の駅に着いていなくても、安全を確認でき次第開通させます。
       「駅扱い」は選んだ進路を、連動に問題がなければ（進路に他の列車がいない・他の列車の進路と重ならない）抑止や待ちを無視して開通させます。</div>
-    <div id="routeTrains"></div>
+    <div id="trains"></div>
   </section>
 
   <section class="wide">
-    <h2>手動進路（管理者）</h2>
+    <h2>手動進路構成</h2>
     <div class="muted" style="margin-bottom:8px">進路名を直接選んで、その列車のゲームに開通・取消させます。連動の確認も、列車が接近しているかの確認もしません（運営中に詰んだとき用の強制の操作）。取り消した駅は、自動で開き直さないように抑止になります。</div>
     <div class="row">
       <label>列車 <select id="mrTrain"></select></label>
@@ -159,20 +142,31 @@
     <div id="mrGame" class="muted"></div>
   </section>
 
-  <section>
-    <h2>駅の扱い</h2>
-    <div class="muted" style="margin-bottom:8px">集中扱いの駅は、列車ごとに「自動開通」を押すまで自動では開通させません。</div>
-    <div id="stationModes" class="row"></div>
+  <section class="wide">
+    <div id="continues"></div>
   </section>
 
   <section>
-    <h2>待避</h2>
+    <h2>駅の扱い</h2>
+    <div id="stationModes"></div>
+  </section>
+
+  <section>
+    <h2>自動退避設定</h2>
+    <div id="passing"></div>
+  </section>
+
+  <section class="wide">
+    <h2>踏切 <span id="activeCount" class="muted"></span></h2>
     <div class="row">
-      <label>余裕(秒) <input id="pMargin" type="number" min="0" style="width:70px"></label>
-      <label>許容の遅れ(秒) <input id="pTolerance" type="number" min="0" style="width:70px"></label>
-      <button id="passingApply">反映</button>
+      <label>理由 <select id="reasonSelect"></select></label>
+      <input id="reasonText" placeholder="自由入力（入れるとこちらを優先）" size="30">
+      <button id="releaseAll" class="danger">すべて復帰</button>
     </div>
-    <div class="muted">後ろの特急に「余裕」より近く追いつかれる見込みなら待避させます。特急が見込みより「許容の遅れ」以上遅れたら、待たずに発車させます。</div>
+    <div class="scroll"><table>
+      <thead><tr><th>踏切</th><th>区間</th><th>状態</th><th>理由</th><th></th></tr></thead>
+      <tbody id="crossings"></tbody>
+    </table></div>
   </section>
 </main>
 
@@ -264,57 +258,17 @@
     ).join("") || `<div class="muted">まだ記録はありません</div>`);
   }
 
-  let passingDirty = false;
-
-  function renderRoutes(r) {
-    $("trainCount").textContent = `（${r.trains.length}列車）`;
-    setHtml($("routeTrains"), r.trains.length === 0
-      ? `<div class="muted">在線共有モードで運転中の列車はいません</div>`
-      : r.trains.map((t) => `
-        <div style="margin-bottom:12px">
-          <div class="row"><b>${esc(t.train)}</b><span>${esc(t.type)}・${esc(t.direction)}</span><span class="muted">${esc(t.position)}</span>
-            <span class="${t.dia ? "muted" : "ng"}">${t.dia ? "ダイヤの進路" : "ダイヤになし（種別の所定）"}</span></div>
-          <div class="scroll"><table>
-            <thead><tr><th>駅</th><th>停車</th><th>番線</th><th>決め方</th><th>状態</th><th></th></tr></thead>
-            <tbody>${t.stations.map((s) => {
-              const train = esc(t.train), st = esc(s.stationId);
-              const opts = [`<option value="">（指定なし）</option>`].concat(s.options.map((o) =>
-                `<option value="${o}" ${s.track === o && s.source === "集中" ? "selected" : ""}>${o}番線</option>`)).join("");
-              const manual = s.manual.length > 0
-                ? `<select data-manual-train="${train}" data-station="${st}"><option value="">駅扱い…</option>${s.manual.map((x) =>
-                    `<option value="${esc(x.action)}">${esc(x.label)}</option>`).join("")}</select>` : "";
-              return `<tr class="${s.held ? "active" : ""}">
-                <td>${esc(s.name)}</td>
-                <td class="muted">${esc(s.stopType)}</td>
-                <td>${s.track ?? "-"} ${s.options.length > 0 ? `<select data-track-train="${train}" data-track-station="${st}">${opts}</select>` : ""}</td>
-                <td class="muted">${esc(s.source)}${s.locked ? "・確定" : ""}</td>
-                <td>${esc(s.status)}</td>
-                <td style="white-space:nowrap">
-                  <button data-hold-train="${train}" data-station="${st}" data-kind="arrive" data-on="${s.holdArrive ? 1 : 0}" class="${s.holdArrive ? "danger" : ""}">${s.holdArrive ? "場内抑止中" : "場内抑止"}</button>
-                  <button data-hold-train="${train}" data-station="${st}" data-kind="depart" data-on="${s.holdDepart ? 1 : 0}" class="${s.holdDepart ? "danger" : ""}">${s.holdDepart ? "出発抑止中" : "出発抑止"}</button>
-                  <button class="primary" data-force-train="${train}" data-station="${st}" title="抑止を外し、安全を確認でき次第、自動で開通させる">自動開通</button>
-                  ${manual}
-                </td></tr>`;
-            }).join("")}</tbody>
-          </table></div>
-        </div>`).join(""));
-
-    setHtml($("stationModes"), r.stations.map((s) =>
-      `<button data-mode-station="${esc(s.id)}" data-central="${s.central ? "0" : "1"}" class="${s.central ? "danger" : ""}">${esc(s.name)}: ${s.central ? "集中扱い" : "列車扱い"}</button>`
-    ).join(""));
-
-    if (!passingDirty) {
-      $("pMargin").value = r.passing.marginSeconds;
-      $("pTolerance").value = r.passing.toleranceSeconds;
-    }
-  }
-
-  // ---- ダイヤグラム（diapanel.js の共通の描き方。◆のずらし・絞り込みつき）・順序・進路を取る順番 ----
+  // ---- ダイヤグラム・順序・進路を取る順番・列車別設定・継続乗務申請・駅の扱い・自動退避設定（diapanel.js の共通部品。diasettings.html と同じ） ----
   const diagramView = GokkoDia.diagramView({ box: $("diagram"), tip: $("diagramTip"), filter: $("diagramFilter"), act });
   const orders = GokkoDia.orderEditor({ el: $("orders"), act });
   const queue = GokkoDia.queuePanel({ el: $("queue"), api });
   const continues = GokkoDia.continuePanel({ el: $("continues"), act });
-  function renderDiagram(d) { orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); }
+  const trainSettings = GokkoDia.trainEditor({ el: $("trains"), act });
+  const stationModes = GokkoDia.stationModePanel({ el: $("stationModes"), act, help: true });
+  const passing = GokkoDia.passingPanel({ el: $("passing"), act, help: true });
+  function renderDiagram(d) {
+    orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); stationModes.update(d); passing.update(d);
+  }
 
   async function refresh() {
     if (!key) { $("conn").textContent = "管理キーを入力してください"; $("conn").className = "status muted"; return; }
@@ -324,7 +278,7 @@
       $("error").textContent = "";
       render(s);
       lastRoutes = await api("GET", "/routes");
-      renderRoutes(lastRoutes);
+      trainSettings.update(lastRoutes.trains);
       renderDiagram(await api("GET", "/diagram"));
       if (!catalog) catalog = await api("GET", "/route/catalog");
       renderManual();
@@ -369,24 +323,6 @@
     randomFormDirty = false;
   };
 
-  $("routeTrains").addEventListener("click", (ev) => {
-    const b = ev.target.closest("button");
-    if (!b) return;
-    if (b.dataset.holdTrain) act("POST", "/route/hold", { train: b.dataset.holdTrain, station: b.dataset.station, hold: b.dataset.on !== "1", kind: b.dataset.kind });
-    else if (b.dataset.forceTrain) act("POST", "/route/force", { train: b.dataset.forceTrain, station: b.dataset.station });
-  });
-  $("routeTrains").addEventListener("change", (ev) => {
-    const s = ev.target.closest("select");
-    if (!s) return;
-    if (s.dataset.manualTrain && s.value) {
-      const label = s.options[s.selectedIndex].text;
-      act("POST", "/route/manual", { train: s.dataset.manualTrain, station: s.dataset.station, action: s.value, label });
-      return;
-    }
-    if (!s.dataset.trackTrain) return;
-    act("POST", "/route/track", { train: s.dataset.trackTrain, station: s.dataset.trackStation, track: s.value === "" ? null : Number(s.value) });
-  });
-
   // ---- 手動進路（管理者） ----
   let catalog = null;
   let lastRoutes = null;
@@ -425,17 +361,6 @@
     const b = ev.target.closest("button[data-mr-cancel]");
     if (b) manualRoute(b.dataset.mrIl, b.dataset.mrCancel, false);
   });
-  $("stationModes").addEventListener("click", (ev) => {
-    const b = ev.target.closest("button");
-    if (!b) return;
-    act("POST", "/route/station-mode", { station: b.dataset.modeStation, central: b.dataset.central === "1" });
-  });
-  for (const id of ["pMargin", "pTolerance"]) $(id).addEventListener("input", () => { passingDirty = true; });
-  $("passingApply").onclick = async () => {
-    await act("POST", "/route/passing", { marginSeconds: Number($("pMargin").value), toleranceSeconds: Number($("pTolerance").value) });
-    passingDirty = false;
-  };
-
   refresh();
   setInterval(refresh, 1000);
 })();

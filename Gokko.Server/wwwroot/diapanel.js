@@ -190,36 +190,62 @@
     return div;
   }
 
-  // ---- 順序の設定画面（駅・区間を選んで並べ替える。並べ替えている間は描き直さない） ----
+  // ---- 順序の設定画面 ----
+  // タブ「出発順序（上下別）」: 上り・下りを左右に並べ、それぞれ駅を選んで、その向きの列車だけを並べ替える。
+  // タブ「単線区間の走行順（上下とも）」: 区間を選んで、上下の列車をまとめて並べ替える。並べ替えている間は描き直さない
   function orderEditor({ el, act }) {
+    const DIRS = ["上り", "下り"];
     let diagram = null;
-    let pick = "";     // "st:TH71" / "sec:TH64|TH63"
-    let dirty = false; // 並べ替え中（決定まで描き直さない）
-    const ctx = { act, seq: [], sseq: [], ord: null, sec: null, redraw: () => draw(), done: () => { dirty = false; } };
+    let tab = "dep";
+    try { tab = localStorage.getItem("gokkoOrderTab") || "dep"; } catch (e) {}
+    const pick = { 上り: "", 下り: "", sec: "" };
+    const seq = { 上り: [], 下り: [], sec: [] };
+    const dirty = { 上り: false, 下り: false, sec: false };
 
-    function options() {
-      const st = (diagram.orders || []).map((o) => `<option value="st:${esc(o.station)}" ${pick === "st:" + o.station ? "selected" : ""}>駅: ${esc(o.name)}（${o.trains.length}本${o.fixedOrder ? "・指定中" : ""}）</option>`);
-      const sc = (diagram.sections || []).map((s) => `<option value="sec:${esc(s.a)}|${esc(s.b)}" ${pick === `sec:${s.a}|${s.b}` ? "selected" : ""}>単線: ${esc(s.name)}（${s.trains.length}本${s.fixedOrder ? "・指定中" : ""}）</option>`);
-      return st.concat(sc).join("");
+    const station = (id) => (diagram && diagram.orders || []).find((o) => o.station === id) || null;
+    const section = (k) => (diagram && diagram.sections || []).find((s) => `${s.a}|${s.b}` === k) || null;
+    // その向きの列車だけにした駅の順序（表示用）
+    const dirOrder = (o, d) => o && { ...o, name: `${o.name} ${d}`, trains: o.trains.filter((t) => t.direction === d) };
+
+    function load(col) {
+      if (col === "sec") { const s = section(pick.sec); seq.sec = s ? s.trains.map((t) => t.train) : []; return; }
+      const o = dirOrder(station(pick[col]), col);
+      seq[col] = o ? o.trains.map((t) => t.train) : [];
+    }
+
+    function colHtml(d) {
+      const opts = (diagram.orders || []).map((o) => {
+        const n = o.trains.filter((t) => t.direction === d).length;
+        return `<option value="${esc(o.station)}" ${pick[d] === o.station ? "selected" : ""}>${esc(o.name)}（${n}本${o.fixedOrder ? "・指定中" : ""}）</option>`;
+      }).join("");
+      const o = dirOrder(station(pick[d]), d);
+      return `<div data-col="${d}" style="min-width:0">
+          <div class="row"><b>${d}</b><select data-pick-col="${d}"><option value="">駅を選ぶ</option>${opts}</select>
+            ${dirty[d] ? `<span class="muted">並べ替え中</span>` : ""}</div>
+          ${o ? stationOrderHtml(o, seq[d]).replace("自動に戻す</button>", "自動に戻す（上下とも）</button>") : ""}</div>`;
+    }
+
+    function secHtml() {
+      const opts = (diagram.sections || []).map((s) => `<option value="${esc(s.a)}|${esc(s.b)}" ${pick.sec === `${s.a}|${s.b}` ? "selected" : ""}>${esc(s.name)}（${s.trains.length}本${s.fixedOrder ? "・指定中" : ""}）</option>`).join("");
+      const s = section(pick.sec);
+      return `<div data-col="sec">
+          <div class="row"><select data-pick-col="sec"><option value="">単線区間を選ぶ</option>${opts}</select>
+            ${dirty.sec ? `<span class="muted">並べ替え中</span>` : ""}</div>
+          ${s ? sectionOrderHtml(s, seq.sec) : ""}</div>`;
     }
 
     function draw() {
       if (!diagram) return;
-      ctx.ord = pick.startsWith("st:") ? (diagram.orders || []).find((o) => o.station === pick.slice(3)) : null;
-      ctx.sec = pick.startsWith("sec:") ? (diagram.sections || []).find((s) => `${s.a}|${s.b}` === pick.slice(4)) : null;
-      el.innerHTML = `<div class="row"><select data-pick-order>${`<option value="">駅・区間を選ぶ</option>` + options()}</select>
-          ${dirty ? `<span class="muted">並べ替え中（「この順で決定」で反映）</span>` : ""}</div>
-        ${ctx.ord ? stationOrderHtml(ctx.ord, ctx.seq) : ctx.sec ? sectionOrderHtml(ctx.sec, ctx.sseq) : ""}`;
-    }
-
-    function load() {
-      ctx.seq = ctx.ord ? ctx.ord.trains.map((t) => t.train) : [];
-      ctx.sseq = ctx.sec ? ctx.sec.trains.map((t) => t.train) : [];
+      const tabBtn = (id, label) => `<button data-tab="${id}" class="${tab === id ? "primary" : ""}">${label}</button>`;
+      el.innerHTML = `<div class="row">${tabBtn("dep", "出発順序（上下別）")}${tabBtn("sec", "単線区間の走行順（上下とも）")}</div>
+        ${tab === "dep"
+          ? `<div style="display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr))">${DIRS.map(colHtml).join("")}</div>`
+          : secHtml()}`;
     }
 
     el.addEventListener("change", async (ev) => {
-      const s = ev.target.closest("select[data-pick-order]");
-      if (s) { pick = s.value; dirty = false; draw(); load(); draw(); return; }
+      const s = ev.target.closest("select[data-pick-col]");
+      if (s) { const c = s.dataset.pickCol; pick[c] = s.value; dirty[c] = false; load(c); draw(); return; }
       const inp = ev.target.closest("input[data-depart-train]");
       if (inp) {
         const time = timeToIso(inp.value);
@@ -228,27 +254,62 @@
         inp.blur();
         return;
       }
-      await handleTrackChange(ev, ctx);
+      const t = ev.target.closest("select[data-track-train]");
+      if (t) {
+        const c = t.closest("[data-col]")?.dataset.col;
+        if (c) dirty[c] = false;
+        await act("POST", "/route/track", { train: t.dataset.trackTrain, station: t.dataset.trackStation, track: t.value === "" ? null : Number(t.value) });
+      }
     });
+
     el.addEventListener("click", async (ev) => {
       const btn = ev.target.closest("button");
       if (!btn) return;
+      if (btn.dataset.tab) {
+        tab = btn.dataset.tab;
+        try { localStorage.setItem("gokkoOrderTab", tab); } catch (e) {}
+        draw();
+        return;
+      }
       if (btn.dataset.departClear) { await act("POST", "/route/open-at", { train: btn.dataset.departClear, station: btn.dataset.departStation, time: null }); return; }
-      if (btn.dataset.up || btn.dataset.down || btn.dataset.sup || btn.dataset.sdown) dirty = true;
-      await handleOrderEvent(ev, ctx);
+      const c = btn.closest("[data-col]")?.dataset.col;
+      if (!c) return;
+      const up = btn.dataset.up ?? btn.dataset.sup, down = btn.dataset.down ?? btn.dataset.sdown;
+      if (up !== undefined || down !== undefined) {
+        const i = Number(up ?? down);
+        swap(seq[c], i, up !== undefined ? i - 1 : i + 1);
+        dirty[c] = true;
+        draw();
+        return;
+      }
+      if (btn.dataset.sorder && c === "sec") {
+        const s = section(pick.sec);
+        dirty.sec = false;
+        if (s) await act("POST", "/route/section-order", { a: s.a, b: s.b, trains: btn.dataset.sorder === "set" ? seq.sec : null });
+        return;
+      }
+      if (btn.dataset.order && c !== "sec") {
+        const o = station(pick[c]);
+        dirty[c] = false;
+        if (!o) return;
+        if (btn.dataset.order !== "set") { await act("POST", "/route/order", { station: o.station, trains: null }); return; }
+        // その向きの列車の位置に、並べ替えた順で入れる（反対向きの列車の並びはそのまま）
+        const mine = [...seq[c]];
+        const merged = o.trains.map((t) => (t.direction === c ? mine.shift() : t.train)).filter((x) => x);
+        await act("POST", "/route/order", { station: o.station, direction: c, trains: merged.concat(mine) });
+      }
     });
 
     return {
       update(d) {
         diagram = d;
-        if (dirty || el.contains(document.activeElement) && ["SELECT", "INPUT"].includes(document.activeElement.tagName)) return;
-        ctx.ord = pick.startsWith("st:") ? (d.orders || []).find((o) => o.station === pick.slice(3)) : null;
-        ctx.sec = pick.startsWith("sec:") ? (d.sections || []).find((s) => `${s.a}|${s.b}` === pick.slice(4)) : null;
-        load();
+        if (el.contains(document.activeElement) && ["SELECT", "INPUT"].includes(document.activeElement.tagName)) return;
+        for (const c of [...DIRS, "sec"]) if (!dirty[c]) load(c);
         // 見込み時刻・状態は毎秒変わるので、比べるときは除く（押している途中のボタンが消えないように）
-        const html = JSON.stringify([pick, ctx.ord, ctx.sec], (k, v) => (k === "eta" || k === "status" ? undefined : v));
-        if (el.dataset.key === html) return;
-        el.dataset.key = html;
+        const key = JSON.stringify([tab, pick, dirty, DIRS.map((x) => station(pick[x])), section(pick.sec)],
+          (k, v) => (k === "eta" || k === "status" ? undefined : v));
+        if (el.dataset.key === key) return;
+        el.dataset.key = key;
         draw();
       }
     };
@@ -480,7 +541,7 @@
   }
 
   // ---- 進路を取る順番（取れずに待っている場内・出発）と、進路を要求した記録 ----
-  function queuePanel({ el, api }) {
+  function queuePanel({ el, api, help = true }) {
     let showLog = false;
     el.addEventListener("click", async (ev) => {
       const b = ev.target.closest("button[data-log]");
@@ -499,11 +560,11 @@
         await refreshLog();
         const q = (d && d.queue) || [];
         const html = `<div class="row" style="margin-bottom:4px"><b>進路を取る順番</b>
-            <span class="muted">（取れずに待っているもの。上から順に取ります）</span>
+            ${help ? `<span class="muted">（取れずに待っているもの。上から順に取ります）</span>` : ""}
             <button data-log="1" style="margin-left:auto">${showLog ? "記録を閉じる" : "進路の記録を見る"}</button></div>
           ${q.length === 0 ? `<div class="muted">待っている進路はありません</div>` : `<table>${q.map((x, i) =>
             `<tr><td class="muted">${i + 1}</td><td><b>${esc(x.train)}</b></td><td>${esc(x.station)}</td><td>${esc(x.kind)}</td><td class="muted">${esc(x.wait)}</td></tr>`).join("")}</table>`}
-          ${showLog ? `<div style="margin-top:8px"><b>進路の記録</b> <span class="muted">（新しい順。サーバーの logs フォルダにも日ごとに残ります）</span>
+          ${showLog ? `<div style="margin-top:8px"><b>進路の記録</b> ${help ? `<span class="muted">（新しい順。サーバーの logs フォルダにも日ごとに残ります）</span>` : ""}
             <pre style="max-height:240px;overflow:auto;font-size:12px;margin:4px 0 0">${esc(logLines.join("\n"))}</pre></div>` : ""}`;
         if (el.dataset.key === html) return;
         el.dataset.key = html;
@@ -513,7 +574,7 @@
   }
 
   // 継続乗務申請（運転画面を出たあとも残している在線。5分で消える）と、出現待ちの列車
-  function continuePanel({ el, act }) {
+  function continuePanel({ el, act, help = true }) {
     el.addEventListener("click", async (ev) => {
       const b = ev.target.closest("button[data-ghost]");
       if (!b) return;
@@ -525,13 +586,13 @@
         const c = (d && d.continues) || [], a = (d && d.appear) || [];
         const left = (t) => Math.max(0, Math.round((Date.parse(t) - Date.now()) / 1000));
         const html = `<div class="row" style="margin-bottom:4px"><b>継続乗務申請</b>
-            <span class="muted">（運転画面を出たあとも在線を残している列車。同じ番線から次のシナリオを始めると、その列番で続けます）</span></div>
+            ${help ? `<span class="muted">（運転画面を出たあとも在線を残している列車。同じ番線から次のシナリオを始めると、新しいシナリオの列番で始めます）</span>` : ""}</div>
           ${c.length === 0 ? `<div class="muted">継続乗務申請はありません</div>` : `<table>${c.map((x) =>
             `<tr><td><b>${esc(x.train)}</b></td><td class="muted">${esc(x.circuits.join(" "))}</td>
               <td>${hhmm(Date.parse(x.since), true)} から・あと${Math.floor(left(x.until) / 60)}分${left(x.until) % 60}秒</td>
               <td><button data-ghost="${esc(x.id)}" data-train="${esc(x.train)}">消す</button></td></tr>`).join("")}</table>`}
           <div class="row" style="margin:8px 0 4px"><b>出現待ち</b>
-            <span class="muted">（他の列車の在線・進路の上に現れた列車。先の列車が抜けるまで、サーバーの列車として扱いません）</span></div>
+            ${help ? `<span class="muted">（他の列車の在線・進路の上に現れた列車。先の列車が抜けるまで、サーバーの列車として扱いません）</span>` : ""}</div>
           ${a.length === 0 ? `<div class="muted">出現待ちの列車はいません</div>` : `<table>${a.map((x) =>
             `<tr><td><b>${esc(x.train)}</b></td><td class="muted">${esc(x.reason)}</td></tr>`).join("")}</table>`}`;
         if (el.dataset.key === html) return;
@@ -541,5 +602,46 @@
     };
   }
 
-  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, diagramView, queuePanel, continuePanel, TYPE_COLORS, esc, hhmm };
+  // ---- 駅の扱い（列車扱い・集中扱いの切り替え） ----
+  function stationModePanel({ el, act, help }) {
+    el.addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-mode-station]");
+      if (b) act("POST", "/route/station-mode", { station: b.dataset.modeStation, central: b.dataset.central === "1" });
+    });
+    return {
+      update(d) {
+        const html = (help ? `<div class="muted" style="margin-bottom:8px">集中扱いの駅は、列車ごとに「自動開通」を押すまで自動では開通させません。</div>` : "")
+          + `<div class="row">${((d && d.stationModes) || []).map((s) =>
+            `<button data-mode-station="${esc(s.id)}" data-central="${s.central ? "0" : "1"}" class="${s.central ? "danger" : ""}">${esc(s.name)}: ${s.central ? "集中扱い" : "列車扱い"}</button>`).join("")}</div>`;
+        if (el.dataset.key === html) return;
+        el.dataset.key = html;
+        el.innerHTML = html;
+      }
+    };
+  }
+
+  // ---- 自動退避設定（余裕・許容の遅れ） ----
+  function passingPanel({ el, act, help }) {
+    let editing = false;
+    el.innerHTML = `<div class="row">
+        <label>余裕(秒) <input data-p="margin" type="number" min="0" style="width:70px"></label>
+        <label>許容の遅れ(秒) <input data-p="tolerance" type="number" min="0" style="width:70px"></label>
+        <button data-p-apply="1">反映</button></div>`
+      + (help ? `<div class="muted">後ろの特急に「余裕」より近く追いつかれる見込みなら待避させます。特急が見込みより「許容の遅れ」以上遅れたら、待たずに発車させます。</div>` : "");
+    const margin = el.querySelector('[data-p="margin"]'), tolerance = el.querySelector('[data-p="tolerance"]');
+    el.addEventListener("input", () => { editing = true; });
+    el.querySelector("[data-p-apply]").addEventListener("click", async () => {
+      await act("POST", "/route/passing", { marginSeconds: Number(margin.value), toleranceSeconds: Number(tolerance.value) });
+      editing = false;
+    });
+    return {
+      update(d) {
+        if (editing || !d || !d.passing) return;
+        margin.value = d.passing.marginSeconds;
+        tolerance.value = d.passing.toleranceSeconds;
+      }
+    };
+  }
+
+  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, diagramView, queuePanel, continuePanel, stationModePanel, passingPanel, TYPE_COLORS, esc, hhmm };
 })();
