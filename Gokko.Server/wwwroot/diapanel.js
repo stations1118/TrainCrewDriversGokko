@@ -643,5 +643,100 @@
     };
   }
 
-  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, diagramView, queuePanel, continuePanel, stationModePanel, passingPanel, TYPE_COLORS, esc, hhmm };
+  // ---- 確認の窓（「はい」「いいえ」）。はいなら true ----
+  function ask(message, detail) {
+    return new Promise((resolve) => {
+      const back = document.createElement("div");
+      back.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px";
+      back.innerHTML = `<div role="dialog" aria-modal="true" style="background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:16px 18px; max-width:420px; width:100%; box-shadow:0 4px 16px rgba(0,0,0,.3)">
+          ${detail ? `<div class="muted" style="margin-bottom:8px">${esc(detail)}</div>` : ""}
+          <div style="font-weight:bold; font-size:16px; margin-bottom:14px">${esc(message)}</div>
+          <div class="row" style="justify-content:flex-end; margin:0">
+            <button data-ans="no">いいえ</button><button data-ans="yes" class="primary">はい</button></div></div>`;
+      const close = (ok) => { back.remove(); document.removeEventListener("keydown", onKey); resolve(ok); };
+      const onKey = (ev) => { if (ev.key === "Escape") close(false); };
+      back.addEventListener("click", (ev) => {
+        const b = ev.target.closest("button[data-ans]");
+        if (b) close(b.dataset.ans === "yes");
+        else if (ev.target === back) close(false);
+      });
+      document.addEventListener("keydown", onKey);
+      document.body.appendChild(back);
+      back.querySelector('[data-ans="no"]').focus(); // うっかり Enter で実行しないように、いいえを選んでおく
+    });
+  }
+
+  // ---- 手動進路構成（進路名を直接選んで、その列車のゲームに開通・取消させる） ----
+  // confirm: true なら、操作のたびに「通告は完了したか？」を聞き、「はい」のときだけ実行する
+  function manualRoutePanel({ el, api, after, confirm = false, help = false }) {
+    el.innerHTML = (help ? `<div class="muted" style="margin-bottom:8px">進路名を直接選んで、その列車のゲームに開通・取消させます。連動の確認も、列車が接近しているかの確認もしません（運営中に詰んだとき用の強制の操作）。取り消した駅は、自動で開き直さないように抑止になります。</div>` : "")
+      + `<div class="row">
+        <label>列車 <select data-mr="train"></select></label>
+        <label>駅 <select data-mr="station"></select></label>
+        <label>進路 <select data-mr="route"></select></label>
+        <button data-mr-act="set" class="primary">開通</button>
+        <button data-mr-act="cancel" class="danger">取消</button>
+        <span data-mr="result" class="muted"></span></div>
+      <div data-mr="game" class="muted"></div>`;
+    const q = (k) => el.querySelector(`[data-mr="${k}"]`);
+    let catalog = null, trains = [];
+
+    function fill(sel, items) {
+      const html = items.map((x) => `<option value="${esc(x.value)}">${esc(x.text)}</option>`).join("");
+      if (sel.dataset.html === html) return;
+      const cur = sel.value;
+      sel.innerHTML = html; sel.dataset.html = html;
+      if (cur && items.some((x) => x.value === cur)) sel.value = cur;
+    }
+
+    function draw() {
+      if (!catalog) return;
+      fill(q("train"), trains.map((t) => ({ value: t.train, text: `${t.train}（${t.direction}）` })));
+      fill(q("station"), catalog.map((s) => ({ value: s.id, text: s.name })));
+      const st = catalog.find((s) => s.id === q("station").value);
+      fill(q("route"), st ? st.routes.map((r) => ({ value: r.name, text: `${r.name}（${r.from}→${r.to}・${r.kind}）` })) : []);
+      const t = trains.find((x) => x.train === q("train").value);
+      const mine = t ? t.gameRoutes.filter((g) => !st || g.interlock === st.interlock) : [];
+      const html = t ? (mine.length === 0 ? `${esc(t.train)} のゲームに、この駅の進路はありません`
+        : `${esc(t.train)} のゲームにある進路: ` + mine.map((g) =>
+            `<button data-mr-cancel="${esc(g.route)}" data-mr-il="${esc(g.interlock)}" title="取消">${esc(g.route)} ×</button>`).join(" ")) : "";
+      if (q("game").dataset.html !== html) { q("game").innerHTML = html; q("game").dataset.html = html; }
+    }
+
+    async function run(interlock, route, set) {
+      const train = q("train").value;
+      if (!train || !route) return;
+      const st = catalog.find((s) => s.interlock === interlock);
+      if (confirm && !(await ask("通告は完了したか？", `${train} ${st ? st.name : interlock} ${route} を${set ? "開通" : "取消"}します`))) {
+        q("result").textContent = "取りやめました";
+        return;
+      }
+      try {
+        const r = await api("POST", "/route/manual-route", { train, interlock, route, set });
+        q("result").textContent = r.message;
+        after && (await after());
+      } catch (e) { q("result").textContent = e.message; }
+    }
+
+    el.addEventListener("change", (ev) => { if (ev.target.closest('[data-mr="train"], [data-mr="station"]')) draw(); });
+    el.addEventListener("click", (ev) => {
+      const b = ev.target.closest("button");
+      if (!b || !catalog) return;
+      if (b.dataset.mrCancel) { run(b.dataset.mrIl, b.dataset.mrCancel, false); return; }
+      if (!b.dataset.mrAct) return;
+      const st = catalog.find((s) => s.id === q("station").value);
+      if (st) run(st.interlock, q("route").value, b.dataset.mrAct === "set");
+    });
+
+    return {
+      async update(list) {
+        trains = list || [];
+        if (!catalog) { try { catalog = await api("GET", "/route/catalog"); } catch (e) { return; } }
+        if (el.contains(document.activeElement) && document.activeElement.tagName === "SELECT") return;
+        draw();
+      }
+    };
+  }
+
+  window.GokkoDia = { openPopup, closePopup, isOpen: () => !!popup, orderEditor, trainEditor, diagramView, queuePanel, continuePanel, stationModePanel, passingPanel, manualRoutePanel, ask, TYPE_COLORS, esc, hhmm };
 })();

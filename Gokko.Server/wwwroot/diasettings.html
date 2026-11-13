@@ -64,6 +64,10 @@
     <div id="trains"></div>
   </section>
   <section class="wide">
+    <h2>手動進路構成</h2>
+    <div id="manual"></div>
+  </section>
+  <section class="wide">
     <div id="continues"></div>
   </section>
   <section>
@@ -124,6 +128,8 @@
   const continues = GokkoDia.continuePanel({ el: $("continues"), act, help: false });
   const stationModes = GokkoDia.stationModePanel({ el: $("stationModes"), act });
   const passing = GokkoDia.passingPanel({ el: $("passing"), act });
+  // 手動進路構成: 不用意に触らないよう、操作のたびに「通告は完了したか？」を確かめる
+  const manual = GokkoDia.manualRoutePanel({ el: $("manual"), api, after: () => refresh(), confirm: true });
   function renderDiagram(d) {
     orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); stationModes.update(d); passing.update(d);
   }
@@ -148,7 +154,9 @@
     if (!key) { $("conn").textContent = "合言葉を入力してください"; $("conn").className = "status muted"; return; }
     try {
       renderDiagram(await api("GET", "/diagram"));
-      trainSettings.update((await api("GET", "/trains")).trains);
+      const trains = (await api("GET", "/trains")).trains;
+      trainSettings.update(trains);
+      manual.update(trains);
       renderIncidents((await api("GET", "/incidents")).incidents);
       $("conn").textContent = "接続中"; $("conn").className = "status ok";
       $("error").textContent = "";

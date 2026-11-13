@@ -130,16 +130,7 @@
 
   <section class="wide">
     <h2>手動進路構成</h2>
-    <div class="muted" style="margin-bottom:8px">進路名を直接選んで、その列車のゲームに開通・取消させます。連動の確認も、列車が接近しているかの確認もしません（運営中に詰んだとき用の強制の操作）。取り消した駅は、自動で開き直さないように抑止になります。</div>
-    <div class="row">
-      <label>列車 <select id="mrTrain"></select></label>
-      <label>駅 <select id="mrStation"></select></label>
-      <label>進路 <select id="mrRoute"></select></label>
-      <button id="mrSet" class="primary">開通</button>
-      <button id="mrCancel" class="danger">取消</button>
-      <span id="mrResult" class="muted"></span>
-    </div>
-    <div id="mrGame" class="muted"></div>
+    <div id="manual"></div>
   </section>
 
   <section class="wide">
@@ -266,6 +257,8 @@
   const trainSettings = GokkoDia.trainEditor({ el: $("trains"), act });
   const stationModes = GokkoDia.stationModePanel({ el: $("stationModes"), act, help: true });
   const passing = GokkoDia.passingPanel({ el: $("passing"), act, help: true });
+  const manual = GokkoDia.manualRoutePanel({ el: $("manual"), api, after: () => refresh(), help: true });
+  let lastRoutes = null;
   function renderDiagram(d) {
     orders.update(d); diagramView.update(d); queue.update(d); continues.update(d); stationModes.update(d); passing.update(d);
   }
@@ -280,8 +273,7 @@
       lastRoutes = await api("GET", "/routes");
       trainSettings.update(lastRoutes.trains);
       renderDiagram(await api("GET", "/diagram"));
-      if (!catalog) catalog = await api("GET", "/route/catalog");
-      renderManual();
+      manual.update(lastRoutes.trains);
     } catch (e) {
       $("conn").textContent = "接続できません"; $("conn").className = "status ng";
       $("error").textContent = e.message;
@@ -323,44 +315,6 @@
     randomFormDirty = false;
   };
 
-  // ---- 手動進路（管理者） ----
-  let catalog = null;
-  let lastRoutes = null;
-  function fillSelect(sel, items, keep) {
-    const html = items.map((x) => `<option value="${esc(x.value)}">${esc(x.text)}</option>`).join("");
-    if (sel.dataset.html === html) return;
-    const cur = keep ? sel.value : "";
-    sel.innerHTML = html; sel.dataset.html = html;
-    if (cur && items.some((x) => x.value === cur)) sel.value = cur;
-  }
-  function renderManual() {
-    if (!catalog || !lastRoutes) return;
-    fillSelect($("mrTrain"), lastRoutes.trains.map((t) => ({ value: t.train, text: `${t.train}（${t.direction}）` })), true);
-    fillSelect($("mrStation"), catalog.map((s) => ({ value: s.id, text: s.name })), true);
-    const st = catalog.find((s) => s.id === $("mrStation").value);
-    fillSelect($("mrRoute"), st ? st.routes.map((r) => ({ value: r.name, text: `${r.name}（${r.from}→${r.to}・${r.kind}）` })) : [], true);
-    const t = lastRoutes.trains.find((x) => x.train === $("mrTrain").value);
-    const mine = t ? t.gameRoutes.filter((g) => !st || g.interlock === st.interlock) : [];
-    setHtml($("mrGame"), t ? (mine.length === 0 ? `${esc(t.train)} のゲームに、この駅の進路はありません`
-      : `${esc(t.train)} のゲームにある進路: ` + mine.map((g) =>
-          `<button data-mr-cancel="${esc(g.route)}" data-mr-il="${esc(g.interlock)}" title="取消">${esc(g.route)} ×</button>`).join(" ")) : "");
-  }
-  async function manualRoute(interlock, route, set) {
-    const train = $("mrTrain").value;
-    if (!train || !route) return;
-    try {
-      const r = await api("POST", "/route/manual-route", { train, interlock, route, set });
-      $("mrResult").textContent = r.message;
-      await refresh();
-    } catch (e) { $("error").textContent = e.message; }
-  }
-  for (const id of ["mrTrain", "mrStation"]) $(id).addEventListener("change", renderManual);
-  $("mrSet").onclick = () => { const st = catalog.find((s) => s.id === $("mrStation").value); if (st) manualRoute(st.interlock, $("mrRoute").value, true); };
-  $("mrCancel").onclick = () => { const st = catalog.find((s) => s.id === $("mrStation").value); if (st) manualRoute(st.interlock, $("mrRoute").value, false); };
-  $("mrGame").addEventListener("click", (ev) => {
-    const b = ev.target.closest("button[data-mr-cancel]");
-    if (b) manualRoute(b.dataset.mrIl, b.dataset.mrCancel, false);
-  });
   refresh();
   setInterval(refresh, 1000);
 })();

@@ -58,7 +58,7 @@ public static class AdminEndpoints
         });
 
         // ダイヤグラムの設定画面（diasettings.html。他の参加者に公開する用）。ヘッダー X-Dia-Key に DiaPassword を付けて呼ぶ。
-        // できるのはダイヤグラムの表示と操作だけ（特発の作動・ロープレ時刻・手動進路などは触れない。特発の解除はできる）
+        // できるのはダイヤグラムの表示と操作だけ（特発の作動・ロープレ時刻などは触れない。特発の解除はできる）
         var dia = app.MapGroup("/api/dia").AddEndpointFilter(async (ctx, next) =>
         {
             if (string.IsNullOrEmpty(options.DiaPassword))
@@ -174,20 +174,6 @@ public static class AdminEndpoints
             passing = new { marginSeconds = rail.PassingMarginSeconds, toleranceSeconds = rail.PassingToleranceSeconds }
         }));
 
-        // 手動進路（管理者用）: 駅ごとの全進路の一覧と、進路名を直接指定した開通・取消
-        admin.MapGet("/route/catalog", (RailData rail) => Results.Ok(rail.ControlStations.Select(s => new
-        {
-            id = s.Id,
-            name = s.Name,
-            interlock = s.Interlock,
-            routes = rail.Routes.Values.Where(r => r.Interlock == s.Interlock)
-                .OrderBy(r => r.Name, StringComparer.Ordinal)
-                .Select(r => new { name = r.Name, from = r.From, to = r.To, kind = r.Kind })
-        })));
-
-        admin.MapPost("/route/manual-route", (ManualRouteRequest req, RouteEngine engine) =>
-            Results.Ok(new { ok = true, message = engine.ManualRoute(req.Train ?? "", req.Interlock ?? "", req.Route ?? "", req.Set) }));
-
         admin.MapPost("/clock", (ClockRequest req, GameClock clock, IncidentManager incidents) =>
         {
             if (req.Clear == true)
@@ -232,6 +218,20 @@ public static class AdminEndpoints
             incidents.Note($"待避の数値: 余裕 {rail.PassingMarginSeconds}秒、許容の遅れ {rail.PassingToleranceSeconds}秒");
             return Results.Ok(new { ok = true });
         });
+
+        // 手動進路構成（管理画面・ダイヤグラムの設定画面。設定画面は操作のたびに「通告は完了したか？」を確かめる）: 駅ごとの全進路の一覧と、進路名を直接指定した開通・取消
+        g.MapGet("/route/catalog", (RailData rail) => Results.Ok(rail.ControlStations.Select(s => new
+        {
+            id = s.Id,
+            name = s.Name,
+            interlock = s.Interlock,
+            routes = rail.Routes.Values.Where(r => r.Interlock == s.Interlock)
+                .OrderBy(r => r.Name, StringComparer.Ordinal)
+                .Select(r => new { name = r.Name, from = r.From, to = r.To, kind = r.Kind })
+        })));
+
+        g.MapPost("/route/manual-route", (ManualRouteRequest req, RouteEngine engine) =>
+            Results.Ok(new { ok = true, message = engine.ManualRoute(req.Train ?? "", req.Interlock ?? "", req.Route ?? "", req.Set) }));
 
         // 継続乗務で残している在線を消す
         g.MapPost("/continue/delete", (IdRequest req, PlayerRegistry players) =>
