@@ -2468,7 +2468,9 @@ public sealed class RouteEngine
                         // （OK、または「同一進路への進入」＝もうその進路が取られている）。まだなら要求中
                         open = q.Seen || Acknowledged(r, q),
                         reply = r.Results.GetValueOrDefault($"{q.Def.Interlock}/{q.Def.Name}") ?? "",
-                        circuits = LiveCircuits(r, q).ToList()
+                        circuits = LiveCircuits(r, q).ToList(),
+                        // 接近鎖錠の区間（出発なら出る番線の回路）。在線位置の画面が、進路の線をどちらの枝へ引くかの手がかりにする
+                        approach = q.Def.Approach
                     })).ToList(),
                 // 単線区間の方向てこ: direction は "下り" / "上り"（まだ一度も使われていなければ null）。locked は、いま使われているか
                 levers = _data.SingleTrackSections.Select(s => new

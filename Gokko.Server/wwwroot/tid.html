@@ -361,8 +361,9 @@
 
     // 進路（開通・要求中）: 実際に通る枝だけ
     const routeMaps = s.tid.routes.map((r) => {
-      // 同じ列車がいる回路と、同じ列車のほかの進路の回路（進路の端がどちらへつながるかを知るため）
-      const known = [...(s.tid.trains.find((t) => t.train === r.train)?.circuits || []),
+      // 同じ列車がいる回路と、同じ列車のほかの進路の回路、その進路の接近区間（出発なら出る番線）。進路の端がどちらへつながるかを知るため。
+      // 列車の位置が分からなくても、接近区間で正しい枝を選べる（日野森の 3L は 1番線の 2RAT から）
+      const known = [...(s.tid.trains.find((t) => t.train === r.train)?.circuits || []), ...(r.approach || []),
         ...s.tid.routes.filter((x) => x.train === r.train && x !== r).flatMap((x) => x.circuits)];
       return { r, map: smoothPath(r.circuits, known) };
     });
