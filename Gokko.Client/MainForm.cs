@@ -320,11 +320,19 @@ public sealed class MainForm : Form
         if (!connected)
         {
             _modeApplied = null;
+            _onemanApplied = false;
             return;
         }
 
         try
         {
+            // ワンマン運転の強制（共有のモードによらず）。ユーザーの設定漏れがあっても、ゲームをワンマンにする
+            if (!_onemanApplied || screenChanged || reconnected)
+            {
+                await SendOnemanAsync(true);
+                _onemanApplied = true;
+            }
+
             if (shared && (_modeApplied != ShareMode.Shared || screenChanged || reconnected))
             {
                 await _game.SendCommandAsync("mode_req", ["hide_other"]);
@@ -345,6 +353,19 @@ public sealed class MainForm : Form
         if (_mode != ShareMode.Shared) return;
         await _routes.ClearAllAsync(_game, EffectiveTrainNumber(_game.Latest));
         await _signals.ClearAllAsync(_game);
+    }
+
+    private bool _onemanApplied;
+
+    /// <summary>
+    /// ワンマン運転の強制指定（ゲームの API の mode 要求 forceoneman_on / forceoneman_off）。
+    /// 資料（TrainCrewControlDesk）の書き方は mode_request だが、このソフトが使っている mode_req でも送る（どちらか片方が効けばよい）。
+    /// </summary>
+    private async Task SendOnemanAsync(bool on)
+    {
+        var arg = on ? "forceoneman_on" : "forceoneman_off";
+        await _game.SendCommandAsync("mode_req", [arg]);
+        await _game.SendCommandAsync("mode_request", [arg]);
     }
 
     /// <summary>在線共有モードで変えたゲームの設定を元に戻す（進路・信号・他列車の表示・進路の自動）。</summary>
@@ -663,6 +684,9 @@ public sealed class MainForm : Form
             _config.Save();
             await _server.StopAsync();
             await LeaveGameModesAsync();
+            // ワンマンの強制も外す（このソフトを使わずに遊ぶときは、ゲームの設定どおりに）
+            if (_onemanApplied && _game.IsConnected)
+                try { await SendOnemanAsync(false); } catch { }
             _game.Stop();
             Close();
             return;

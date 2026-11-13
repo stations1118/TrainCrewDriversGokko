@@ -107,6 +107,9 @@ public sealed class RouteEngine
         /// <summary>列車が番線に入りきった時刻（番線ごとの「入ってから何秒後に出発を開通」を数える）。</summary>
         public DateTime? InTrackUtc { get; set; }
 
+        /// <summary>番線に入りきって、ゲームの速度が 0km/h になった（止まった）時刻。出発・入換の開通の合図に使う。</summary>
+        public DateTime? StoppedUtc { get; set; }
+
         /// <summary>先頭がこの駅に着いた時刻（始発は認識した時刻）。単線区間で、同時に待ち合ったときの順番に使う。</summary>
         public DateTime? HereUtc { get; set; }
 
@@ -827,6 +830,7 @@ public sealed class RouteEngine
             if (st.LoopArrivedUtc == null && IsLoopTrack(run, st) && FullyInTrack(run, st))
                 st.LoopArrivedUtc = now;
             if (st.InTrackUtc == null && FullyInTrack(run, st)) st.InTrackUtc = now;
+            if (st.StoppedUtc == null && FullyInTrack(run, st) && run.Player.Speed < StopSpeedKmh) st.StoppedUtc = now;
 
             // 2つ手前の駅（すべての駅）に先頭が着いたか（構内に入ったか）。始発のすぐ先などで、もう過ぎていればすぐ
             if (!st.Triggered && !st.IsStart)
@@ -1037,6 +1041,7 @@ public sealed class RouteEngine
         st.Track = want;
         st.LoopArrivedUtc = null;
         st.InTrackUtc = null;
+        st.StoppedUtc = null;
         st.TrackSource = source;
         st.Partners.Clear();
         (st.Arrive, st.ArriveWait) = (GroupState.None, "");
@@ -1470,13 +1475,24 @@ public sealed class RouteEngine
         : st.StopType == "通過" && !st.IsStart && !st.DepartStop ? 0 : _data.DefaultDwellSeconds;
 
     /// <summary>待避線に着いてから、最低の停車時分がたっていなければ待つ理由。</summary>
-    private string? LoopDwellHold(TrainRun run, StationRun st, DateTime now)
+    /// <summary>止まったとみなす速度（km/h 未満）。</summary>
+    private const float StopSpeedKmh = 0.5f;
+
+    /// <summary>
+    /// 番線に入りきって 0km/h になる（止まる）まで開通させない。止まってから afterStopSeconds（と番線ごとの秒数）待つ。
+    /// 秒数で待つと運転のしかたで長さが変わるので、ゲームの速度で止まったことを確かめる。
+    /// </summary>
+    private string? StopHold(StationRun st, DateTime now, string what, int extraSeconds = 0)
     {
-        if (!IsLoopTrack(run, st)) return null;
-        if (st.LoopArrivedUtc is not { } at) return $"待避線で停車（着いてから {_data.MinLoopDwellSeconds}秒）";
-        var left = _data.MinLoopDwellSeconds - (now - at).TotalSeconds;
-        return left > 0 ? $"待避線で停車（あと {Math.Ceiling(left):0}秒）" : null;
+        if (st.StoppedUtc is not { } at) return $"{what}（止まったら開通）";
+        var sec = Math.Max(extraSeconds, _data.AfterStopSeconds);
+        var left = sec - (now - at).TotalSeconds;
+        return left > 0 ? $"{what}（止まってから{sec}秒・あと {Math.Ceiling(left):0}秒）" : null;
     }
+
+    /// <summary>待避線に入った列車は、止まるまで出発を開通させない（すぐに次の信号を要求しないように）。</summary>
+    private string? LoopDwellHold(TrainRun run, StationRun st, DateTime now) =>
+        IsLoopTrack(run, st) ? StopHold(st, now, "待避線で停車") : null;
 
     /// <summary>ダイヤグラムのスジずらしで決めた発車時刻の30秒前まで、出発を開通させない。</summary>
     private string? DepartTimeHold(TrainRun run, StationRun st, DateTime now)
@@ -1489,18 +1505,15 @@ public sealed class RouteEngine
     private const int DepartLeadSeconds = 30;
 
     /// <summary>
-    /// 番線に入りきってから決まった秒数がたつまで、出発を開通させない。番線ごとの指定（大道寺の上り1番線など）があればその秒数、
-    /// なくても、出発が開通しないまま入りきった（停止で入った）なら最低 minStopSeconds 秒（RouteRules.json）。始発の列車には使わない。
+    /// 番線に入りきって止まる（0km/h）まで、出発を開通させない。番線ごとの指定（大道寺の上り1番線など）がある番線は必ず、
+    /// ない番線は、出発が開通しないまま入りきった（停止で入った）ときだけ。指定の秒数は「止まってから」の秒数。始発の列車には使わない。
     /// </summary>
     private string? TrackDelayHold(TrainRun run, StationRun st, DateTime now)
     {
         if (st.IsStart || st.Track is not { } t) return null;
         var configured = st.St.DepartDelay.TryGetValue((run.Dir, t), out var conf);
         if (!configured && st.InTrackUtc == null) return null; // 入りきる前に開通させるのはかまわない
-        var sec = Math.Max(configured ? conf : 0, _data.MinStopSeconds);
-        if (st.InTrackUtc is not { } at) return $"番線に入ってから{sec}秒後に開通";
-        var left = sec - (now - at).TotalSeconds;
-        return left > 0 ? $"番線に入ってから{sec}秒後に開通（あと {Math.Ceiling(left):0}秒）" : null;
+        return StopHold(st, now, "停車", configured ? conf : 0);
     }
 
     /// <summary>行き止まり（折り返し）の番線に入るか。入ると、この駅で打ち切り。</summary>
@@ -1532,8 +1545,7 @@ public sealed class RouteEngine
             {
                 var outPath = outOptions[outIndex].Routes;
                 var outWait = !st.IsStart && !FullyInTrack(run, st) ? "列車が番線に入るまで"
-                    : !st.IsStart && st.InTrackUtc is { } inAt && (now - inAt).TotalSeconds < _data.MinStopSeconds
-                        ? $"番線に入ってから{_data.MinStopSeconds}秒後に開通（あと {Math.Ceiling(_data.MinStopSeconds - (now - inAt).TotalSeconds):0}秒）"
+                    : !st.IsStart && StopHold(st, now, "停車") is { } stopWait ? stopWait
                     : st.ForceShuntOut ? InterlockConflict(run, outPath, occupied)
                     : (_central.Hold(run.Train, st.St.Id) & HoldKind.Depart) != 0 ? "出発抑止（集中扱い）"
                     : Conflict(run, st, outPath, occupied, departure: true);
