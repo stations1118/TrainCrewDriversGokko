@@ -79,6 +79,10 @@
 
   const swap = (arr, i, j) => { [arr[i], arr[j]] = [arr[j], arr[i]]; };
 
+  // その向き（"上り" / "下り"）の列車だけにした駅の出発順序（出発順序は上下別に持つ）
+  const dirOrder = (o, d) => o && { ...o, name: `${o.name} ${d}`, direction: d,
+    fixedOrder: d === "上り" ? o.fixedUp : o.fixedDown, trains: o.trains.filter((t) => t.direction === d) };
+
   // 順序の表のボタン・番線の選択。処理したら true
   async function handleOrderEvent(ev, ctx) {
     const btn = ev.target.closest("button");
@@ -97,7 +101,7 @@
       }
       if (btn.dataset.order) {
         ctx.done();
-        await ctx.act("POST", "/route/order", { station: ctx.ord.station, trains: btn.dataset.order === "set" ? ctx.seq : null });
+        await ctx.act("POST", "/route/order", { station: ctx.ord.station, direction: ctx.ord.direction, trains: btn.dataset.order === "set" ? ctx.seq : null });
         return true;
       }
       if (btn.dataset.sorder) {
@@ -132,7 +136,9 @@
   function openPopup({ box, anchor, train, marker: m, diagram, act, onClose }) {
     closePopup();
     const r = anchor.getBoundingClientRect(), b = box.getBoundingClientRect();
-    const ord = (diagram.orders || []).find((o) => o.station === m.stationId);
+    const dir = ((diagram.trains || []).find((t) => t.train === train) || {}).direction;
+    const all = (diagram.orders || []).find((o) => o.station === m.stationId);
+    const ord = dir ? dirOrder(all, dir) : all; // 選んだ列車の向きの出発順序だけ
     const sec = m.singleNext ? (diagram.sections || []).find((s) => (s.a === m.stationId && s.b === m.singleNext) || (s.b === m.stationId && s.a === m.singleNext)) : null;
     const ctx = {
       ord, sec, act,
@@ -161,6 +167,9 @@
           <button data-hold="arrive" class="${m.holdArrive ? "danger" : ""}" title="場内信号を出させない。開通済みでも、列車がまだ接近していなければ取り消す">${m.holdArrive ? "場内抑止中（解除）" : "場内抑止"}</button>
           <button data-hold="depart" class="${m.holdDepart ? "danger" : ""}" title="出発信号を出させない。開通済みでも、列車がまだ接近していなければ取り消す">${m.holdDepart ? "出発抑止中（解除）" : "出発抑止"}</button>
           <button class="primary" data-act="force" title="抑止を外し、安全を確認でき次第、自動で開通させる">自動開通</button>
+          ${m.stopOverride === "打ち切り"
+            ? `<button data-act="uncut" class="danger" title="打ち切りを外して、この先の駅も扱う">打ち切り中（解除）</button>`
+            : m.terminal ? "" : `<button data-act="cut" title="この駅で運転を打ち切る（サーバーの扱いだけ。この先の駅の進路は取らない）">打ち切り</button>`}
           <button data-close="1">閉じる</button></div>
         ${ord ? `<div ${sep}>${stationOrderHtml(ord, ctx.seq)}</div>` : ""}
         ${sec ? `<div ${sep}>${sectionOrderHtml(sec, ctx.sseq)}</div>` : ""}`;
@@ -178,6 +187,7 @@
       const body = { train, station: m.stationId };
       closePopup();
       if (btn.dataset.act === "force") await act("POST", "/route/force", body);
+      else if (btn.dataset.act === "cut" || btn.dataset.act === "uncut") await act("POST", "/route/stop", { ...body, kind: btn.dataset.act === "cut" ? "打ち切り" : null });
       else if (btn.dataset.hold) {
         const on = btn.dataset.hold === "arrive" ? m.holdArrive : m.holdDepart;
         await act("POST", "/route/hold", { ...body, hold: !on, kind: btn.dataset.hold });
@@ -204,8 +214,6 @@
 
     const station = (id) => (diagram && diagram.orders || []).find((o) => o.station === id) || null;
     const section = (k) => (diagram && diagram.sections || []).find((s) => `${s.a}|${s.b}` === k) || null;
-    // その向きの列車だけにした駅の順序（表示用）
-    const dirOrder = (o, d) => o && { ...o, name: `${o.name} ${d}`, trains: o.trains.filter((t) => t.direction === d) };
 
     function load(col) {
       if (col === "sec") { const s = section(pick.sec); seq.sec = s ? s.trains.map((t) => t.train) : []; return; }
@@ -216,13 +224,14 @@
     function colHtml(d) {
       const opts = (diagram.orders || []).map((o) => {
         const n = o.trains.filter((t) => t.direction === d).length;
-        return `<option value="${esc(o.station)}" ${pick[d] === o.station ? "selected" : ""}>${esc(o.name)}（${n}本${o.fixedOrder ? "・指定中" : ""}）</option>`;
+        const fixed = d === "上り" ? o.fixedUp : o.fixedDown;
+        return `<option value="${esc(o.station)}" ${pick[d] === o.station ? "selected" : ""}>${esc(o.name)}（${n}本${fixed ? "・指定中" : ""}）</option>`;
       }).join("");
       const o = dirOrder(station(pick[d]), d);
       return `<div data-col="${d}" style="min-width:0">
           <div class="row"><b>${d}</b><select data-pick-col="${d}"><option value="">駅を選ぶ</option>${opts}</select>
             ${dirty[d] ? `<span class="muted">並べ替え中</span>` : ""}</div>
-          ${o ? stationOrderHtml(o, seq[d]).replace("自動に戻す</button>", "自動に戻す（上下とも）</button>") : ""}</div>`;
+          ${o ? stationOrderHtml(o, seq[d]) : ""}</div>`;
     }
 
     function secHtml() {
@@ -292,11 +301,8 @@
         const o = station(pick[c]);
         dirty[c] = false;
         if (!o) return;
-        if (btn.dataset.order !== "set") { await act("POST", "/route/order", { station: o.station, trains: null }); return; }
-        // その向きの列車の位置に、並べ替えた順で入れる（反対向きの列車の並びはそのまま）
-        const mine = [...seq[c]];
-        const merged = o.trains.map((t) => (t.direction === c ? mine.shift() : t.train)).filter((x) => x);
-        await act("POST", "/route/order", { station: o.station, direction: c, trains: merged.concat(mine) });
+        // その向きだけを決める・自動に戻す（反対向きの順序はそのまま）
+        await act("POST", "/route/order", { station: o.station, direction: c, trains: btn.dataset.order === "set" ? [...seq[c]] : null });
       }
     });
 

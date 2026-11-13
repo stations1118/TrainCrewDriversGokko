@@ -54,7 +54,7 @@ public sealed class GameHub(
         var p = players.Get(Context.ConnectionId);
         if (p == null) return new RestoreResult { Message = "サーバーに参加していません" };
 
-        var targets = incidents.Snapshot().Where(i => data.IsNear(i.Crossing, p.Zones)).Select(i => i.Crossing).ToList();
+        var targets = incidents.Snapshot().Where(i => data.IsNear(i.Crossing, p.TrackCircuits, p.Zones)).Select(i => i.Crossing).ToList();
         if (targets.Count == 0) return new RestoreResult { Message = "この区間に、作動中の特発はありません" };
 
         var who = string.IsNullOrEmpty(p.TrainNumber) ? "列番未設定" : $"列番 {p.TrainNumber}";

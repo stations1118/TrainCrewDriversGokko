@@ -103,6 +103,9 @@ public sealed class LineMap
         return null;
     }
 
+    /// <summary>そのゾーン（駅構内・駅間）に属する軌道回路。</summary>
+    public IEnumerable<string> CircuitsOfZone(int zone) => _circuitZone.Where(kv => kv.Value == zone).Select(kv => kv.Key);
+
     /// <summary>軌道回路のゾーン。なければ null。</summary>
     public int? ZoneOfCircuit(string circuit) => _circuitZone.TryGetValue(circuit, out var z) ? z : null;
 

@@ -19,6 +19,8 @@
   <!-- データファイルは exe の隣の Data フォルダに置く（サーバー上で書き換えて再起動すれば反映される） -->
   <ItemGroup>
     <Content Update="Data\**\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- 踏切の閉塞（信号・踏切道早見表）。特発の復帰を、列車のいる閉塞で判定する -->
+    <Content Include="Data\CrossingBlocks.csv" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- 管理画面。exe の場所を基準に読むので、dotnet build の出力にもコピーする -->
     <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

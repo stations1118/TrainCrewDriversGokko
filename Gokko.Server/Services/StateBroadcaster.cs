@@ -98,7 +98,7 @@ public sealed class StateBroadcaster : BackgroundService
                 Position = _data.Line.DescribeZones(p.Zones),
                 ActiveCrossings = activeNames,
                 VisibleIncidents = active
-                    .Where(i => _data.IsNear(i.Crossing, p.Zones))
+                    .Where(i => _data.IsNear(i.Crossing, p.TrackCircuits, p.Zones))
                     .Select(i => new IncidentView { Crossing = i.Crossing, Reason = i.Reason, StartedGameTime = i.StartedGameTime })
                     .ToList(),
                 PlayerCount = players.Count

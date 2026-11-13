@@ -18,6 +18,9 @@ var dataDir = Path.IsPathRooted(options.DataDirectory)
 // データファイルの誤りは、起動時に止めて知らせる
 var data = GameData.Load(dataDir);
 var rail = RailData.Load(dataDir, data.Line);
+// 踏切の特発を戻せる軌道回路（信号・踏切道早見表から、上下別の閉塞で）
+var crossingNotes = new List<string>();
+data.SetCrossingCircuits(CrossingBlocks.Load(Path.Combine(dataDir, "CrossingBlocks.csv"), data.Line, rail, data, crossingNotes));
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton(options.Random); // 管理画面から書き換える（運転会中だけ有効。再起動で appsettings の値に戻る）
@@ -45,6 +48,8 @@ var app = builder.Build();
 
 app.Logger.LogInformation("データ: 踏切 {Crossings}件、区間設定 {Sections}件、理由 {Reasons}件（{Dir}）",
     data.Crossings.Count, data.CrossingZones.Count, data.Reasons.Count, dataDir);
+foreach (var n in crossingNotes) app.Logger.LogWarning("{Note}", n);
+app.Logger.LogInformation("踏切の閉塞: {Count}件（CrossingBlocks.csv）", data.CrossingCircuits.Count);
 app.Logger.LogInformation("進路: 駅 {Stations}件（うち扱う駅 {Control}件）、進路 {Routes}件、信号機 {Signals}件、標準運転時分 {RunTimes}区間",
     rail.Stations.Count, rail.ControlStations.Count(), rail.Routes.Count, rail.Signals.Count, rail.RunTimes.Count);
 

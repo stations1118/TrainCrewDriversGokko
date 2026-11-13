@@ -16,7 +16,7 @@ public enum HoldKind
 /// ・抑止: 列番＋駅 → その駅の場内・出発（どちらか、または両方）の進路を開通させない
 /// ・開通指示: 列番＋駅 → 手前の駅を通過していなくても、安全の確認ができしだい開通させる（集中扱いの駅では必須）
 /// ・駅扱い（強制進路）: 列番＋駅＋「本線→1番線」などの進路 → 連動に問題がなければ、サーバーの抑止・待ちを無視して開通させる
-/// ・駅の出発順序: 駅ごとの列番の並び（上下とも）。進路が競合する列車どうしは、先の列車が駅を抜けるまで出発させない
+/// ・駅の出発順序: 駅・向き（上り・下り）ごとの列番の並び。進路が競合する列車どうしは、先の列車が駅を抜けるまで出発させない
 /// ・単線区間の走行順: 駅間ごとの列番の並び。先の列車が区間を抜けるまで、後の列車をその区間へ出発させない
 /// ・駅の扱い: 駅ごとに「列車扱い」「集中扱い」。集中扱いの駅は、開通指示があるまで自動では開通させない
 /// 列番で覚えるので、クライアントがつなぎ直しても引き継がれる。サーバーを再起動すると消える。
@@ -29,47 +29,47 @@ public sealed class CentralControl
     private readonly HashSet<(string Train, string Station)> _forces = new();
     private readonly HashSet<string> _centralStations = new();
     private readonly Dictionary<(string Train, string Station), DateTime> _openAt = new();
-    private readonly Dictionary<string, List<string>> _orders = new();
+    private readonly Dictionary<(string Station, Dir Dir), List<string>> _orders = new();
     private readonly Dictionary<(string A, string B), List<string>> _sectionOrders = new();
     private readonly Dictionary<(string Train, string Station), string> _manual = new();
 
     // 順序を最後に変えた順番（出発順序と走行順のどちらが新しいかで、同期の向きを決める）
     private long _stamp;
-    private readonly Dictionary<string, long> _orderStamps = new();
+    private readonly Dictionary<(string Station, Dir Dir), long> _orderStamps = new();
     private readonly Dictionary<(string A, string B), long> _sectionStamps = new();
 
-    public long OrderStamp(string station) { lock (_lock) return _orderStamps.GetValueOrDefault(station); }
+    public long OrderStamp(string station, Dir dir) { lock (_lock) return _orderStamps.GetValueOrDefault((station, dir)); }
     public long SectionStamp(string a, string b) { lock (_lock) return _sectionStamps.GetValueOrDefault(SectionKey(a, b)); }
 
     public event Action<string>? Changed;
 
     // ---- 駅の出発順序 ----
 
-    /// <summary>駅の出発順序（上下の列車をまとめた列番の並び）。</summary>
-    public IReadOnlyList<string>? Order(string station)
+    /// <summary>駅の出発順序（その向きの列車の列番の並び）。上り・下りは別々に持ち、片方だけ自動に戻せる。</summary>
+    public IReadOnlyList<string>? Order(string station, Dir dir)
     {
-        lock (_lock) return _orders.TryGetValue(station, out var l) ? l.ToList() : null;
+        lock (_lock) return _orders.TryGetValue((station, dir), out var l) ? l.ToList() : null;
     }
 
-    public void SetOrder(string station, IReadOnlyList<string>? trains)
+    public void SetOrder(string station, Dir dir, IReadOnlyList<string>? trains)
     {
         lock (_lock)
         {
-            if (trains is { Count: > 0 }) _orders[station] = trains.Distinct().ToList();
-            else _orders.Remove(station);
-            _orderStamps[station] = ++_stamp;
+            if (trains is { Count: > 0 }) _orders[(station, dir)] = trains.Distinct().ToList();
+            else _orders.Remove((station, dir));
+            _orderStamps[(station, dir)] = ++_stamp;
         }
 
-        Changed?.Invoke($"集中扱い: {station} 出発順序 → {(trains is { Count: > 0 } ? string.Join(" → ", trains) : "自動に戻す")}");
+        Changed?.Invoke($"集中扱い: {station} {dir.Label()}出発順序 → {(trains is { Count: > 0 } ? string.Join(" → ", trains) : "自動に戻す")}");
     }
 
     /// <summary>走行順に合わせて出発順序を直す（同期。記録には出さず、走行順と同じ更新時刻にする）。</summary>
-    public void SyncOrder(string station, IReadOnlyList<string> trains, long stamp)
+    public void SyncOrder(string station, Dir dir, IReadOnlyList<string> trains, long stamp)
     {
         lock (_lock)
         {
-            _orders[station] = trains.Distinct().ToList();
-            _orderStamps[station] = stamp;
+            _orders[(station, dir)] = trains.Distinct().ToList();
+            _orderStamps[(station, dir)] = stamp;
         }
     }
 
@@ -88,8 +88,11 @@ public sealed class CentralControl
     {
         lock (_lock)
         {
-            if (!_orders.TryGetValue(station, out var l) || !l.Remove(train)) return;
-            if (l.Count == 0) _orders.Remove(station);
+            foreach (var dir in new[] { Dir.Down, Dir.Up })
+            {
+                if (!_orders.TryGetValue((station, dir), out var l) || !l.Remove(train)) continue;
+                if (l.Count == 0) _orders.Remove((station, dir));
+            }
         }
     }
 

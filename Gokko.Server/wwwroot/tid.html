@@ -346,7 +346,8 @@
   // 分岐器の回路（46イT・46ロT など。イ・ロは分岐器の名前）は、分岐器の番号ごとにまとめて、渡り線（斜めの線）の上に「46T」と1つだけ出す
   function circuitNames() {
     const out = [];
-    const label = (x, y, text) => out.push(`<text x="${x}" y="${y - 6}" class="cname">${esc(text)}</text>`);
+    const labels = []; // { x, y, text }。あとで、横に重なるものを段にずらして書く
+    const label = (x, y, text) => labels.push({ x, y, text });
     const segsOf = (lines) => lines.flatMap((l) => l.slice(1).map((b, i) => ({ a: l[i], b, len: Math.hypot(b[0] - l[i][0], b[1] - l[i][1]) })));
     const switches = new Map(); // "TH75_46" → { text: "46T", diag: [], straight: [] }
     for (const [name, lines] of Object.entries(layout.circuits)) {
@@ -373,6 +374,19 @@
         const best = g.straight.reduce((m, s) => (!m || s.len > m.len ? s : m), null);
         if (best) label((X(best.a[0]) + X(best.b[0])) / 2, (Y(best.a[1]) + Y(best.b[1])) / 2, g.text);
       }
+    }
+    // 同じ高さで横に重なる回路名は、後ろのものを一段（12px）ずつ上へずらす（短い閉塞が続く所で字が詰まらないように）
+    const width = (t) => [...t].reduce((w, ch) => w + (ch.charCodeAt(0) > 255 ? 11 : 6.5), 0);
+    const rows = new Map(); // 高さ → 段ごとの右端
+    for (const l of labels.sort((a, b) => a.y - b.y || a.x - b.x)) {
+      const key = Math.round(l.y);
+      const ends = rows.get(key) || [];
+      const w = width(l.text), left = l.x - w / 2;
+      let level = 0;
+      while (level < ends.length && left < ends[level] + 3) level++;
+      ends[level] = l.x + w / 2;
+      rows.set(key, ends);
+      out.push(`<text x="${l.x}" y="${l.y - 6 - level * 12}" class="cname">${esc(l.text)}</text>`);
     }
     for (const sg of signals) {
       const lines = layout.circuits[sg.circuit];
@@ -494,9 +508,12 @@
       const t = await res.json();
       if (!res.ok) throw new Error(t.message || ("HTTP " + res.status));
       const rows = t.stops.map((s) => {
-        const pass = s.stop === "通";
+        // 臨停・臨通・打切は、列車別設定の臨時停車・臨時通過・打ち切り
+        const pass = s.stop === "通" || s.stop === "臨通";
+        const note = { "通": " 通", "運停": " 運停", "臨停": " 臨時停車", "臨通": " 臨時通過", "打切": " 打ち切り" }[s.stop] || "";
+        const special = ["臨停", "臨通", "打切"].includes(s.stop);
         return `<tr class="${s.control ? "ctl" : ""} ${pass ? "pass" : ""}"><td>${esc(s.name)}</td>
-          <td>${pass ? "" : esc(s.arr || "")}</td><td>${esc(s.dep || "")}${pass ? " 通" : s.stop === "運停" ? " 運停" : ""}</td></tr>`;
+          <td>${pass ? "" : esc(s.arr || "")}</td><td>${esc(s.dep || "")}<span style="${special ? "color:#e07000;font-weight:700" : ""}">${note}</span></td></tr>`;
       }).join("");
       box.innerHTML = `<div style="margin-bottom:4px"><b>${esc(t.train)}</b> ${esc(t.label || "")}
           <span class="muted">（${esc(t.source)}）</span> <button data-close style="padding:0 6px;margin-left:8px">×</button></div>

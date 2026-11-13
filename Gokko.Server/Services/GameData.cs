@@ -42,6 +42,23 @@ public sealed class GameData
         return !_crossingZones.TryGetValue(crossing, out var cz) || cz.Any(zones.Contains);
     }
 
+    // 踏切ごとの「特発を戻せる軌道回路」（CrossingBlocks.csv から。上下別に、踏切のある閉塞とその手前の閉塞）
+    private Dictionary<string, HashSet<string>> _crossingCircuits = new();
+
+    public IReadOnlyDictionary<string, HashSet<string>> CrossingCircuits => _crossingCircuits;
+
+    public void SetCrossingCircuits(Dictionary<string, HashSet<string>> map) => _crossingCircuits = map;
+
+    /// <summary>
+    /// 列車（踏んでいる軌道回路と、その位置のゾーン）が、その踏切の特発を戻せる所にいるか。
+    /// 閉塞が分かっている踏切は軌道回路で（上下別・駅の境目をまたいでも正しく）、分からない踏切は駅間のゾーンで判定する。
+    /// </summary>
+    public bool IsNear(string crossing, IReadOnlyCollection<string> circuits, IReadOnlyCollection<int> zones)
+    {
+        if (_crossingCircuits.TryGetValue(crossing, out var set)) return circuits.Any(set.Contains);
+        return IsNear(crossing, zones);
+    }
+
     public string DescribeCrossing(string crossing)
     {
         return _crossingZones.TryGetValue(crossing, out var zones) ? Line.DescribeZones(zones) ?? "" : "（区間未設定）";

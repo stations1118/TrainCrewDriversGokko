@@ -119,6 +119,8 @@ public static class AdminEndpoints
                 {
                     name = c,
                     location = data.DescribeCrossing(c),
+                    // 特発を戻せる軌道回路（信号・踏切道早見表から。なければ駅間で判定）
+                    restoreCircuits = data.CrossingCircuits.TryGetValue(c, out var rc) ? rc.OrderBy(x => x, StringComparer.Ordinal).ToList() : null,
                     incident = active.TryGetValue(c, out var i)
                         ? new
                         {
@@ -327,10 +329,20 @@ public static class AdminEndpoints
             return Results.Ok(new { ok = true });
         });
 
-        g.MapPost("/route/order", (OrderRequest req, CentralControl central, RailData rail) =>
+        // 駅の出発順序（direction: "上り" / "下り"。trains が null なら、その向きを自動に戻す）。
+        // direction がなければ、列車ごとの向きで振り分ける（trains も null なら上下とも自動に戻す）
+        g.MapPost("/route/order", (OrderRequest req, CentralControl central, RailData rail, RouteEngine engine) =>
         {
             if (!rail.Stations.ContainsKey(req.Station)) return Results.BadRequest(new { ok = false, message = "駅IDが違います" });
-            central.SetOrder(req.Station, req.Trains?.Where(t => !string.IsNullOrWhiteSpace(t)).ToList());
+            var trains = req.Trains?.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+            Dir? dir = req.Direction switch { "上り" => Dir.Up, "下り" => Dir.Down, _ => null };
+            if (dir is { } d) { central.SetOrder(req.Station, d, trains); return Results.Ok(new { ok = true }); }
+            foreach (var x in new[] { Dir.Down, Dir.Up })
+            {
+                var mine = trains?.Where(t => engine.DirOfTrain(t) == x).ToList();
+                if (trains == null || mine!.Count > 0) central.SetOrder(req.Station, x, trains == null ? null : mine);
+            }
+
             return Results.Ok(new { ok = true });
         });
     }

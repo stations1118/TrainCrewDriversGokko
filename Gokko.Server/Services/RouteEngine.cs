@@ -557,13 +557,14 @@ public sealed class RouteEngine
                 var deps = sec.Where(t => RunByTrain(t) is { } r && r.Stations.FirstOrDefault(s => s.St.Id == x && !s.Done) is { } s
                                           && !IsCutOff(r, s) && !s.Terminal && NextControlStation(r, s) == other).ToList();
                 if (deps.Count == 0) continue;
-                var order = _central.Order(x)?.ToList();
+                var dir = RunByTrain(deps[0])!.Dir; // x から other へ出る列車は、みな同じ向き
+                var order = _central.Order(x, dir)?.ToList();
                 var secStamp = _central.SectionStamp(a, b);
-                var stStamp = _central.OrderStamp(x);
+                var stStamp = _central.OrderStamp(x, dir);
                 if (order == null || secStamp > stStamp)
                 {
                     var merged = Reorder(order ?? new List<string>(), deps);
-                    if (order == null || !merged.SequenceEqual(order)) _central.SyncOrder(x, merged, secStamp);
+                    if (order == null || !merged.SequenceEqual(order)) _central.SyncOrder(x, dir, merged, secStamp);
                 }
                 else if (stStamp > secStamp)
                 {
@@ -617,6 +618,12 @@ public sealed class RouteEngine
     {
         lock (_lock)
             return LeverSignals().Where(x => !_levers.TryGetValue(x.Section, out var lv) || lv.Dir != x.Dir).Select(x => x.Name).ToList();
+    }
+
+    /// <summary>列車の向き（走っていればその列車、いなければ列番から）。分からなければ null。</summary>
+    public Dir? DirOfTrain(string train)
+    {
+        lock (_lock) return RunByTrain(train)?.Dir ?? TrainInfo(train)?.Dir;
     }
 
     private static (string Type, Dir Dir)? TrainInfo(string train)
@@ -1321,7 +1328,7 @@ public sealed class RouteEngine
         // 自動の待避は、その駅に停車する列車だけ（通過列車を待避のために止めない。通過列車は、次の停車する待避駅で待つ）
         if (st.StopType == "通過" && !st.IsStart) return;
         if (_central.TrackOverride(run.Train, st.St.Id) != null) return;
-        if (_central.Order(st.St.Id)?.Contains(run.Train) == true) return;
+        if (_central.Order(st.St.Id, run.Dir)?.Contains(run.Train) == true) return;
         var loop = ps.TrackFor(run.Dir);
         if (!st.Options.Contains(loop) || LoopUser(run, st, loop) != null) return;
         var nextStation = _data.Line.StationAtZone(st.Zone + 2 * run.Dir.Step());
@@ -1413,7 +1420,7 @@ public sealed class RouteEngine
     private int? OrderLoopTrack(TrainRun run, StationRun st)
     {
         if (st.Terminal || st.IsStart) return null;
-        if (_central.Order(st.St.Id) is not { } order) return null;
+        if (_central.Order(st.St.Id, run.Dir) is not { } order) return null;
         var idx = order.ToList().IndexOf(run.Train);
         if (idx <= 0) return null;
         var routes = st.St.Routes[run.Dir];
@@ -1453,7 +1460,7 @@ public sealed class RouteEngine
     /// </summary>
     private string? OrderHold(TrainRun run, StationRun st, List<RouteDef> path)
     {
-        if (_central.Order(st.St.Id) is not { } order) return null;
+        if (_central.Order(st.St.Id, run.Dir) is not { } order) return null;
         var idx = order.ToList().IndexOf(run.Train);
         if (idx <= 0) return null;
         var mine = Circuits(path).ToHashSet();
@@ -2201,7 +2208,7 @@ public sealed class RouteEngine
                             Max(p.Dir == r.Dir ? pp.DepAt.TryGetValue(z, out var d1) ? d1 : null : pp.ArrAt.TryGetValue(z, out var a1) ? a1 : null);
 
                 // 駅の出発順序: 同じ向きの先の列車がこの駅を出たあと
-                if (_central.Order(sid) is { } order && order.Contains(r.Train))
+                if (_central.Order(sid, r.Dir) is { } order && order.Contains(r.Train))
                     foreach (var name in order.TakeWhile(t => t != r.Train))
                         if (RunByTrain(name) is { } p && p.Dir == r.Dir && (_central.Hold(name, sid) & HoldKind.Depart) == 0
                             && basePlans.TryGetValue(p, out var pp) && pp.DepAt.TryGetValue(z, out var d2))
@@ -2266,6 +2273,9 @@ public sealed class RouteEngine
                         held = _central.IsHeld(r.Train, s.St.Id),
                         holdArrive = (_central.Hold(r.Train, s.St.Id) & HoldKind.Arrive) != 0,
                         holdDepart = (_central.Hold(r.Train, s.St.Id) & HoldKind.Depart) != 0,
+                        // 臨時停車・臨時通過・打ち切りの指定（◆の窓で打ち切りを選べる）
+                        stopOverride = _central.StopOverride(r.Train, s.St.Id),
+                        terminal = s.Terminal,
                         manual = ManualOptions(r, s).Select(o => new { action = o.Action, label = o.Label }),
                         singleNext = NextControlStation(r, s) is { } nx && _data.IsSingleTrack(s.St.Id, nx) ? nx : null,
                         status = Status(r, s),
@@ -2369,7 +2379,12 @@ public sealed class RouteEngine
             var list = new List<object>();
             foreach (var station in _data.ControlStations)
             {
-                var order = _central.Order(station.Id)?.ToList() ?? new List<string>();
+                // 出発順序は上り・下りで別々（片方だけ自動に戻せる）
+                var orders = new Dictionary<Dir, List<string>>
+                {
+                    [Dir.Down] = _central.Order(station.Id, Dir.Down)?.ToList() ?? new List<string>(),
+                    [Dir.Up] = _central.Order(station.Id, Dir.Up)?.ToList() ?? new List<string>()
+                };
                 var trains = _runs.Values
                     .Where(r => r.HasPosition)
                     .Select(r => (Run: r, St: r.Stations.FirstOrDefault(s => s.St.Id == station.Id && !s.Done)))
@@ -2379,6 +2394,7 @@ public sealed class RouteEngine
                         double? sec = x.St!.IsStart ? 0 : _model.SecondsTo(RunType(x.Run), x.Run.Dir, x.Run.Front, x.Run.Fraction, station.Id);
                         var arriveSec = sec;
                         if (sec != null) sec += DwellSeconds(x.Run, x.St); // 待避線なら最低の停車時分
+                        var order = orders[x.Run.Dir];
                         var entered = x.Run.Requests.Any(q => q.Station == x.St && !q.Released && q.CancelledUtc == null
                                                               && q.Def.Circuits.Any(x.Run.Player.TrackCircuits.Contains));
                         return new
@@ -2417,8 +2433,10 @@ public sealed class RouteEngine
                     station = station.Id,
                     name = station.Name,
                     loopTrack = _data.PassingStations.TryGetValue(station.Id, out var ps) ? $"下り{ps.DownTrack}・上り{ps.UpTrack}番線" : null,
-                    // 指定中: 順序の列車が1本でもいま走っている（退出した列車だけの古い指定は数えない）
+                    // 指定中: 順序の列車が1本でもいま走っている（退出した列車だけの古い指定は数えない）。上り・下り別にも出す
                     fixedOrder = trains.Any(t => t.index >= 0),
+                    fixedUp = trains.Any(t => t.index >= 0 && t.direction == "上り"),
+                    fixedDown = trains.Any(t => t.index >= 0 && t.direction == "下り"),
                     trains
                 });
             }
@@ -2533,12 +2551,35 @@ public sealed class RouteEngine
             var dia = run?.Dia ?? _data.DiaOf(key);
             bool Control(string? id) => id != null && _data.Stations.TryGetValue(id, out var s) && s.RouteControl;
 
+            // 列車別設定の臨時停車・臨時通過・打ち切り（進路を扱う駅だけ）。stop は「臨停」「臨通」「打切」になる
+            string? Override(string? id) => id != null ? _central.StopOverride(key, id) : null;
+
             if (dia != null && dia.Stops.Count > 0)
-                return new
+            {
+                var stops = new List<object>();
+                foreach (var s in dia.Stops)
                 {
-                    train = key, label = dia.TypeLabel, source = "ダイヤ",
-                    stops = dia.Stops.Select(s => new { name = s.Name, control = Control(s.StationId), stop = s.Stop, arr = s.Arr, dep = s.Dep }).ToList()
-                };
+                    switch (Override(s.StationId))
+                    {
+                        case "停車" when s.Stop == "通":
+                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = "臨停", arr = s.Arr ?? s.Dep, dep = s.Dep ?? s.Arr });
+                            break;
+                        case "通過" when s.Stop != "通":
+                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = "臨通", arr = (string?)null, dep = s.Dep ?? s.Arr });
+                            break;
+                        case "打ち切り":
+                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = "打切", arr = s.Arr ?? s.Dep, dep = (string?)null });
+                            break;
+                        default:
+                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = s.Stop, arr = s.Arr, dep = s.Dep });
+                            break;
+                    }
+
+                    if (Override(s.StationId) == "打ち切り") break; // 打ち切った先の駅は出さない
+                }
+
+                return new { train = key, label = dia.TypeLabel, source = "ダイヤ", stops };
+            }
 
             if (run == null || !run.HasPosition) return null;
 
@@ -2552,6 +2593,14 @@ public sealed class RouteEngine
             var endZone = run.Dia?.TerminalId is { } tid ? _data.Line.ZoneOfStation(tid)
                 : stopZones.Count > 0 ? stopZones[^1].Zone
                 : step > 0 ? ids.Max(_data.Line.ZoneOfStation) : ids.Min(_data.Line.ZoneOfStation);
+            // 打ち切りの駅があれば、そこを終着にする
+            foreach (var id in ids.OrderBy(i => _data.Line.ZoneOfStation(i) * step))
+            {
+                var z0 = _data.Line.ZoneOfStation(id);
+                if ((z0 - startZone) * step <= 0 || (z0 - endZone) * step > 0) continue;
+                if (Override(id) == "打ち切り") { endZone = z0; break; }
+            }
+
             var start = clock ?? DateTime.Now.TimeOfDay;
             string Fmt(double sec) => TimeSpan.FromTicks((start + TimeSpan.FromSeconds(sec)).Ticks % TimeSpan.TicksPerDay).ToString(@"hh\:mm\:ss");
 
@@ -2563,6 +2612,12 @@ public sealed class RouteEngine
                 var stopInfo = stopZones.FirstOrDefault(x => x.Zone == z);
                 var stops = stopInfo.StopType is "StopForPassenger" or "StopForOperation" || z == startZone || z == endZone;
                 var mark = stopInfo.StopType == "StopForOperation" ? "運停" : stops ? "停" : "通";
+                switch (Override(id))
+                {
+                    case "停車" when !stops: (stops, mark) = (true, "臨停"); break;
+                    case "通過" when stops && z != startZone && z != endZone: (stops, mark) = (false, "臨通"); break;
+                    case "打ち切り": mark = "打切"; break;
+                }
                 if (z == startZone)
                 {
                     list.Add(new { name = _data.Line.StationName(id), control = Control(id), stop = mark, arr = (string?)null, dep = (string?)Fmt(0) });
