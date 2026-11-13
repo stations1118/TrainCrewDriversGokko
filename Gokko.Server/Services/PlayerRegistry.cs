@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using System.Text;
 using Gokko.Common;
 
@@ -101,7 +102,7 @@ public sealed class PlayerRegistry(GameData data, CentralControl central)
         if (!_players.TryRemove(connectionId, out var p)) return;
         lock (p)
             if (!kicked && (p.ContinueDuty || central.DiaMode) && p.Mode == ShareMode.Shared && p.InGame && p.TrackCircuits.Count > 0 && p.TrainNumber.Length > 0
-                && p.AppearReason == null)
+                && p.AppearReason == null && !LeavesLine(p))
                 AddGhost(p);
     }
 
@@ -170,6 +171,28 @@ public sealed class PlayerRegistry(GameData data, CentralControl central)
         }
     }
 
+    /// <summary>
+    /// 線区の外（赤山町の先、三郷方面）へ出ていく列車か。上り列車（列番の数字の最後の桁が偶数）が、赤山町の1番線・2番線、
+    /// またはそれより三郷寄り（赤山町〜三郷の駅間・三郷・路線データにない回路）にだけいるとき。
+    /// こういう列車がシナリオを終えたときは、継続乗務の在線を残さない（ダイヤ運転中も。その先へ出て行った扱い）。
+    /// 2番線は下りの通過（新大路方から入ってくる列車）も使うので、上り列車に限る
+    /// </summary>
+    private bool LeavesLine(PlayerInfo p)
+    {
+        if (p.TrackCircuits.Count == 0) return false;
+        var body = Regex.Replace(Regex.Replace(p.TrainNumber.Trim(), @"#\d+$", ""), "[XYZ]$", "", RegexOptions.IgnoreCase);
+        var digits = Regex.Match(body, @"(\d+)(?!.*\d)");
+        if (!digits.Success || int.Parse(digits.Groups[1].Value[^1..]) % 2 != 0) return false; // 上り（偶数）だけ
+
+        var exitZone = data.Line.ZoneOfStation(ExitStation);
+        if (exitZone < 0) return false;
+        return p.TrackCircuits.All(c => ExitTrackCircuits.Contains(c) || (data.Line.ZoneOfCircuit(c) is not { } z || z < exitZone));
+    }
+
+    /// <summary>線区の外へ出る駅（赤山町）と、出ていく列車が使う番線の回路（1番線・2番線）。</summary>
+    private const string ExitStation = "TH58";
+    private static readonly HashSet<string> ExitTrackCircuits = ["TH58_2RAT", "TH58_2RBT"];
+
     private void AddGhost(PlayerInfo from)
     {
         var now = DateTime.UtcNow;
@@ -235,7 +258,7 @@ public sealed class PlayerRegistry(GameData data, CentralControl central)
             var nowIn = report.InGame && circuits.Count > 0;
             // ダイヤ運転中は、継続乗務ボタンによらず残す（出現待ちだった列車は、在線がないので残さない）
             if (wasIn && !nowIn && p.Mode == ShareMode.Shared && (p.ContinueDuty || report.ContinueDuty || central.DiaMode) && p.TrainNumber.Length > 0
-                && p.AppearReason == null)
+                && p.AppearReason == null && !LeavesLine(p))
                 AddGhost(p);
             p.ContinueDuty = report.ContinueDuty;
             p.TrainNumberTyped = report.TrainNumberTyped;
