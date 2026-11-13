@@ -37,11 +37,6 @@ public sealed class PlayerInfo
     /// <summary>継続乗務ボタンが押されているか（最後の報告）。</summary>
     public bool ContinueDuty { get; set; }
 
-    /// <summary>継続乗務で引き継いだ列番。ゲームから届く列番の代わりに使う（運転画面を出たら忘れる）。</summary>
-    public string? Alias { get; set; }
-
-    /// <summary>継続乗務で引き継いだ残した在線（<see cref="PlayerRegistry.GhostPrefix"/> で始まる接続ID）。進路の判断が列車を引き継ぐ。</summary>
-    public string? ContinuedFrom { get; set; }
 
     /// <summary>出現待ちの理由（継続乗務の開始番線が違う）。あれば、サーバーの列車として扱わない。</summary>
     public string? AppearReason { get; set; }
@@ -162,8 +157,6 @@ public sealed class PlayerRegistry(GameData data)
         info.TrainCrewConnected = true;
         info.Speed = 0;
         info.ContinueDuty = false;
-        info.Alias = null;
-        info.ContinuedFrom = null;
         info.AppearReason = null;
         lock (_ghosts)
         {
@@ -175,10 +168,11 @@ public sealed class PlayerRegistry(GameData data)
     }
 
     /// <summary>
-    /// 運転画面に入った列車が、継続乗務の在線を引き継ぐか。同じ番線（踏んでいる軌道回路が重なる）なら引き継ぎ、
+    /// 運転画面に入った列車が、継続乗務の在線を引き継ぐか。同じ番線（踏んでいる軌道回路が重なる）なら、残した在線を消して
+    /// 新しいシナリオの列番の列車として始める（出現待ちにしない）。
     /// 自分が残した在線があるのに番線が違えば「開始番線が違う」として出現待ちにする。
     /// </summary>
-    private void MatchGhost(PlayerInfo p)
+    private void MatchGhost(PlayerInfo p, string number)
     {
         lock (_ghosts)
         {
@@ -188,10 +182,8 @@ public sealed class PlayerRegistry(GameData data)
             if (same != null)
             {
                 _ghosts.Remove(same.Id);
-                p.Alias = same.Info.TrainNumber;
-                p.ContinuedFrom = same.Id;
                 p.AppearReason = null;
-                Changed?.Invoke($"継続乗務: {same.Info.TrainNumber} として運転を続けます");
+                Changed?.Invoke($"継続乗務: {same.Info.TrainNumber} の在線を {number} が引き継ぎました");
                 return;
             }
 
@@ -221,14 +213,15 @@ public sealed class PlayerRegistry(GameData data)
             if (wasIn && !nowIn && p.Mode == ShareMode.Shared && (p.ContinueDuty || report.ContinueDuty) && p.TrainNumber.Length > 0)
                 AddGhost(p);
             p.ContinueDuty = report.ContinueDuty;
-            if (!nowIn) { p.Alias = null; p.ContinuedFrom = null; p.AppearReason = null; }
+            var number = Truncate(NormalizeName(report.TrainNumber));
+            if (!nowIn) p.AppearReason = null;
             else if (p.Mode == ShareMode.Shared && (!wasIn || p.AppearReason != null))
             {
                 p.TrackCircuits = circuits;
-                MatchGhost(p);
+                MatchGhost(p, number);
             }
 
-            p.TrainNumber = p.Alias ?? Truncate(NormalizeName(report.TrainNumber));
+            p.TrainNumber = number;
             p.TrainCrewConnected = report.TrainCrewConnected;
             p.InGame = report.InGame;
             p.TrackCircuits = circuits;

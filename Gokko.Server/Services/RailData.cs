@@ -185,6 +185,7 @@ public sealed class RailData
 
     /// <summary>待避線に入ったときの最低の停車時分（秒）。</summary>
     public int MinLoopDwellSeconds { get; private set; } = 90;
+    public int MinStopSeconds { get; private set; } = 30;
 
     /// <summary>進路を扱う駅（路線の並び順）。</summary>
     public IEnumerable<StationDef> ControlStations =>
@@ -348,6 +349,7 @@ public sealed class RailData
             data.PassingToleranceSeconds = root.GetProperty("passingToleranceSeconds").GetInt32();
             data.DefaultDwellSeconds = root.GetProperty("defaultDwellSeconds").GetInt32();
             if (root.TryGetProperty("minLoopDwellSeconds", out var ml)) data.MinLoopDwellSeconds = ml.GetInt32();
+            if (root.TryGetProperty("minStopSeconds", out var ms)) data.MinStopSeconds = ms.GetInt32();
 
             if (root.TryGetProperty("departDelaySeconds", out var dd))
                 foreach (var st in dd.EnumerateObject())

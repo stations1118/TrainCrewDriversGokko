@@ -32,6 +32,9 @@
         <td class="muted">${esc(t.direction || "")}・${esc(t.stop || "")}</td>
         <td>${trackSel}</td>
         <td class="muted">${eta(t.eta)}</td>
+        <td style="white-space:nowrap" title="発車時刻を手で決める（この30秒前まで出発を開通させません）">${t.departable || t.departAt
+          ? `発 <input type="time" step="1" data-depart-train="${esc(tr)}" data-depart-station="${esc(ord.station)}" value="${t.departAt ? hhmm(Date.parse(t.departAt), true) : ""}" style="width:7.5em">${
+              t.departAt ? `<button data-depart-clear="${esc(tr)}" data-depart-station="${esc(ord.station)}" title="発車時刻の指定を外す">×</button>` : ""}` : ""}</td>
         <td style="white-space:nowrap"><button data-up="${i}" ${i === 0 ? "disabled" : ""}>▲</button><button data-down="${i}" ${i === seq.length - 1 ? "disabled" : ""}>▼</button></td>
       </tr>${t.warning ? `<tr><td></td><td colspan="5" style="color:#e07000; font-size:12px">⚠ ${esc(t.warning)}</td></tr>` : ""}`;
     }).join("");
@@ -41,6 +44,17 @@
       <div class="row" style="margin:6px 0 0">
         <button data-order="set" class="primary" ${seq.length < 2 ? "disabled" : ""}>この順で決定</button>
         <button data-order="clear" ${ord.fixedOrder ? "" : "disabled"}>自動に戻す</button></div>`;
+  }
+
+  function timeToIso(v) {
+    const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(v || "");
+    if (!m) return null;
+    const d = new Date();
+    d.setHours(Number(m[1]), Number(m[2]), Number(m[3] || 0), 0);
+    const now = Date.now();
+    if (d.getTime() < now - 12 * 3600000) d.setDate(d.getDate() + 1);
+    else if (d.getTime() > now + 12 * 3600000) d.setDate(d.getDate() - 1);
+    return d.toISOString();
   }
 
   function sectionOrderHtml(sec, seq) {
@@ -206,11 +220,20 @@
     el.addEventListener("change", async (ev) => {
       const s = ev.target.closest("select[data-pick-order]");
       if (s) { pick = s.value; dirty = false; draw(); load(); draw(); return; }
+      const inp = ev.target.closest("input[data-depart-train]");
+      if (inp) {
+        const time = timeToIso(inp.value);
+        if (inp.value && !time) return;
+        await act("POST", "/route/open-at", { train: inp.dataset.departTrain, station: inp.dataset.departStation, time });
+        inp.blur();
+        return;
+      }
       await handleTrackChange(ev, ctx);
     });
     el.addEventListener("click", async (ev) => {
       const btn = ev.target.closest("button");
       if (!btn) return;
+      if (btn.dataset.departClear) { await act("POST", "/route/open-at", { train: btn.dataset.departClear, station: btn.dataset.departStation, time: null }); return; }
       if (btn.dataset.up || btn.dataset.down || btn.dataset.sup || btn.dataset.sdown) dirty = true;
       await handleOrderEvent(ev, ctx);
     });
@@ -218,7 +241,7 @@
     return {
       update(d) {
         diagram = d;
-        if (dirty || el.contains(document.activeElement) && document.activeElement.tagName === "SELECT") return;
+        if (dirty || el.contains(document.activeElement) && ["SELECT", "INPUT"].includes(document.activeElement.tagName)) return;
         ctx.ord = pick.startsWith("st:") ? (d.orders || []).find((o) => o.station === pick.slice(3)) : null;
         ctx.sec = pick.startsWith("sec:") ? (d.sections || []).find((s) => `${s.a}|${s.b}` === pick.slice(4)) : null;
         load();

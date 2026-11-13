@@ -318,7 +318,7 @@ public sealed class RouteEngine
         lock (_lock)
         {
             // 継続乗務: 運転画面を出て在線を残したら、その列車（進路・駅の状態）を残した在線へ移す。
-            // 同じ番線から次のシナリオを始めたら、残した在線からその接続へ戻す
+            // 同じ番線から次のシナリオを始めたら、残した在線は消え、新しいシナリオの列番の列車として作り直す
             foreach (var g in snapshot.Where(p => p.ConnectionId.StartsWith(PlayerRegistry.GhostPrefix)))
             {
                 var owner = g.ConnectionId[PlayerRegistry.GhostPrefix.Length..g.ConnectionId.LastIndexOf('/')];
@@ -326,10 +326,6 @@ public sealed class RouteEngine
                     && r0.Player.TrainNumber == g.TrainNumber)
                     MoveRun(owner, g.ConnectionId);
             }
-
-            foreach (var p in snapshot.Where(p => p.ContinuedFrom != null && _runs.ContainsKey(p.ContinuedFrom!)))
-                if (!_runs.TryGetValue(p.ConnectionId, out var cur) || cur.Player.TrainNumber != p.TrainNumber)
-                    MoveRun(p.ContinuedFrom!, p.ConnectionId);
 
             // 列車の入れ替わり
             foreach (var id in _runs.Keys.Where(id => snapshot.All(p => p.ConnectionId != id)).ToList()) _runs.Remove(id);
@@ -757,7 +753,10 @@ public sealed class RouteEngine
         var terminal = ov == "打ち切り" || st.BaseTerminal;
         if (stop == st.StopType && terminal == st.Terminal) return;
         // 停車・通過が変わると番線も変わりうるので、場内から作り直す。終着だけが変わるなら、出発だけ作り直す
+        // 場内にもう入っていれば、停車・通過は変えない（打ち切りの終着だけ反映する）
+        if (stop != st.StopType && run.Requests.Any(r => r.Station == st && r.Entered && !r.Released && !r.Departure)) stop = st.StopType;
         var stopChanged = stop != st.StopType;
+        if (!stopChanged && terminal == st.Terminal) return;
         if (run.Requests.Any(r => r.Station == st && r.Entered && !r.Released && (stopChanged || r.Departure))) return;
         foreach (var req in run.Requests.Where(r => r.Station == st && !r.Released && r.CancelledUtc == null && (stopChanged || r.Departure)))
             req.CancelledUtc = now;
@@ -1489,10 +1488,16 @@ public sealed class RouteEngine
     /// <summary>スジずらしで決めた発車時刻の、何秒前に出発の進路を要求するか。</summary>
     private const int DepartLeadSeconds = 30;
 
-    /// <summary>番線に入りきってから決まった秒数がたつまで、出発を開通させない番線（大道寺の上り1番線など）。始発の列車には使わない。</summary>
-    private static string? TrackDelayHold(TrainRun run, StationRun st, DateTime now)
+    /// <summary>
+    /// 番線に入りきってから決まった秒数がたつまで、出発を開通させない。番線ごとの指定（大道寺の上り1番線など）があればその秒数、
+    /// なくても、出発が開通しないまま入りきった（停止で入った）なら最低 minStopSeconds 秒（RouteRules.json）。始発の列車には使わない。
+    /// </summary>
+    private string? TrackDelayHold(TrainRun run, StationRun st, DateTime now)
     {
-        if (st.IsStart || st.Track is not { } t || !st.St.DepartDelay.TryGetValue((run.Dir, t), out var sec)) return null;
+        if (st.IsStart || st.Track is not { } t) return null;
+        var configured = st.St.DepartDelay.TryGetValue((run.Dir, t), out var conf);
+        if (!configured && st.InTrackUtc == null) return null; // 入りきる前に開通させるのはかまわない
+        var sec = Math.Max(configured ? conf : 0, _data.MinStopSeconds);
         if (st.InTrackUtc is not { } at) return $"番線に入ってから{sec}秒後に開通";
         var left = sec - (now - at).TotalSeconds;
         return left > 0 ? $"番線に入ってから{sec}秒後に開通（あと {Math.Ceiling(left):0}秒）" : null;
@@ -1527,6 +1532,8 @@ public sealed class RouteEngine
             {
                 var outPath = outOptions[outIndex].Routes;
                 var outWait = !st.IsStart && !FullyInTrack(run, st) ? "列車が番線に入るまで"
+                    : !st.IsStart && st.InTrackUtc is { } inAt && (now - inAt).TotalSeconds < _data.MinStopSeconds
+                        ? $"番線に入ってから{_data.MinStopSeconds}秒後に開通（あと {Math.Ceiling(_data.MinStopSeconds - (now - inAt).TotalSeconds):0}秒）"
                     : st.ForceShuntOut ? InterlockConflict(run, outPath, occupied)
                     : (_central.Hold(run.Train, st.St.Id) & HoldKind.Depart) != 0 ? "出発抑止（集中扱い）"
                     : Conflict(run, st, outPath, occupied, departure: true);
@@ -1937,6 +1944,9 @@ public sealed class RouteEngine
         var prev = run.Stations.TakeWhile(s => s != st).LastOrDefault(s => !s.Done);
         if (prev == null || IsCutOff(run, prev) || prev.Terminal) return null;
         if ((run.Front - prev.Zone) * run.Dir.Step() > 0) return null; // もう手前の駅を出た
+        // 始発の駅: 入換（引上線などからホーム）が終わり、出発進路を要求するまで、先の駅の進路は取らない
+        if (prev.IsStart && prev.ShuntFrom != null) return $"{prev.St.Name}の入換待ち";
+        if (prev.IsStart && prev.Depart != GroupState.Requested && !IsTurnbackTrack(run, prev)) return $"{prev.St.Name}の出発待ち";
         if (prev.Track == null) return prev.Arrive == GroupState.Requested ? null : $"{prev.St.Name}の通過待ち";
         if (prev.DepartPath.Count == 0) return null;
         return prev.Depart == GroupState.Requested ? null : $"{prev.St.Name}の出発待ち";
@@ -2248,8 +2258,8 @@ public sealed class RouteEngine
         var type = RunType(r);
         var terminal = r.Player.Stops.Count > 0 ? _data.Line.StationIdByName(r.Player.Stops[^1].Name) : null;
         var terminalZone = terminal != null ? _data.Line.ZoneOfStation(terminal) : -1;
-        // 行き止まりの番線に入る駅があれば、線はその駅で切る
-        if (r.Stations.FirstOrDefault(s => !s.Done && IsTurnbackTrack(r, s)) is { } cut) terminalZone = cut.Zone;
+        // 行き止まりの番線に入る駅・終着（列車別設定の打ち切りを含む）があれば、線はその駅で切る
+        if (r.Stations.FirstOrDefault(s => !s.Done && (IsTurnbackTrack(r, s) || s.Terminal)) is { } cut) terminalZone = cut.Zone;
 
         var points = new List<object> { new { t = now, y = PlotY(r) } };
         var arrAt = new Dictionary<int, DateTime>();
@@ -2336,6 +2346,9 @@ public sealed class RouteEngine
                             options = x.St.Options,
                             changeable = x.St.Options.Count > 1 && !entered && !(x.St.IsStart && x.St.ShuntFrom != null && x.St.Shunt == GroupState.Requested),
                             warning = order.Count > 0 ? OrderWarning(x.Run, x.St, order) : "",
+                            // 指定した発車時刻（ダイヤグラムのスジずらし・出発順序の手打ち）。この30秒前まで出発を開通させない
+                            departAt = _central.OpenAt(x.Run.Train, x.St.St.Id),
+                            departable = !x.St.Terminal && !IsTurnbackTrack(x.Run, x.St) && x.St.Depart != GroupState.Requested,
                             // その駅で運転を終える列車（終着・行き止まりの番線）。出発順序には出さず、到着順序にだけ出す
                             ends = x.St.Terminal || IsTurnbackTrack(x.Run, x.St),
                             // もうこの駅に着いている（始発・停車中・通過中）。到着順序には出さない
