@@ -36,8 +36,8 @@ public sealed class RandomTokuhatsuService(
     {
         var now = DateTime.UtcNow;
 
-        if (settings.AutoReleaseSeconds > 0)
-            incidents.ReleaseExpired(TimeSpan.FromSeconds(settings.AutoReleaseSeconds));
+        // 自動復帰（作動のときに理由ごとの秒数で決めた時刻を過ぎたもの）
+        incidents.ReleaseExpired();
 
         // 有効にした瞬間から、最初の抽選までは間隔ぶん待つ
         if (settings.Enabled && !_wasEnabled) _lastRollUtc = now;
@@ -54,8 +54,26 @@ public sealed class RandomTokuhatsuService(
         if (pool.Count == 0) return;
 
         var crossing = pool[_rng.Next(pool.Count)];
-        var reason = data.Reasons.Count > 0 ? data.Reasons[_rng.Next(data.Reasons.Count)] : "";
+        var reason = PickReason();
         incidents.TryTrigger(crossing, reason, "ランダム", out _);
+    }
+
+    /// <summary>理由を、重み（Reasons.json の weight）に比例した確率で選ぶ。重みが全部 0 なら、同じ確率で選ぶ。</summary>
+    private string PickReason()
+    {
+        var specs = data.ReasonSpecs;
+        if (specs.Count == 0) return "";
+        var total = specs.Sum(r => r.Weight);
+        if (total <= 0) return specs[_rng.Next(specs.Count)].Name;
+        var x = _rng.NextDouble() * total;
+        foreach (var r in specs)
+        {
+            if (r.Weight <= 0) continue;
+            x -= r.Weight;
+            if (x < 0) return r.Name;
+        }
+
+        return specs.Last(r => r.Weight > 0).Name;
     }
 
     /// <summary>参加者それぞれの「現在の駅間と進行方向の先」にある踏切を合わせたもの。</summary>

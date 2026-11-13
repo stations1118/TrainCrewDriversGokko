@@ -73,11 +73,16 @@
       <label>確率 <input id="rProb" type="number" min="0" max="1" step="0.05" style="width:70px"></label>
     </div>
     <div class="row">
-      <label>自動復帰(秒) <input id="rAuto" type="number" min="0" style="width:80px"></label>
+      <label title="一覧にない理由を自由に書いて作動させたときの自動復帰">自動復帰(秒・自由入力の理由) <input id="rAuto" type="number" min="0" style="width:80px"></label>
       <label>同時最大 <input id="rMax" type="number" min="1" style="width:60px"></label>
       <button id="randomApply">反映</button>
     </div>
-    <div class="muted">参加者の誰かの「現在の駅間と進行方向の先」にある踏切から選びます。自動復帰は手動で作動させたものにも効きます（0で無効）。</div>
+    <div class="muted">参加者の誰かの「現在の駅間と進行方向の先」にある踏切から選びます。理由は重みに比例した確率で選び、理由ごとの秒数で自動復帰します（手動で作動させたものも同じ。「10~30」はその範囲から選ぶ）。
+      一覧にない理由を自由に書いて作動させたときは「自動復帰(秒)」を使います（0で自動復帰なし）。理由・秒数・重みは Data/Reasons.json で変えられます（再起動で反映）。</div>
+    <div class="scroll" style="margin-top:6px"><table>
+      <thead><tr><th>理由</th><th>自動復帰(秒)</th><th>重み</th><th>確率</th></tr></thead>
+      <tbody id="reasonSpecs"></tbody>
+    </table></div>
   </section>
 
   <section>
@@ -215,6 +220,9 @@
       $("rMax").value = r.maxConcurrent;
     }
 
+    setHtml($("reasonSpecs"), (s.reasonSpecs || []).map((r) =>
+      `<tr><td>${esc(r.name)}</td><td>${r.seconds == null ? `<span class="muted">（自動復帰(秒)）</span>` : esc(r.seconds)}</td><td>${r.weight}</td><td>${r.percent}%</td></tr>`).join(""));
+
     const sel = $("reasonSelect");
     if (sel.options.length !== s.reasons.length) {
       sel.innerHTML = s.reasons.map((x) => `<option>${esc(x)}</option>`).join("");
@@ -238,7 +246,8 @@
       return `<tr class="${i ? "active" : ""}">
         <td>${name}</td>
         <td class="muted">${esc(c.location)}</td>
-        <td>${i ? `<span class="ng status">作動中</span> <span class="muted">${esc(i.source)}・${Math.floor(i.elapsedSeconds / 60)}分経過</span>` : `<span class="muted">-</span>`}</td>
+        <td>${i ? `<span class="ng status">作動中</span> <span class="muted">${esc(i.source)}・${Math.floor(i.elapsedSeconds / 60)}分${i.elapsedSeconds % 60}秒経過${
+          i.releaseInSeconds == null ? "・自動復帰なし" : `・あと${Math.floor(i.releaseInSeconds / 60) ? Math.floor(i.releaseInSeconds / 60) + "分" : ""}${i.releaseInSeconds % 60}秒で自動復帰`}</span>` : `<span class="muted">-</span>`}</td>
         <td>${i ? esc(i.reason) : ""}</td>
         <td>${i
           ? `<button data-release="${name}">復帰</button>`

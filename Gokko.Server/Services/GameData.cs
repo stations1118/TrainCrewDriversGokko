@@ -3,6 +3,12 @@ using System.Text.Json;
 
 namespace Gokko.Server.Services;
 
+/// <summary>特発の理由1つ。作動してから自動で復帰するまでの秒数（MinSeconds〜MaxSeconds から選ぶ）と、ランダムで選ばれる重み。</summary>
+public sealed record ReasonSpec(string Name, int MinSeconds, int MaxSeconds, double Weight)
+{
+    public string SecondsText => MinSeconds == MaxSeconds ? $"{MinSeconds}" : $"{MinSeconds}~{MaxSeconds}";
+}
+
 /// <summary>
 /// サーバーが起動時に読むデータファイル一式（Data フォルダ）。
 /// ・Crossings.json         踏切名の一覧
@@ -25,6 +31,11 @@ public sealed class GameData
 
     public IReadOnlyList<string> Crossings { get; private init; } = [];
     public IReadOnlyList<string> Reasons { get; private init; } = [];
+
+    /// <summary>理由ごとの自動復帰の秒数と重み（Reasons.json）。秒数を書いていない理由は MinSeconds = -1（管理画面の「自動復帰(秒)」を使う）。</summary>
+    public IReadOnlyList<ReasonSpec> ReasonSpecs { get; private init; } = [];
+
+    public ReasonSpec? ReasonSpecOf(string reason) => ReasonSpecs.FirstOrDefault(r => r.Name == reason.Trim());
     public LineMap Line { get; private init; } = null!;
 
     /// <summary>踏切ごとのゾーン（CrossingSections.json に書いたもの）。</summary>
@@ -79,15 +90,53 @@ public sealed class GameData
         var line = LineMap.Parse(Read("LineData.json"));
 
         var reasonsPath = Path.Combine(directory, "Reasons.json");
-        var reasons = File.Exists(reasonsPath)
-            ? ParseStringArray(File.ReadAllText(reasonsPath, Encoding.UTF8), "Reasons.json")
-            : DefaultReasons.ToList();
-        if (reasons.Count == 0) reasons = DefaultReasons.ToList();
+        var specs = File.Exists(reasonsPath) ? ParseReasons(File.ReadAllText(reasonsPath, Encoding.UTF8)) : new List<ReasonSpec>();
+        if (specs.Count == 0) specs = DefaultReasons.Select(r => new ReasonSpec(r, -1, -1, 1)).ToList();
 
-        var data = new GameData { Crossings = crossings, Reasons = reasons, Line = line };
+        var data = new GameData { Crossings = crossings, Reasons = specs.Select(r => r.Name).ToList(), ReasonSpecs = specs, Line = line };
         foreach (var c in crossings) data._crossingSet.Add(c);
         data.LoadCrossingSections(Read("CrossingSections.json"));
         return data;
+    }
+
+    // Reasons.json: [ "理由", ... ] か [ { "reason": "理由", "seconds": "10~30" または 360, "weight": 10 }, ... ]
+    private static List<ReasonSpec> ParseReasons(string json)
+    {
+        using var doc = JsonDocument.Parse(json, LineMap.JsonOptions);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+            throw new InvalidDataException("Reasons.json は [ { \"reason\": \"...\", \"seconds\": \"10~30\", \"weight\": 1 }, ... ] の形で書いてください");
+
+        var list = new List<ReasonSpec>();
+        foreach (var item in doc.RootElement.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.String)
+            {
+                var name0 = LineMap.Str(item).Trim();
+                if (name0.Length > 0 && list.All(r => r.Name != name0)) list.Add(new ReasonSpec(name0, -1, -1, 1));
+                continue;
+            }
+
+            if (item.ValueKind != JsonValueKind.Object) throw new InvalidDataException("Reasons.json: 理由は文字列か { \"reason\": ... } で書いてください");
+            var name = item.TryGetProperty("reason", out var r) ? LineMap.Str(r).Trim() : "";
+            if (name.Length == 0) throw new InvalidDataException("Reasons.json: reason（理由）がありません");
+            int min = -1, max = -1;
+            if (item.TryGetProperty("seconds", out var sec))
+            {
+                var text = sec.ValueKind == JsonValueKind.Number ? sec.GetRawText() : LineMap.Str(sec);
+                var parts = text.Normalize(NormalizationForm.FormKC).Split(new[] { '~', '-', '〜' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length is < 1 or > 2 || !parts.All(p => int.TryParse(p, out var v) && v >= 0))
+                    throw new InvalidDataException($"Reasons.json の {name}: seconds は 360 か \"10~30\" の形で書いてください");
+                min = int.Parse(parts[0]);
+                max = int.Parse(parts[^1]);
+                if (max < min) (min, max) = (max, min);
+            }
+
+            var weight = item.TryGetProperty("weight", out var w) && w.ValueKind == JsonValueKind.Number ? w.GetDouble() : 1;
+            if (weight < 0) throw new InvalidDataException($"Reasons.json の {name}: weight は 0 以上で書いてください");
+            if (list.All(x => x.Name != name)) list.Add(new ReasonSpec(name, min, max, weight));
+        }
+
+        return list;
     }
 
     private static List<string> ParseStringArray(string json, string fileName)

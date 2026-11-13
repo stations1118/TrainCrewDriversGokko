@@ -77,7 +77,8 @@ public static class AdminEndpoints
         // ダイヤグラムの設定画面からは、特発の解除だけできる（作動はできない）
         dia.MapGet("/incidents", (IncidentManager incidents) => Results.Ok(new
         {
-            incidents = incidents.Snapshot().OrderBy(i => i.StartedUtc).Select(i => new { crossing = i.Crossing, reason = i.Reason, source = i.Source, started = i.StartedUtc })
+            incidents = incidents.Snapshot().OrderBy(i => i.StartedUtc).Select(i => new { crossing = i.Crossing, reason = i.Reason, source = i.Source, started = i.StartedUtc,
+                releaseInSeconds = i.ReleaseAtUtc is { } ra ? Math.Max(0, (int)Math.Ceiling((ra - DateTime.UtcNow).TotalSeconds)) : (int?)null })
         }));
         dia.MapPost("/release", (ReleaseRequest req, IncidentManager incidents) =>
         {
@@ -115,6 +116,9 @@ public static class AdminEndpoints
                 clock = new { gameTime = clock.NowText, running = clock.IsRunning },
                 random,
                 reasons = data.Reasons,
+                // 理由ごとの自動復帰の秒数と重み（ランダムで選ばれる確率は、重み ÷ 重みの合計）
+                reasonSpecs = data.ReasonSpecs.Select(r => new { name = r.Name, seconds = r.MinSeconds >= 0 ? r.SecondsText : null, weight = r.Weight,
+                    percent = data.ReasonSpecs.Sum(x => x.Weight) is var tw && tw > 0 ? Math.Round(r.Weight / tw * 100, 1) : 0 }),
                 crossings = data.Crossings.Select(c => new
                 {
                     name = c,
@@ -127,7 +131,9 @@ public static class AdminEndpoints
                             reason = i.Reason,
                             source = i.Source,
                             startedGameTime = i.StartedGameTime,
-                            elapsedSeconds = (int)(now - i.StartedUtc).TotalSeconds
+                            elapsedSeconds = (int)(now - i.StartedUtc).TotalSeconds,
+                            // 自動で復帰するまでの残り秒数（自動復帰しないなら null）
+                            releaseInSeconds = i.ReleaseAtUtc is { } ra ? Math.Max(0, (int)Math.Ceiling((ra - now).TotalSeconds)) : (int?)null
                         }
                         : null
                 }),

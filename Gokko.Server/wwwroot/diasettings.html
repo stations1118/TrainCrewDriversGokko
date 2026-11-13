@@ -139,7 +139,7 @@
   function renderIncidents(list) {
     const html = list.length === 0 ? `<div class="muted">作動中の特発はありません</div>`
       : `<table>${list.map((i) => `<tr><td><b>${GokkoDia.esc(i.crossing)}</b></td><td class="muted">${GokkoDia.esc(i.reason)}</td>
-          <td class="muted">${GokkoDia.esc(i.source)}・${GokkoDia.hhmm(Date.parse(i.started), true)}</td>
+          <td class="muted">${GokkoDia.esc(i.source)}・${GokkoDia.hhmm(Date.parse(i.started), true)}${i.releaseInSeconds == null ? "" : `・あと${i.releaseInSeconds}秒で自動復帰`}</td>
           <td><button data-release="${GokkoDia.esc(i.crossing)}">解除</button></td></tr>`).join("")}</table>`;
     if ($("incidents").dataset.key === html) return;
     $("incidents").dataset.key = html;
