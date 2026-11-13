@@ -651,8 +651,8 @@
       back.innerHTML = `<div role="dialog" aria-modal="true" style="background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:16px 18px; max-width:420px; width:100%; box-shadow:0 4px 16px rgba(0,0,0,.3)">
           ${detail ? `<div class="muted" style="margin-bottom:8px">${esc(detail)}</div>` : ""}
           <div style="font-weight:bold; font-size:16px; margin-bottom:14px">${esc(message)}</div>
-          <div class="row" style="justify-content:flex-end; margin:0">
-            <button data-ans="no">いいえ</button><button data-ans="yes" class="primary">はい</button></div></div>`;
+          <div class="row" style="justify-content:center; margin:0">
+            <button data-ans="yes" class="primary">はい</button><button data-ans="no">いいえ</button></div></div>`;
       const close = (ok) => { back.remove(); document.removeEventListener("keydown", onKey); resolve(ok); };
       const onKey = (ev) => { if (ev.key === "Escape") close(false); };
       back.addEventListener("click", (ev) => {
