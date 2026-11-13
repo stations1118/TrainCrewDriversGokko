@@ -61,6 +61,27 @@ public sealed class ServerLink
     }
 
     /// <summary>出発要求ボタン。</summary>
+    private long _stateReceivedTick;
+
+    /// <summary>サーバーからの配信が5秒以内に届いているか（届いていなければ、防護無線の警報は止める）。</summary>
+    public bool HasFreshState => _state != null && Environment.TickCount64 - Interlocked.Read(ref _stateReceivedTick) < 5000;
+
+    /// <summary>防護無線の発報・解除（トグル）。押した時点の位置を一緒に送る。受け付けられたら true。返事がなくても送り直さない（二重に切り替わるのを防ぐ）。</summary>
+    public async Task<bool> ToggleProtectionRadioAsync(ClientReport report)
+    {
+        var conn = _conn;
+        if (conn == null || !IsJoined) return false;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            return await conn.InvokeAsync<bool>(Protocol.ToggleProtectionRadio, report, timeout.Token);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<string> RequestDepartureAsync()
     {
         var conn = _conn;
@@ -168,7 +189,11 @@ public sealed class ServerLink
                 closed.TrySetResult();
                 return Task.CompletedTask;
             };
-            conn.On<ClientState>(Protocol.ReceiveState, s => _state = s);
+            conn.On<ClientState>(Protocol.ReceiveState, s =>
+            {
+                Interlocked.Exchange(ref _stateReceivedTick, Environment.TickCount64);
+                _state = s;
+            });
 
             try
             {

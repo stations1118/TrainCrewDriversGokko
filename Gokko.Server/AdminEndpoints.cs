@@ -108,7 +108,7 @@ public static class AdminEndpoints
             sections = engine.SectionsView()
         }));
 
-        admin.MapGet("/state", (GameData data, IncidentManager incidents, PlayerRegistry players, GameClock clock, RandomOptions random) =>
+        admin.MapGet("/state", (GameData data, IncidentManager incidents, PlayerRegistry players, GameClock clock, RandomOptions random, ProtectionRadio radio) =>
         {
             var now = DateTime.UtcNow;
             var active = incidents.Snapshot().ToDictionary(i => i.Crossing);
@@ -116,6 +116,7 @@ public static class AdminEndpoints
             {
                 serverTime = DateTimeOffset.UtcNow,
                 clock = new { gameTime = clock.NowText, running = clock.IsRunning },
+                radio = radio.View(), // 防護無線の発報中の一覧
                 random,
                 reasons = data.Reasons,
                 // 理由ごとの自動復帰の秒数と重み（ランダムで選ばれる確率は、重み ÷ 重みの合計）
@@ -271,6 +272,14 @@ public static class AdminEndpoints
         });
 
         // つながっている参加者を強制的に切断する（次の報告のときに接続を切る）
+        // 防護無線の発報を解除する（押したまま離れた参加者など）
+        g.MapPost("/radio/clear", (IdRequest req, ProtectionRadio radio, StateBroadcaster broadcaster) =>
+        {
+            if (!radio.Clear(req.Id)) return Results.NotFound(new { message = "その発報はもうありません" });
+            broadcaster.Trigger();
+            return Results.Ok(new { ok = true });
+        });
+
         g.MapPost("/players/kick", (IdRequest req, PlayerRegistry players) =>
             players.Kick(req.Id) ? Results.Ok(new { ok = true }) : Results.NotFound(new { message = "その参加者はもういません" }));
 

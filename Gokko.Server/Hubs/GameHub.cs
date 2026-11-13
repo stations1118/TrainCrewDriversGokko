@@ -13,6 +13,7 @@ public sealed class GameHub(
     GameData data,
     StateBroadcaster broadcaster,
     RouteEngine routes,
+    ProtectionRadio radio,
     ServerOptions options,
     ILogger<GameHub> logger) : Hub
 {
@@ -53,6 +54,17 @@ public sealed class GameHub(
         }
 
         return players.ApplyReport(Context.ConnectionId, report);
+    }
+
+    /// <summary>防護無線の発報・解除（トグル）。押した時点の位置を一緒に受け取り、その位置で発報する。受け付けたら true。</summary>
+    [HubMethodName(Protocol.ToggleProtectionRadio)]
+    public bool ToggleProtectionRadio(ClientReport report)
+    {
+        if (!players.IsJoined(Context.ConnectionId)) return false;
+        if (report != null) players.ApplyReport(Context.ConnectionId, report);
+        var accepted = radio.Toggle(Context.ConnectionId);
+        broadcaster.Trigger();
+        return accepted;
     }
 
     /// <summary>復帰ボタン。自分のいる区間で作動中の特発（理由が表示されているもの）だけを解除する。</summary>
@@ -99,6 +111,8 @@ public sealed class GameHub(
         if (players.IsJoined(Context.ConnectionId))
         {
             players.Remove(Context.ConnectionId);
+            radio.Remove(Context.ConnectionId);
+            broadcaster.Trigger();
             logger.LogInformation("退出 {ConnectionId}（{Count}人）", Context.ConnectionId, players.Count);
         }
 

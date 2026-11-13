@@ -106,6 +106,12 @@ public sealed class ClientState
     /// <summary>ダイヤ運転中か（false ならフリー運転）。ダイヤ運転中は列車番号の手入力が要り、継続乗務は常に入。</summary>
     public bool DiaMode { get; set; }
 
+    /// <summary>自列車が防護無線の受信範囲にいる（どこかで発報中）。クライアントは警報音を鳴らす。</summary>
+    public bool ProtectionRadioReceiving { get; set; }
+
+    /// <summary>自分が防護無線を発報中か。</summary>
+    public bool ProtectionRadioSending { get; set; }
+
     /// <summary>ロープレ上の時刻（"HH:mm:ss"）。管理画面で設定するまでは null。</summary>
     public string? GameTime { get; set; }
 

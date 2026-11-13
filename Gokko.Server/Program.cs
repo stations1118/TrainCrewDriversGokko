@@ -33,6 +33,7 @@ builder.Services.AddSingleton<RunTimeModel>();
 builder.Services.AddSingleton<SignalCalculator>();
 builder.Services.AddSingleton<CentralControl>();
 builder.Services.AddSingleton<RouteEngine>();
+builder.Services.AddSingleton<ProtectionRadio>();
 builder.Services.AddSingleton<StateBroadcaster>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<StateBroadcaster>());
 builder.Services.AddHostedService<RandomTokuhatsuService>();

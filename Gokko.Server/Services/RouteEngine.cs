@@ -141,7 +141,8 @@ public sealed class RouteEngine
     {
         if (!DiaMode || run.Dia == null || _central.OpenAt(run.Train, st.St.Id) != null) return null;
         if (!st.IsStart && st.StopType == "通過" && !st.DepartStop) return null;
-        if (DepartBeforeArrive(st)) return null;
+        // 浜園に入ってくる列車は、出発まで開けてから入るので時刻で待たない。浜園から始発する列車（回1094 など）は時刻で待つ
+        if (DepartBeforeArrive(st) && !st.IsStart) return null;
         if (DiaSec(run, st.St.Id, depart: true) is not { } dep) return null;
         return NowSec() < dep - DepartLeadSeconds ? $"発車時刻待ち（{FormatDiaTime(dep)} 発。{DepartLeadSeconds}秒前に開通）" : null;
     }
@@ -472,7 +473,8 @@ public sealed class RouteEngine
     /// 同じ行き先の候補（経由の違い）は、最初のものを代表にして1つにまとめる。実際の進路は <see cref="ShuntOutPath"/> で選ぶ。
     /// </summary>
     private static List<ShuntOutDef> ShuntOutOptions(TrainRun run, StationRun st) =>
-        (st.Terminal || IsTurnbackTrack(run, st)) && st.Track is { } t
+        // 途中で列番が変わる駅（1178 は新野崎から 回1178）は、ダイヤの上では終着でも、その番線からそのまま出るので引上げはない
+        (st.Terminal || IsTurnbackTrack(run, st)) && run.Dia?.Next?.StationId != st.St.Id && st.Track is { } t
             ? st.St.Routes[run.Dir].ShuntOuts.Where(o => o.From == t).GroupBy(o => o.Label).Select(g => g.First()).ToList()
             : new List<ShuntOutDef>();
 
@@ -511,7 +513,11 @@ public sealed class RouteEngine
             var m = Regex.Match(message ?? "", @"^(.+?)_(\S+) is (.+)$");
             if (!m.Success) return;
             var key = $"{m.Groups[1].Value}/{m.Groups[2].Value}";
-            run.Results[key] = m.Groups[3].Value;
+            var reply = m.Groups[3].Value;
+            // ゲームが断った進路は記録に残す（サーバーが送らなかったのか、ゲームが断ったのかを、あとから区別できるように）
+            if (reply != "OK" && !reply.Contains("同一進路") && run.Results.GetValueOrDefault(key) != reply)
+                RouteLogLine(DateTime.UtcNow, $"ゲームが進路を断った: {run.Train} {m.Groups[1].Value} {m.Groups[2].Value}「{reply}」（在線 {string.Join(" ", run.Player.TrackCircuits)}）");
+            run.Results[key] = reply;
             run.ResultAt[key] = DateTime.UtcNow;
         }
     }
@@ -1093,7 +1099,10 @@ public sealed class RouteEngine
             if (DiaMode && run.Dia != null && run.Player.Speed < StopSpeedKmh)
             {
                 if (st.IsStart && st.ShuntFrom != null && !st.ShuntRequested) st.ShuntRequested = true;
-                if (st.ShuntOutChoice == null && ShuntOutOptions(run, st).Count > 0 && (st.IsStart || FullyInTrack(run, st))) st.ShuntOutChoice = 0;
+                // 引上げは、スタフの折返が「入換」のときだけ（「発」なら、その番線から次の列番でそのまま出る）
+                if (st.ShuntOutChoice == null && ShuntOutOptions(run, st).Count > 0 && (st.IsStart || FullyInTrack(run, st))
+                    && run.Dia.Turn is not { Kind: "折返", How: not "入換" })
+                    st.ShuntOutChoice = 0;
             }
             ApplyHold(run, st, now);
 
@@ -1263,7 +1272,8 @@ public sealed class RouteEngine
                 }
         }
 
-        if (run.Player.TrackChoices.TryGetValue(st.St.Id, out var chosen) && options.Contains(chosen))
+        // 運転士が選んだ番線。ダイヤ運転中のダイヤの列車は使わない（列車からは進路に触れない）
+        if (!(DiaMode && run.Dia != null) && run.Player.TrackChoices.TryGetValue(st.St.Id, out var chosen) && options.Contains(chosen))
         {
             (st.Track, st.TrackSource) = (chosen, "選択");
             return;
@@ -2651,6 +2661,9 @@ public sealed class RouteEngine
     /// </summary>
     private PlanResult Plan(TrainRun r, DateTime now, Func<int, DateTime?> minDepart)
     {
+        // ダイヤ運転中のダイヤの列車: この先はダイヤどおりの線（遅れていればその分ずらす）。過去は実績（history）のまま
+        if (DiaMode && r.Dia != null && DiaPlan(r, now) is { } dp) return dp;
+
         var step = r.Dir.Step();
         var type = RunType(r);
         var terminal = r.Player.Stops.Count > 0 ? _data.Line.StationIdByName(r.Player.Stops[^1].Name) : null;
@@ -2704,6 +2717,65 @@ public sealed class RouteEngine
         }
 
         return new PlanResult(points, arrAt, depAt);
+    }
+
+    /// <summary>
+    /// ダイヤ運転中の見込み: この先の駅を、ダイヤの着・発の時刻に、いまの遅れの分だけ遅らせて引く。
+    /// 遅れ = 今いる駅ならダイヤの発車時刻からの遅れ（まだ発車時刻前なら0）、駅間なら次の駅に着く見込み（標準運転時分）とダイヤの着の差（早着は0）。
+    /// 時刻はロープレ時刻なので、ダイヤグラムの横軸（実時間）に直す（時計を早回ししていれば、その速さで割る）
+    /// </summary>
+    private PlanResult? DiaPlan(TrainRun r, DateTime now)
+    {
+        var step = r.Dir.Step();
+        var nowSec = NowSec();
+        var speed = _clock.Now != null && _clock.Speed > 0 ? _clock.Speed : 1;
+        DateTime Utc(double sec) => now.AddSeconds((sec - nowSec) / speed);
+
+        // 線の終わり: ダイヤで線区の最後の駅（打ち切り・行き止まりの番線があればそこ）
+        var lastDia = r.Dia!.Stops.LastOrDefault(s => s.StationId != null && _data.Line.ZoneOfStation(s.StationId) >= 0);
+        if (lastDia == null) return null;
+        var terminalZone = _data.Line.ZoneOfStation(lastDia.StationId!);
+        if (r.Stations.FirstOrDefault(s => !s.Done && (IsTurnbackTrack(r, s) || s.Terminal)) is { } cut) terminalZone = cut.Zone;
+
+        double? Arr(string sid) => DiaSec(r, sid, depart: false);
+        double? Dep(string sid) => DiaSec(r, sid, depart: true);
+
+        // 遅れ
+        double shift = 0;
+        var atStation = r.Front % 2 == 0 && _data.Line.StationAtZone(r.Front) is { } curSid && r.Dia.Stops.Any(s => s.StationId == curSid);
+        if (atStation)
+        {
+            if (Dep(_data.Line.StationAtZone(r.Front)!) is { } d) shift = Math.Max(0, nowSec - d);
+        }
+        else
+        {
+            for (var z = r.Front + step; _data.Line.StationAtZone(z) is { } sid || z % 2 != 0; z += step)
+            {
+                if (_data.Line.StationAtZone(z) is not { } s2 || Arr(s2) is not { } a) continue;
+                if (_model.SecondsTo(RunType(r), r.Dir, r.Front, r.Fraction, s2) is { } sec) shift = Math.Max(0, nowSec + sec - a);
+                break;
+            }
+        }
+
+        var points = new List<object> { new { t = now, y = PlotY(r) } };
+        var arrAt = new Dictionary<int, DateTime>();
+        var depAt = new Dictionary<int, DateTime>();
+        var first = r.Front % 2 == 0 ? r.Front : r.Front + step;
+        for (var z = first; _data.Line.StationAtZone(z) is { } sid; z += 2 * step)
+        {
+            if (Arr(sid) is not { } a || Dep(sid) is not { } d) { if (z == terminalZone) break; continue; }
+            var arr = z == r.Front && atStation ? now : Utc(a + shift);
+            var dep = Utc(d + shift);
+            if (arr < now) arr = now;
+            if (dep < arr) dep = arr;
+            arrAt[z] = arr;
+            if (z != r.Front || !atStation) points.Add(new { t = arr, y = (double)z });
+            if (z == terminalZone) break;
+            depAt[z] = dep;
+            if (dep > arr) points.Add(new { t = dep, y = (double)z });
+        }
+
+        return points.Count > 1 ? new PlanResult(points, arrAt, depAt) : null;
     }
 
     /// <summary>

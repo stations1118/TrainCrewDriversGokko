@@ -30,6 +30,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 防護無線の警報音（EXE に埋め込む） -->
+    <EmbeddedResource Include="Audio\bougo_radio_alarm.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Gokko.Common\Gokko.Common.csproj" />
   </ItemGroup>
 

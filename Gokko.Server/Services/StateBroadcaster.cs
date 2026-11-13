@@ -23,11 +23,13 @@ public sealed class StateBroadcaster : BackgroundService
     private readonly SemaphoreSlim _wake = new(0, 1);
 
     private readonly CentralControl _central;
+    private readonly ProtectionRadio _radio;
 
     public StateBroadcaster(IHubContext<GameHub> hub, PlayerRegistry players, IncidentManager incidents, GameClock clock,
-        GameData data, RouteEngine routes, SignalCalculator signals, ServerOptions options, CentralControl central, ILogger<StateBroadcaster> logger)
+        GameData data, RouteEngine routes, SignalCalculator signals, ServerOptions options, CentralControl central, ProtectionRadio radio, ILogger<StateBroadcaster> logger)
     {
         _central = central;
+        _radio = radio;
         _hub = hub;
         _players = players;
         _incidents = incidents;
@@ -90,6 +92,7 @@ public sealed class StateBroadcaster : BackgroundService
         var gameTime = _clock.NowText;
         var shared = players.Where(p => p.Mode == ShareMode.Shared && p.InGame).ToList();
         var leverStops = _routes.LeverStopSignals();
+        var (radioReceivers, radioSenders) = _radio.Evaluate(players); // 防護無線（受信している・発報している参加者）
 
         var sends = new List<Task>(players.Count);
         foreach (var p in players)
@@ -98,6 +101,8 @@ public sealed class StateBroadcaster : BackgroundService
             {
                 ServerTime = now,
                 DiaMode = _central.DiaMode,
+                ProtectionRadioReceiving = radioReceivers.Contains(p.ConnectionId),
+                ProtectionRadioSending = radioSenders.Contains(p.ConnectionId),
                 GameTime = gameTime,
                 Position = _data.Line.DescribeZones(p.Zones),
                 ActiveCrossings = activeNames,

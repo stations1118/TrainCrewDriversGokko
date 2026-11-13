@@ -15,6 +15,13 @@ public sealed class SignalApplier
     private Dictionary<string, string> _sent = new();
     private DateTime _lastFullUtc = DateTime.MinValue;
 
+    /// <summary>送った現示の記録を捨てる（シナリオを閉じた・ゲームとつなぎ直したとき。次の周期で全部送り直す）。</summary>
+    public void Reset()
+    {
+        _sent.Clear();
+        _lastFullUtc = DateTime.MinValue;
+    }
+
     public async Task TickAsync(GameLink link, ClientState? state)
     {
         if (!link.IsConnected || link.Latest is not { InGame: true })

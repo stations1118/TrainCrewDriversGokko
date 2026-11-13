@@ -48,6 +48,7 @@ public sealed class GameLink
     private volatile ClientWebSocket? _ws;
     private volatile GameState? _latest;
     private volatile string _playerTrainNumber = "";
+    private string _prevPlayer = ""; // 自列車の回路が見つかった、いちばん新しいダイヤ名（列番が変わった直後の照合に使う）
 
     public GameState? Latest => _latest;
 
@@ -76,6 +77,19 @@ public sealed class GameLink
     public void Stop()
     {
         _cts?.Cancel();
+        _cts = null;
+    }
+
+    /// <summary>手で切ったか（<see cref="Stop"/> のあと、<see cref="Start"/> するまで）。</summary>
+    public bool Stopped => _cts == null;
+
+    /// <summary>
+    /// ゲームとの接続を張り直す（今の接続を切ると、3秒後に自動でつなぎ直す）。
+    /// ゲーム側（外部入出力）に溜まった要求や、進路一覧の送り方の状態を、まっさらにするため
+    /// </summary>
+    public void Reconnect()
+    {
+        try { _ws?.Abort(); } catch { }
     }
 
     /// <summary>踏切の特発を作動（true）または解除（false）する。</summary>
@@ -268,11 +282,19 @@ public sealed class GameLink
             }
         }
 
-        // 自列車の名前と一致する列車が踏んでいる軌道回路だけを、プレイヤーの位置とする
+        // 自列車の名前と一致する列車が踏んでいる軌道回路だけを、プレイヤーの位置とする。
+        // 途中駅で列番が変わる（ゲームが 1178 → 回1178 にダイヤ名を変える）と、回路の Last は列車が次の回路に動くまで前の名前のまま。
+        // 新しい名前の回路が出てくるまでは、ひとつ前のダイヤ名でも探す（止まっている間に在線が消えて、進路が取れなくなるのを防ぐ）
         var identified = player.Length > 0 && occupied.Any(o => o.Last.Length > 0);
-        var circuits = identified
-            ? occupied.Where(o => NormalizeName(o.Last) == player).Select(o => o.Circuit).Distinct().ToList()
-            : new List<string>();
+        var circuits = new List<string>();
+        if (identified)
+        {
+            circuits = occupied.Where(o => NormalizeName(o.Last) == player).Select(o => o.Circuit).Distinct().ToList();
+            if (circuits.Count == 0 && _prevPlayer.Length > 0 && _prevPlayer != player)
+                circuits = occupied.Where(o => NormalizeName(o.Last) == _prevPlayer).Select(o => o.Circuit).Distinct().ToList();
+            else if (circuits.Count > 0)
+                _prevPlayer = player;
+        }
 
         var screen = ScreenName(Prop(data, "gameScreen"));
         var inGame = screen.Length == 0 || screen is "MainGame" or "MainGame_Pause";

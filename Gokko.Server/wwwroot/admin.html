@@ -95,6 +95,15 @@
   </section>
 
   <section>
+    <h2>防護無線 <span id="radioCount" class="muted"></span></h2>
+    <div class="muted" style="margin-bottom:6px">運転士が F5 で発報すると、その地点の前後2駅までにいる列車で警報音が鳴ります。押したまま離れた人がいれば、ここで解除できます。</div>
+    <div class="scroll"><table>
+      <thead><tr><th>列車番号</th><th>発報地点</th><th>受信範囲</th><th>発報時刻</th><th></th></tr></thead>
+      <tbody id="radio"></tbody>
+    </table></div>
+  </section>
+
+  <section>
     <h2>記録</h2>
     <div id="log"></div>
   </section>
@@ -239,6 +248,16 @@
           <td>${esc(p.position || "不明")}${p.direction ? (p.direction > 0 ? " ↑" : " ↓") : ""}</td>
           <td class="muted">${p.lastReportSecondsAgo < 3 ? "正常" : p.lastReportSecondsAgo + "秒前"}</td></tr>`).join(""));
 
+    const radio = s.radio || [];
+    $("radioCount").textContent = radio.length ? `（発報中 ${radio.length}件）` : "";
+    $("radioCount").className = radio.length ? "status ng" : "muted";
+    setHtml($("radio"), radio.length === 0
+      ? `<tr><td colspan="5" class="muted">発報はありません</td></tr>`
+      : radio.map((x) => `<tr>
+          <td>${esc(x.train || "（未設定）")}</td><td>${esc(x.at)}</td><td>${esc(x.range)}</td>
+          <td class="muted">${new Date(x.started).toLocaleTimeString("ja-JP")}</td>
+          <td><button data-radio="${esc(x.id)}">解除</button></td></tr>`).join(""));
+
     const active = s.crossings.filter((c) => c.incident);
     $("activeCount").textContent = `（作動中 ${active.length}件）`;
     setHtml($("crossings"), s.crossings.map((c) => {
@@ -297,6 +316,11 @@
     try { sessionStorage.setItem("gokkoAdminKey", key); } catch (e) {}
     refresh();
   };
+
+  $("radio").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-radio]");
+    if (b) act("POST", "/radio/clear", { id: b.dataset.radio });
+  });
 
   $("crossings").addEventListener("click", (ev) => {
     const t = ev.target.closest("button");

@@ -35,6 +35,7 @@ public sealed class MainForm : Form
     private readonly TextBox _trainBox = new() { PlaceholderText = "空欄ならシナリオの列番" };
     private readonly Button _confirmButton = new() { Text = "確定" };
     private readonly Button _connectButton = new() { Text = "接続" };
+    private readonly Button _gameButton = new() { Text = "ゲーム切断" };
 
     /// <summary>確定した列車番号（空ならシナリオの列番）。入力欄を書き換えただけでは変わらない。</summary>
     private string _confirmedTrain = "";
@@ -83,6 +84,7 @@ public sealed class MainForm : Form
         _confirmedTrain = _config.TrainNumber.Trim();
 
         _connectButton.Click += async (_, _) => await ToggleConnectionAsync();
+        _gameButton.Click += async (_, _) => await ToggleGameAsync();
         _confirmButton.Click += async (_, _) => await ConfirmTrainAsync();
         _trainBox.KeyDown += async (_, e) =>
         {
@@ -118,6 +120,7 @@ public sealed class MainForm : Form
 
         _timer.Tick += OnTick;
         _timer.Start();
+        StartProtectionRadio();
         _game.Start();
         UpdateView(null);
 
@@ -166,7 +169,9 @@ public sealed class MainForm : Form
         _connectButton.Size = new Size(100, 30);
         _modeLabel.AutoSize = true;
         _modeLabel.Margin = new Padding(10, 7, 0, 0);
-        buttons.Controls.AddRange([_connectButton, _modeLabel]);
+        _gameButton.Size = new Size(100, 30);
+        _gameButton.Margin = new Padding(8, 3, 0, 3);
+        buttons.Controls.AddRange([_connectButton, _gameButton, _modeLabel]);
         AddWide(buttons, SizeType.Absolute, 40);
 
         foreach (var l in new[] { _serverLabel, _gameLabel, _infoLabel, _messageLabel })
@@ -315,6 +320,15 @@ public sealed class MainForm : Form
                             && (screen is "Menu" or "MainGame_Loading"
                                 || screen == "MainGame" && _lastScreen is not ("MainGame_Pause" or ""));
         var reconnected = connected && !_wasGameConnected;
+        // シナリオを閉じた（運転画面からメニュー・タイトル・結果画面へ）: ゲームとの接続を張り直し、送った進路・信号の記録を捨てる。
+        // ゲーム側に溜まった要求や古い進路の記録で、必要な進路が送られなくなるのを防ぐ（次のシナリオでは、まっさらな状態から始める）
+        var closedScenario = _lastScreen is "MainGame" or "MainGame_Pause" && screen is "Menu" or "Title" or "Result";
+        if (closedScenario) _game.Reconnect();
+        if (closedScenario || reconnected)
+        {
+            _routes.Reset();
+            _signals.Reset();
+        }
         _wasGameConnected = connected;
         _lastScreen = screen;
         if (!connected)
@@ -389,6 +403,41 @@ public sealed class MainForm : Form
         _modeApplied = null;
     }
 
+    /// <summary>
+    /// TRAIN CREW との接続を手で切る・つなぎ直す。切るときは、このソフトが変えたゲームの設定（進路・信号・他列車の表示・進路の自動・ワンマン）を戻してから切る。
+    /// つなぎ直すと、まっさらな状態から送り直す
+    /// </summary>
+    private async Task ToggleGameAsync()
+    {
+        _gameButton.Enabled = false;
+        try
+        {
+            if (!_game.Stopped)
+            {
+                await LeaveGameModesAsync();
+                if (_onemanApplied && _game.IsConnected)
+                    try { await SendOnemanAsync(false); } catch { }
+                _game.Stop();
+                _onemanApplied = false;
+                _routes.Reset();
+                _signals.Reset();
+                ShowMessage("TRAIN CREW との接続を切りました（ゲームの設定は元に戻しました）");
+            }
+            else
+            {
+                _routes.Reset();
+                _signals.Reset();
+                _game.Start();
+                ShowMessage("TRAIN CREW につなぎ直します");
+            }
+        }
+        finally
+        {
+            _gameButton.Text = _game.Stopped ? "ゲーム接続" : "ゲーム切断";
+            _gameButton.Enabled = true;
+        }
+    }
+
     private async Task RestoreAsync()
     {
         _restoreButton.Enabled = false;
@@ -430,26 +479,7 @@ public sealed class MainForm : Form
             // ゲームの状態をサーバーへ（応答は待たない）
             if (_server.IsJoined)
             {
-                var report = new ClientReport
-                {
-                    TrainNumber = trainNumber,
-                    TrainCrewConnected = gameConnected,
-                    InGame = gameConnected && game?.InGame == true,
-                    TrackCircuits = gameConnected && game != null ? game.TrackCircuits : new List<string>(),
-                    ContinueDuty = shared && _continueButton.Checked,
-                    TrainNumberTyped = _confirmedTrain.Length > 0 // 入力欄の列番か（ダイヤ運転中は手入力が要る）
-                };
-                if (shared && gameConnected && game != null)
-                {
-                    report.Stops = game.Stops;
-                    report.TraveledDistance = game.TraveledDistance;
-                    report.NextStationDistance = game.NextStationDistance;
-                    report.Speed = game.Speed;
-                    report.GameRoutes = (game.Routes ?? new()).Select(r => new RouteKey { Interlocking = r.Interlock, RouteName = r.Route }).ToList();
-                    report.TrackChoices = new Dictionary<string, int>(_trackChoices);
-                }
-
-                _ = _server.ReportAsync(report);
+                _ = _server.ReportAsync(CreateReport(game, gameConnected, trainNumber));
             }
 
             // サーバーの指示をゲームへ
@@ -558,14 +588,17 @@ public sealed class MainForm : Form
         };
 
         var game = _game.Latest;
-        if (!_game.IsConnected)
+        if (_game.Stopped)
+            (_gameLabel.Text, _gameLabel.ForeColor) = ("● TRAIN CREW: 切断中（「ゲーム接続」でつなぎ直します）", Ng);
+        else if (!_game.IsConnected)
             (_gameLabel.Text, _gameLabel.ForeColor) = ("● TRAIN CREW: 未接続", Ng);
         else if (game?.InGame == true)
             (_gameLabel.Text, _gameLabel.ForeColor) = ($"● TRAIN CREW: 接続済み（運転中 {EffectiveTrainNumber(game)}）", Ok);
         else
             (_gameLabel.Text, _gameLabel.ForeColor) = ("● TRAIN CREW: 接続済み（運転画面の外）", Wait);
 
-        _infoLabel.Text = $"ロープレ時刻 {state?.GameTime ?? "--:--:--"}　現在地 {state?.Position ?? "不明"}";
+        _infoLabel.Text = $"ロープレ時刻 {state?.GameTime ?? "--:--:--"}　現在地 {state?.Position ?? "不明"}"
+                          + (state?.ProtectionRadioSending == true ? "　◆防護無線 発報中（F5 で解除）" : "");
 
         // 特発
         var visible = state?.VisibleIncidents ?? new List<IncidentView>();
@@ -598,7 +631,11 @@ public sealed class MainForm : Form
         }
         else
         {
-            _routeMessage.Text = state?.RouteMessage ?? (state?.Plan.Count > 0 ? "番線は、手前の駅を通過するまで選べます" : "この先に、進路を扱う駅はありません");
+            // ダイヤ運転中は、列車から進路に触れない（番線はダイヤどおり。選んだ番線も送らない）
+            _diaLock = state?.DiaMode == true;
+            if (_diaLock) _trackChoices.Clear();
+            _routeMessage.Text = state?.RouteMessage ?? (_diaLock ? "ダイヤ運転中は、番線・進路はダイヤどおりに自動で扱います（列車からは変えられません）"
+                : state?.Plan.Count > 0 ? "番線は、手前の駅を通過するまで選べます" : "この先に、進路を扱う駅はありません");
             UpdatePlan(state?.Plan ?? new List<StationPlanView>());
             _departButton.Enabled = state?.CanRequestDeparture == true;
             _departButton.Text = state?.DepartureLabel ?? "出発要求";
@@ -621,6 +658,7 @@ public sealed class MainForm : Form
     }
 
     private bool _diaShown;
+    private bool _diaLock; // ダイヤ運転中（番線を選べない）
     private bool _continueBefore;
     private string _clockSyncKey = "";
 
@@ -687,7 +725,7 @@ public sealed class MainForm : Form
 
     private void UpdatePlanCore(List<StationPlanView> plan)
     {
-        var key = string.Join("|", plan.Select(p => $"{p.StationId}:{string.Join(",", p.TrackOptions)}:{p.Locked}:{p.Track == null}"));
+        var key = (_diaLock ? "dia|" : "") + string.Join("|", plan.Select(p => $"{p.StationId}:{string.Join(",", p.TrackOptions)}:{p.Locked}:{p.Track == null}"));
         if (key != _planKey)
         {
             _planKey = key;
@@ -699,7 +737,7 @@ public sealed class MainForm : Form
                 var cell = (DataGridViewComboBoxCell)row.Cells[_planGrid.Columns["Track"]!.Index];
                 if (p.Track == null) cell.Items.Add("通過");
                 foreach (var t in p.TrackOptions) cell.Items.Add($"{t}番線");
-                row.Cells[_planGrid.Columns["Track"]!.Index].ReadOnly = p.Locked || p.TrackOptions.Count == 0 || p.Track == null;
+                row.Cells[_planGrid.Columns["Track"]!.Index].ReadOnly = _diaLock || p.Locked || p.TrackOptions.Count == 0 || p.Track == null;
                 _planGrid.Rows.Add(row);
             }
 
@@ -731,10 +769,110 @@ public sealed class MainForm : Form
         _messageUntil = DateTime.UtcNow.AddSeconds(5);
     }
 
+    /// <summary>サーバーへ送る自分の状態（毎周期の報告と、防護無線の発報で使う）。</summary>
+    private ClientReport CreateReport(GameState? game, bool gameConnected, string trainNumber)
+    {
+        var shared = _mode == ShareMode.Shared;
+        var report = new ClientReport
+        {
+            TrainNumber = trainNumber,
+            TrainCrewConnected = gameConnected,
+            InGame = gameConnected && game?.InGame == true,
+            TrackCircuits = gameConnected && game != null ? game.TrackCircuits : new List<string>(),
+            ContinueDuty = shared && _continueButton.Checked,
+            TrainNumberTyped = _confirmedTrain.Length > 0 // 入力欄の列番か（ダイヤ運転中は手入力が要る）
+        };
+        if (shared && gameConnected && game != null)
+        {
+            report.Stops = game.Stops;
+            report.TraveledDistance = game.TraveledDistance;
+            report.NextStationDistance = game.NextStationDistance;
+            report.Speed = game.Speed;
+            report.GameRoutes = (game.Routes ?? new()).Select(r => new RouteKey { Interlocking = r.Interlock, RouteName = r.Route }).ToList();
+            report.TrackChoices = new Dictionary<string, int>(_trackChoices);
+        }
+
+        return report;
+    }
+
+    // =====================================================================================
+    // 防護無線（F5 で発報・解除。受信範囲にいる間は警報音を繰り返し鳴らす）
+    // =====================================================================================
+
+    private ProtectionRadioAudio? _radioAudio;
+    private readonly System.Windows.Forms.Timer _radioAudioTimer = new() { Interval = 100 };
+    private bool _radioToggling;
+    private bool _radioHotKeyRegistered;
+
+    private void StartProtectionRadio()
+    {
+        try { _radioAudio = new ProtectionRadioAudio(); }
+        catch { ShowMessage("防護無線の警報音を読み込めませんでした（警報は鳴りません）"); }
+        _radioAudioTimer.Tick += (_, _) => UpdateRadioAudio();
+        _radioAudioTimer.Start();
+        Shown += (_, _) =>
+        {
+            if (!_radioHotKeyRegistered)
+                ShowMessage("防護無線の F5 キーを登録できません。F5 を使う他のアプリ（別の共有クライアントなど）を閉じて起動し直してください");
+        };
+    }
+
+    // 受信範囲にいて、サーバーとゲームにつながっていて運転画面にいる間だけ鳴らす（配信が5秒止まったら止める）
+    private void UpdateRadioAudio() =>
+        _radioAudio?.Update(!_closing && _server.IsJoined && _server.HasFreshState && _game.IsConnected
+                            && _game.Latest?.InGame == true && _server.State?.ProtectionRadioReceiving == true);
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        _radioHotKeyRegistered = ProtectionRadioHotKey.Register(Handle);
+    }
+
+    protected override void OnHandleDestroyed(EventArgs e)
+    {
+        if (_radioHotKeyRegistered) ProtectionRadioHotKey.Unregister(Handle);
+        _radioHotKeyRegistered = false;
+        base.OnHandleDestroyed(e);
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == ProtectionRadioHotKey.Message && m.WParam.ToInt32() == ProtectionRadioHotKey.Id)
+        {
+            _ = ToggleProtectionRadioAsync();
+            return;
+        }
+
+        base.WndProc(ref m);
+    }
+
+    private async Task ToggleProtectionRadioAsync()
+    {
+        if (_closing || _radioToggling || !_server.IsJoined) return;
+        _radioToggling = true;
+        try
+        {
+            // 押した時点の位置を一緒に送る。解除は、ゲームから外れていてもできる
+            var game = _game.Latest;
+            var report = CreateReport(game, _game.IsConnected, EffectiveTrainNumber(game));
+            if (!await _server.ToggleProtectionRadioAsync(report))
+            {
+                System.Media.SystemSounds.Beep.Play();
+                ShowMessage("防護無線を発報できませんでした（運転画面で、路線の上にいるときに押してください）");
+            }
+        }
+        finally
+        {
+            _radioToggling = false;
+        }
+    }
+
     protected override async void OnFormClosing(FormClosingEventArgs e)
     {
         if (!_closing)
         {
+            _radioAudioTimer.Stop();
+            _radioAudio?.Update(false);
             // 作動させた特発・進路・信号・他列車の表示を戻してから閉じる
             e.Cancel = true;
             _closing = true;

@@ -7,7 +7,7 @@ namespace Gokko.Common;
 public static class Protocol
 {
     /// <summary>通信の版。サーバーと違うクライアントは、接続時に拒否される。</summary>
-    public const int Version = 4;
+    public const int Version = 5;
 
     /// <summary>SignalR の接続先のパス（https://example.duckdns.org/hub）。</summary>
     public const string HubPath = "/hub";
@@ -31,6 +31,9 @@ public static class Protocol
 
     /// <summary>列車番号の確定（在線共有モード）。引数 string（列車番号）、戻り値 <see cref="TrainCheckResult"/>。ダイヤにある列車か調べる。</summary>
     public const string CheckTrain = "CheckTrain";
+
+    /// <summary>防護無線の発報・解除（トグル）。引数 <see cref="ClientReport"/>（押した時点の位置）、戻り値 bool（受け付けたか）。</summary>
+    public const string ToggleProtectionRadio = "ToggleProtectionRadio";
 
     // ---- サーバー → クライアント ----
 
