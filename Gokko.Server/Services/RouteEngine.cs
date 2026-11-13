@@ -53,7 +53,54 @@ public sealed class RouteEngine
         _central = central;
         _players = players;
         _log = log;
+        _approach = new ApproachTrigger(data);
     }
+
+    private readonly ApproachTrigger _approach;
+
+    /// <summary>その駅の場内（通過なら出発も）を取り始める位置（信号機）。設定で切ってあれば・計算できなければ null。</summary>
+    private ApproachTrigger.Result? ApproachOf(TrainRun run, StationRun st)
+    {
+        if (!_data.ApproachTriggerEnabled || st.IsStart) return null;
+        var passing = st.StopType == "通過" && !st.DepartStop && !st.Terminal && !IsTurnbackTrack(run, st);
+        return _approach.For(st.St.Id, run.Dir, st.St.Routes[run.Dir], st.Track, passing, _data.ApproachTriggerMargin);
+    }
+
+    /// <summary>駅・向き・番線ごとの、進路を取り始める位置の一覧（確かめる用）。margin は限界点からの余裕（閉塞の数）。</summary>
+    public List<object> ApproachTable(int margin)
+    {
+        var list = new List<object>();
+        foreach (var st in _data.ControlStations)
+        foreach (var dir in new[] { Dir.Down, Dir.Up })
+        {
+            var routes = st.Routes[dir];
+            var tracks = routes.Arrive.Keys.OrderBy(t => t).Select(t => (int?)t).ToList();
+            if (routes.Through.Count > 0) tracks.Add(null);
+            foreach (var track in tracks)
+            foreach (var passing in track == null ? new[] { true } : routes.Depart.ContainsKey(track.Value) ? new[] { false, true } : new[] { false })
+            {
+                var r = _approach.For(st.Id, dir, routes, track, passing, margin);
+                list.Add(new
+                {
+                    station = st.Name, direction = dir.Label(), track, kind = passing ? "通過" : "停車",
+                    home = r?.Home, changed = r?.Changed, limits = r?.Limits, triggers = r?.Triggers
+                });
+            }
+        }
+
+        return list;
+    }
+
+    /// <summary>列車の先頭が、取り始める信号機を過ぎたか（その信号機から場内信号機までの回路にいる、または駅に着いている）。</summary>
+    private static bool PassedApproach(TrainRun run, StationRun st, ApproachTrigger.Result a) =>
+        (run.Front - st.Zone) * run.Dir.Step() >= 0 || run.Player.TrackCircuits.Any(a.Near.Contains);
+
+    /// <summary>
+    /// 進路を取り始める位置（ApproachTrigger）をまだ過ぎていなければ、場内を要求しない（通過列車は出発も、場内を待つので一緒に待つ）。
+    /// 現示が変わるところを運転士に見せない、いちばん遅い位置で取る。
+    /// </summary>
+    private string? ApproachHold(TrainRun run, StationRun st) =>
+        ApproachOf(run, st) is { } a && !PassedApproach(run, st, a) ? $"取り始め待ち（{string.Join("・", a.Triggers)} を過ぎたら）" : null;
 
     // =========================================================================================
     // 列車・駅ごとの状態
@@ -224,6 +271,9 @@ public sealed class RouteEngine
 
         /// <summary>走った実績（ダイヤグラム用）。先頭のゾーンが変わるたびに記録し、30分より古いものは捨てる。</summary>
         public List<(DateTime Utc, double Y)> History { get; } = new();
+
+        /// <summary>踏んだ軌道回路と、最後に踏んでいた時刻（在線位置の画面が、通ってきた枝で在線を塗るため。1分より古いものは捨てる）。</summary>
+        public Dictionary<string, DateTime> SeenCircuits { get; } = new();
     }
 
     // =========================================================================================
@@ -721,6 +771,9 @@ public sealed class RouteEngine
 
     private void UpdatePosition(TrainRun run)
     {
+        var seenAt = DateTime.UtcNow;
+        foreach (var c in run.Player.TrackCircuits) run.SeenCircuits[c] = seenAt;
+        foreach (var c in run.SeenCircuits.Where(kv => (seenAt - kv.Value).TotalSeconds > 60).Select(kv => kv.Key).ToList()) run.SeenCircuits.Remove(c);
         var zones = run.Player.Zones;
         run.HasPosition = zones.Count > 0;
         if (!run.HasPosition) return;
@@ -910,7 +963,8 @@ public sealed class RouteEngine
             if (!st.Triggered && !st.IsStart)
             {
                 var triggerZone = st.Zone - 2 * TriggerAhead(run, st) * step;
-                if ((run.Front - triggerZone) * step >= 0)
+                // 取り始める信号機（ApproachTrigger）を先に過ぎたら、そこで番線を確定する（駅が近く、2つ手前の駅より手前になる所）
+                if ((run.Front - triggerZone) * step >= 0 || ApproachOf(run, st) is { } ap && PassedApproach(run, st, ap))
                 {
                     st.Triggered = true;
                     st.TriggeredUtc = now;
@@ -1738,7 +1792,7 @@ public sealed class RouteEngine
             else
                 arriveWait = arriveHeld ? "場内抑止（集中扱い）"
                     : central ? "集中扱い（開通指示待ち）"
-                    : timeWait ?? SingleEntryHold(run, st) ?? PrevDepartHold(run, st) ?? (st.Track == null ? DepartTimeHold(run, st, now) : null) ?? (conflict = Conflict(run, st, st.ArrivePath, occupied, departure: false));
+                    : timeWait ?? SingleEntryHold(run, st) ?? PrevDepartHold(run, st) ?? ApproachHold(run, st) ?? (st.Track == null ? DepartTimeHold(run, st, now) : null) ?? (conflict = Conflict(run, st, st.ArrivePath, occupied, departure: false));
             st.ArriveBlocked = arriveWait != null && ReferenceEquals(arriveWait, conflict);
             if (arriveWait != null && !st.ForceArrive && st.TrackSource == "待避" && st.Track is { } lt && LoopUser(run, st, lt) is { } lu)
                 arriveWait = $"待避線ふさがり（{lu.Train}）";
@@ -1936,7 +1990,10 @@ public sealed class RouteEngine
         // まだこの駅の手前の駅間まで来ていなければ、交換の判断をしない（場内が停止なら、判断は直前でよい）
         var here = (run.Front - st.Zone) * step >= 0;            // 駅に着いている（構内か、その先）
         var approaching = run.Front == st.Zone - step;             // 手前の駅間
-        if (!st.IsStart && !here && !approaching) return "交換の判断待ち（駅に近づくまで）";
+        // 進路を取り始める位置（ApproachTrigger）が入っていれば、そこを過ぎたら判断する
+        // （通過列車の場内・出発をまとめて開けられるように。水越の上りが、藤江を通過する前に出発まで開くように）
+        var approachPassed = ApproachOf(run, st) is { } ap && PassedApproach(run, st, ap);
+        if (!st.IsStart && !here && !approaching && !approachPassed) return "交換の判断待ち（駅に近づくまで）";
 
         var nextZone = _data.Line.ZoneOfStation(next);
         var (lo, hi) = (Math.Min(st.Zone, nextZone), Math.Max(st.Zone, nextZone));
@@ -2559,7 +2616,9 @@ public sealed class RouteEngine
                     train = r.Train,
                     type = r.Type,
                     direction = r.Dir.Label(),
-                    circuits = r.Player.TrackCircuits.ToList()
+                    circuits = r.Player.TrackCircuits.ToList(),
+                    // 少し前（1分以内）に踏んでいた回路。在線をどの枝で塗るかの手がかり（通ってきた側の枝を選ぶ）
+                    recent = r.SeenCircuits.Keys.Where(c => !r.Player.TrackCircuits.Contains(c)).ToList()
                 }).ToList(),
                 routes = runs.SelectMany(r => r.Requests
                     .Where(q => !q.Released && q.CancelledUtc == null)

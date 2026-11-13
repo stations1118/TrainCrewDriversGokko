@@ -187,6 +187,10 @@ public sealed class RailData
     public int MinLoopDwellSeconds { get; private set; } = 90;
     public int AfterStopSeconds { get; private set; } = 0;
 
+    /// <summary>進路を信号機の位置から取り始めるか（ApproachTrigger）と、限界点からの余裕（閉塞の数）。切ってあれば「2つ手前の駅」で取る。</summary>
+    public bool ApproachTriggerEnabled { get; set; }
+    public int ApproachTriggerMargin { get; set; } = 1;
+
     /// <summary>進路を扱う駅（路線の並び順）。</summary>
     public IEnumerable<StationDef> ControlStations =>
         Line.StationIds.Where(id => Stations.TryGetValue(id, out var s) && s.RouteControl).Select(id => Stations[id]);
@@ -350,6 +354,11 @@ public sealed class RailData
             data.DefaultDwellSeconds = root.GetProperty("defaultDwellSeconds").GetInt32();
             if (root.TryGetProperty("minLoopDwellSeconds", out var ml)) data.MinLoopDwellSeconds = ml.GetInt32();
             if (root.TryGetProperty("afterStopSeconds", out var ms)) data.AfterStopSeconds = ms.GetInt32();
+            if (root.TryGetProperty("approachTrigger", out var at) && at.ValueKind == JsonValueKind.Object)
+            {
+                if (at.TryGetProperty("enabled", out var ae)) data.ApproachTriggerEnabled = ae.GetBoolean();
+                if (at.TryGetProperty("margin", out var am)) data.ApproachTriggerMargin = Math.Max(0, am.GetInt32());
+            }
 
             if (root.TryGetProperty("departDelaySeconds", out var dd))
                 foreach (var st in dd.EnumerateObject())

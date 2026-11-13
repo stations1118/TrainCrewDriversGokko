@@ -187,6 +187,14 @@ public static class AdminEndpoints
             passing = new { marginSeconds = rail.PassingMarginSeconds, toleranceSeconds = rail.PassingToleranceSeconds }
         }));
 
+        // 進路を取り始める位置（信号機）の一覧（確かめる用）
+        admin.MapGet("/route/approach", (int? margin, RouteEngine engine, RailData rail) => Results.Ok(new
+        {
+            enabled = rail.ApproachTriggerEnabled,
+            margin = margin ?? rail.ApproachTriggerMargin,
+            rows = engine.ApproachTable(margin ?? rail.ApproachTriggerMargin)
+        }));
+
         admin.MapPost("/clock", (ClockRequest req, GameClock clock, IncidentManager incidents) =>
         {
             if (req.Clear == true)

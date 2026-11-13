@@ -214,7 +214,8 @@
   // 回路の集まり（進路の回路、または列車がいる回路）の線をつないだ中で、急に向きを変えずに一筆で通れる道のうち、
   // 「同じ列車のほかの回路につながる端の数」「通る回路の数」「長さ」の順に大きいものを選ぶ。
   // 進路のデータには、分岐の反対側の回路（側面防護）も入っているので、それは描かない。結果は 回路名 → 線の並び
-  function smoothPath(circuits, known) {
+  // straight: 同じ点なら、曲がりの少ない（まっすぐな）道を選ぶ（在線を塗るとき。本線を通過した列車を渡り線側に塗らないように）
+  function smoothPath(circuits, known, straight = false) {
     const cs = [...new Set(circuits)].filter((c) => graphs[c]);
     const result = new Map();
     if (cs.length === 0) return result;
@@ -232,9 +233,9 @@
     const better = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] > b[i]; return false; };
     let best = null;
     const segs = [], count = new Map(), visited = new Set();
-    const visit = (k, dir, startTouch, len) => {
+    const visit = (k, dir, startTouch, len, turn) => {
       if (segs.length > 0) {
-        const score = [startTouch + (touches(k) ? 1 : 0), count.size, len];
+        const score = straight ? [startTouch + (touches(k) ? 1 : 0), count.size, -Math.round(turn * 1000), len] : [startTouch + (touches(k) ? 1 : 0), count.size, len];
         if (!best || better(score, best.score)) best = { score, segs: segs.slice() };
       }
       const here = nodes.get(k);
@@ -248,14 +249,14 @@
         visited.add(e.to);
         segs.push({ a: here.p, b, c: e.c });
         count.set(e.c, (count.get(e.c) || 0) + 1);
-        visit(e.to, u, startTouch, len + l);
+        visit(e.to, u, startTouch, len + l, turn + (dir ? 1 - (u[0] * dir[0] + u[1] * dir[1]) : 0));
         segs.pop();
         const n = count.get(e.c) - 1;
         if (n) count.set(e.c, n); else count.delete(e.c);
         visited.delete(e.to);
       }
     };
-    for (const k of nodes.keys()) { visited.add(k); visit(k, null, touches(k) ? 1 : 0, 0); visited.delete(k); }
+    for (const k of nodes.keys()) { visited.add(k); visit(k, null, touches(k) ? 1 : 0, 0, 0); visited.delete(k); }
     if (!best) return result;
     // 同じ回路が続く所は1本の線にまとめる
     let cur = null;
@@ -444,12 +445,14 @@
     for (const { r, map } of routeMaps) for (const lines of map.values()) p.push(poly(r.open ? "route" : "wait", lines));
 
     // 在線: その列車の進路が通る回路は、進路の枝で塗る。そうでない回路は、列車がいる回路どうしをつなぐ枝で塗る。
-    // 列車が1つの回路にしかいなくて、進路もなければ、回路全体を塗る（どの枝にいるか分からないため）
+    // 列車が1つの回路にしかいなくて、進路も通ってきた回路も分からなければ、回路全体を塗る（どの枝にいるか分からないため）
     const trainLines = new Map();
     for (const t of s.tid.trains) {
       const mine = routeMaps.filter((x) => x.r.train === t.train);
       const occ = t.circuits.filter((c) => graphs[c]);
-      const occMap = occ.length > 1 ? smoothPath(occ, mine.flatMap((x) => x.r.circuits)) : new Map();
+      // 手がかり: その列車の進路の回路と、少し前に踏んでいた回路（通ってきた側の枝を選ぶ）。それでも決まらなければ、まっすぐな枝
+      const hints = mine.flatMap((x) => x.r.circuits).concat(t.recent || []);
+      const occMap = occ.length > 1 || hints.some((c) => graphs[c]) ? smoothPath(occ, hints, true) : new Map();
       const lines = [];
       for (const c of occ) {
         const fromRoute = mine.find((x) => x.map.has(c));
