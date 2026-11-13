@@ -443,7 +443,8 @@
     }
     for (const c of cuts) p.push(`<line class="cut" x1="${c[0]}" y1="${c[1]}" x2="${c[2]}" y2="${c[3]}"/>`);
 
-    for (const l of layout.labels) p.push(`<text x="${X(l.x)}" y="${Y(l.y) - 7}" class="num">${esc(l.text)}</text>`);
+    // 番線の数字（軌道回路名の画面では出さない）
+    for (const l of NAMES ? [] : layout.labels) p.push(`<text x="${X(l.x)}" y="${Y(l.y) - 7}" class="num">${esc(l.text)}</text>`);
     for (const st of layout.stations) p.push(`<text x="${X(st.x)}" y="${Y(st.y)}" class="name">${esc(st.name)}</text>`);
     for (const st of layout.stops) p.push(`<text x="${X(st.x)}" y="${Y(st.y)}" class="stop">${esc(st.name)}</text>`);
     if (NAMES) p.push(circuitNames());
