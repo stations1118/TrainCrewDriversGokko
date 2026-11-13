@@ -146,44 +146,6 @@ public sealed class RouteEngine
         return NowSec() < dep - DepartLeadSeconds ? $"発車時刻待ち（{FormatDiaTime(dep)} 発。{DepartLeadSeconds}秒前に開通）" : null;
     }
 
-    /// <summary>列車（ダイヤの列番）・駅 → その駅の出発（通過）信号機を踏んだ時刻（運転日の秒）。列車がいなくなっても残す。</summary>
-    private readonly Dictionary<(string Train, string Station), double> _departedLog = new();
-    private double? _diaSince;
-    private double _lastTickSec;
-
-    /// <summary>
-    /// ダイヤ運転中の単線区間: ダイヤでこの列車より先に、相手の駅（next）から区間へ入る対向列車のうち、
-    /// いま参加していなくて（出現前・遅れ・切断）、まだ相手の駅を出ていないもの。いれば列番を「・」でつなぐ。
-    /// 見るのは、この列車が区間に入るダイヤの時刻の30分前までに入るはずの列車。ダイヤ運転を始める（時計を動かす）より前の時刻の列車は、
-    /// 記録がないので見ない（途中から始めても、もう通り終えた列車を待ち続けない）。
-    /// </summary>
-    private string? DiaAbsentOpposing(TrainRun run, StationRun st, string next)
-    {
-        if (run.Dia == null || DiaSec(run, st.St.Id, depart: true) is not { } mine) return null;
-        var present = new HashSet<string>();
-        foreach (var r in _runs.Values.Where(r => r.Dia != null))
-        {
-            present.Add(r.Dia!.Number);
-            if (r.Dia.Next is { } nx) present.Add(nx.Number); // 途中で列番が変わる列車（1053 → 回1153）
-        }
-
-        var waiting = new List<string>();
-        foreach (var d in _data.Dia.Values)
-        {
-            if (d.Number == run.Dia.Number || present.Contains(d.Number)) continue;
-            var iNext = d.Stops.FindIndex(s => s.StationId == next);
-            var iHere = d.Stops.FindIndex(s => s.StationId == st.St.Id);
-            if (iNext < 0 || iHere < 0 || iNext > iHere) continue; // 相手の駅から入って、こちらの駅へ来る列車だけ
-            var s0 = d.Stops[iNext];
-            if (ParseDiaTime(s0.Dep ?? s0.Arr) is not { } t || t >= mine || t < mine - 1800 || t < (_diaSince ?? double.MaxValue)) continue;
-            lock (_departedLog)
-                if (_departedLog.TryGetValue((d.Number, next), out var at) && at >= t - 3600) continue; // もう相手の駅を出た
-            waiting.Add(d.Number);
-        }
-
-        return waiting.Count > 0 ? string.Join("・", waiting) : null;
-    }
-
     /// <summary>
     /// ダイヤ運転中: この駅から出る始発列車のダイヤの発車が、この列車の着（通過）より前で、その出発の進路と場内の進路が重なるなら、始発列車が先
     /// （江ノ原検車区13番線から出る回送より先に、12番線に入る列車が場内を取ってしまわないように）。
@@ -561,11 +523,6 @@ public sealed class RouteEngine
     public void Tick()
     {
         var now = DateTime.UtcNow;
-        // ダイヤ運転を始めた時刻（運転日の秒）。時計を大きく動かしたら、そこから数え直す
-        var nowSec = NowSec();
-        if (!DiaMode) _diaSince = null;
-        else if (_diaSince == null || Math.Abs(nowSec - _lastTickSec) > 120) _diaSince = nowSec;
-        _lastTickSec = nowSec;
         var snapshot = _players.Snapshot()
             .Where(p => p.Mode == ShareMode.Shared && p.InGame && p.TrainCrewConnected && p.TrainNumber.Length > 0)
             .ToList();
@@ -1147,6 +1104,18 @@ public sealed class RouteEngine
                 if (!st.IsStart && st.StopType == "通過" && !st.DepartStop) run.ActualArr.TryAdd(st.St.Id, NowSec()); // 通過: 駅に入った時刻
             }
 
+            // 始発の入換（駅扱い・手動進路を含む）でホームに入りきったら、入換は終わり。番線の確定と駅扱いの印を外し、
+            // そこから先はふつうの始発として自動で扱う（駅扱いで確定したままだと、入換元にいる扱いが続き、出発の進路を自動で扱わない）
+            if (st.IsStart && st.ShuntFrom != null && st.Track is { } shTo && st.St.TrackCircuit.TryGetValue(shTo, out var shTc)
+                && run.Player.TrackCircuits.Contains(shTc)
+                && run.Requests.Where(r => r.Station == st && !r.Departure && r.CancelledUtc == null).SelectMany(r => r.Def.Circuits)
+                    .Where(c => c != shTc).All(c => !run.Player.TrackCircuits.Contains(c)))
+            {
+                (st.ShuntFrom, st.ShuntRequested, st.Shunt, st.ShuntWait, st.ForceShunt, st.ShuntVia) = (null, false, GroupState.None, "", false, null);
+                (st.Locked, st.ManualUsed) = (false, false);
+                _log.Note($"入換終わり: {run.Train} {st.St.Name} {shTo}番線に入りました（ここから先は自動で進路を扱います）");
+            }
+
             if (!st.Locked) ChooseTrack(run, st);
             else if (CanRechoose(run, st))
             {
@@ -1201,13 +1170,9 @@ public sealed class RouteEngine
             if (req.Def.Circuits.Any(run.Player.TrackCircuits.Contains))
             {
                 // 出発信号機（通過の進路なら、その進路）を踏んだ時刻を、その駅の発時刻とし、ダイヤとの差を遅れにする
-                if (!req.Entered && (req.Def.IsDepartureSignal || req.Station.Track == null) && run.ActualDep.TryAdd(req.Station.St.Id, NowSec()))
-                {
-                    // 列車がいなくなっても残す記録（ダイヤ運転中の単線の交換で、対向列車がもう区間に入ったかを知るため）
-                    lock (_departedLog) _departedLog[(run.Dia?.Number ?? run.Train, req.Station.St.Id)] = NowSec();
-                    if (DiaSec(run, req.Station.St.Id, depart: true) is { } plan)
-                        run.Delay = run.ActualDep[req.Station.St.Id] - plan;
-                }
+                if (!req.Entered && (req.Def.IsDepartureSignal || req.Station.Track == null) && run.ActualDep.TryAdd(req.Station.St.Id, NowSec())
+                    && DiaSec(run, req.Station.St.Id, depart: true) is { } plan)
+                    run.Delay = run.ActualDep[req.Station.St.Id] - plan;
                 req.Entered = true;
             }
             else if (req.Entered && req.CancelledUtc == null)
@@ -2251,12 +2216,10 @@ public sealed class RouteEngine
         if (_levers.TryGetValue(section, out var lever) && lever.Locked && lever.Dir != run.Dir)
             return $"方向てこが{lever.Dir.Label()}向き（{st.St.Name}〜{nextName}）";
 
-        // ---- ダイヤ運転中: ダイヤで先に区間へ入る対向列車が、まだ現れていなくても（遅れ・未接続）、区間に入るまで待つ ----
-        // 交換駅はダイヤどおり。相手の駅の場内が空いていても信号は取らない。走行順を手で決めた区間は、その順に従う
-        if (DiaMode && run.Dia != null && _central.SectionOrder(st.St.Id, next) == null && DiaAbsentOpposing(run, st, next) is { } absent)
-            return $"交換待ち（ダイヤ: {absent} が先に{st.St.Name}〜{nextName}を通る）";
-
         // ---- 走行順（集中扱い）: 区間ごとに決めた順で流す ----
+        // ダイヤ運転中（手で決めていなければ）は、いまサーバー上で走っているダイヤの列車だけで、区間に入るダイヤの時刻の順に並べる。
+        // 交換の相手が走っていれば（参加していれば）その列車を待つ。走っていなければ待たない（上の「必ず待つ」で、区間と相手の駅の出発に
+        // 列車がいないことは確かめてある。フリー運転と同じく、隣の駅まで進めるなら進路を取る）
         var order = EffectiveSectionOrder(st.St.Id, next); // ダイヤ運転中は、手で決めていなければダイヤの時刻順
         if (order != null && order.Contains(run.Train))
         {
