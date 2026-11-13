@@ -432,6 +432,26 @@ public sealed class RouteEngine
     /// その列車の向きに鎖錠する（Locked）。誰も使っていなければ、最後の向きのまま、鎖錠なし。
     /// 鎖錠されている間、反対向きの出発は開通させない（SingleTrackHold が、区間の対向列車・相手の駅の対向の出発進路で待たせる）。
     /// </summary>
+    /// <summary>
+    /// 出発信号の進路が出ていく単線区間（SingleTrackSections の組）と、その向き。単線区間へ出ない進路・出発信号でない進路なら null。
+    /// 向きは進路の種別（下り出発・上り出発）から決める。手動進路構成で出した出発信号も、これで方向てこ・対向の判断に入る
+    /// </summary>
+    private ((string, string) Section, Dir Dir)? DepartSection(RouteDef def, Dir fallback)
+    {
+        if (!def.IsDepartureSignal) return null;
+        var dir = def.Category.StartsWith("上り") ? Dir.Up : def.Category.StartsWith("下り") ? Dir.Down : fallback;
+        var z = _data.Line.ZoneOfStation(def.StationId);
+        if (z < 0) return null;
+        foreach (var sec in _data.SingleTrackSections)
+        {
+            var other = sec.Item1 == def.StationId ? sec.Item2 : sec.Item2 == def.StationId ? sec.Item1 : null;
+            if (other == null) continue;
+            if ((_data.Line.ZoneOfStation(other) - z) * dir.Step() > 0) return (sec, dir);
+        }
+
+        return null;
+    }
+
     private void UpdateLevers()
     {
         foreach (var (a, b) in _data.SingleTrackSections)
@@ -441,13 +461,12 @@ public sealed class RouteEngine
             Dir? use = null;
             foreach (var run in _runs.Values.Where(r => r.HasPosition))
             {
-                var entry = run.Dir == Dir.Down ? (za < zb ? a : b) : (za < zb ? b : a);
-                var exit = entry == a ? b : a;
-                var inside = run.Player.Zones.Any(z => z > lo && z < hi);
-                var leaving = run.Requests.Any(r => !r.Released && r.CancelledUtc == null && r.Departure && r.Station.St.Id == entry
-                                                     && r.Station.DepartPath.Contains(r.Def) && NextControlStation(run, r.Station) == exit);
-                if (!inside && !leaving) continue;
-                use = run.Dir;
+                if (run.Player.Zones.Any(z => z > lo && z < hi)) { use = run.Dir; break; } // 区間の中にいる
+                // 区間へ出る出発進路を要求している（自動・駅扱い・手動進路構成のどれでも）
+                var leaving = run.Requests.Where(r => !r.Released && r.CancelledUtc == null)
+                    .Select(r => DepartSection(r.Def, run.Dir)).FirstOrDefault(ds => ds is { } d && d.Section == (a, b));
+                if (leaving is not { } go) continue;
+                use = go.Dir;
                 break;
             }
 
@@ -1212,6 +1231,17 @@ public sealed class RouteEngine
             {
                 if (active.Count > 0) return $"{train}: {routeName} はもう要求しています";
                 if (st == null) return $"{train}: 扱える駅がありません";
+                if (DepartSection(def, run.Dir) is { } ds)
+                {
+                    var secName = $"{_data.Line.StationName(ds.Section.Item1)}〜{_data.Line.StationName(ds.Section.Item2)}";
+                    if (_levers.TryGetValue(ds.Section, out var lv) && lv.Locked && lv.Dir != ds.Dir)
+                        return $"{train}: {routeName} は開通させません（方向てこが{lv.Dir.Label()}向きに鎖錠中: {secName}）";
+                    var (za, zb) = (_data.Line.ZoneOfStation(ds.Section.Item1), _data.Line.ZoneOfStation(ds.Section.Item2));
+                    if (_runs.Values.FirstOrDefault(o => o != run && o.Player.Zones.Any(z => z > Math.Min(za, zb) && z < Math.Max(za, zb))) is { } inSec)
+                        return $"{train}: {routeName} は開通させません（単線区間 {secName} に {inSec.Train} がいます）";
+                    _levers[ds.Section] = (ds.Dir, true); // すぐに倒す（次の周期を待たずに、対向の出発を止める）
+                }
+
                 foreach (var old in run.Requests.Where(o => !o.Released && o.CancelledUtc != null && o.Def == def)) old.Released = true;
                 run.Requests.Add(new RouteReq { Def = def, Id = ++_seq, Station = st, Departure = def.IsDepartureSignal, RequestedUtc = now, Manual = true });
                 if (st.St.Id == def.StationId) st.ManualUsed = true;
@@ -1866,8 +1896,14 @@ public sealed class RouteEngine
                 return $"対向列車（{other.Train}）が{nextName}を出発";
         }
 
-        // ---- 方向てこ: 区間が逆向きに鎖錠されている間は、こちら向きの出発を開通させない ----
         var section = _data.SingleTrackSections.FirstOrDefault(s => s.Item1 == st.St.Id && s.Item2 == next || s.Item2 == st.St.Id && s.Item1 == next);
+        // 区間へ逆向きに出る出発進路が出ている（手動進路構成で出したものを含む。進路の種別から向きを決める）
+        foreach (var other in _runs.Values.Where(o => o != run && o.HasPosition))
+            if (other.Requests.Any(r => !r.Released && r.CancelledUtc == null && DepartSection(r.Def, other.Dir) is { } ds && ds.Section == section && ds.Dir != run.Dir)
+                && !SectionCleared(other, st.St.Id, next))
+                return $"対向列車（{other.Train}）の出発進路が{st.St.Name}〜{nextName}へ出ています";
+
+        // ---- 方向てこ: 区間が逆向きに鎖錠されている間は、こちら向きの出発を開通させない ----
         if (_levers.TryGetValue(section, out var lever) && lever.Locked && lever.Dir != run.Dir)
             return $"方向てこが{lever.Dir.Label()}向き（{st.St.Name}〜{nextName}）";
 

@@ -92,6 +92,11 @@ public static class AdminEndpoints
         view.MapGet("/timetable", (string? train, RouteEngine engine, GameClock clock) =>
             engine.Timetable(train ?? "", clock.Now) is { } t ? Results.Ok(t) : Results.NotFound(new { message = "この列車の時刻表はありません" }));
 
+        // 閉塞信号機の番号と、守る軌道回路（軌道回路名つきの画面で、閉塞信号の位置に番号を出す）
+        view.MapGet("/signals", (RailData rail) => Results.Ok(rail.Signals.Values
+            .Where(s => !s.IsRepeater && s.Protects.Count > 0 && System.Text.RegularExpressions.Regex.IsMatch(s.Name, @"^(上り|下り)閉塞\d+$"))
+            .Select(s => new { number = System.Text.RegularExpressions.Regex.Match(s.Name, @"\d+$").Value, direction = s.Name[..2], circuit = s.Protects[0] })));
+
         view.MapGet("/state", (RouteEngine engine, GameClock clock) => Results.Ok(new
         {
             gameTime = clock.NowText,

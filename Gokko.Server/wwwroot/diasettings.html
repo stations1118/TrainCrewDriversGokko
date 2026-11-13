@@ -65,6 +65,7 @@
   </section>
   <section class="wide">
     <h2>手動進路構成</h2>
+    <iframe id="circuitMap" src="tid.html?names=1&embed=1" title="軌道回路名つきの配線" style="width:100%; height:320px; border:1px solid var(--line); border-radius:6px; margin-bottom:8px; background:#fff"></iframe>
     <div id="manual"></div>
   </section>
   <section class="wide">
@@ -172,6 +173,11 @@
     refresh();
   };
   $("key").addEventListener("keydown", (ev) => { if (ev.key === "Enter") $("saveKey").click(); });
+
+  // 軌道回路名つきの配線（埋め込み）: 図の高さに合わせる
+  window.addEventListener("message", (ev) => {
+    if (ev.origin === location.origin && ev.data && ev.data.gokkoTidHeight) $("circuitMap").style.height = ev.data.gokkoTidHeight + "px";
+  });
 
   refresh();
   setInterval(refresh, 1000);

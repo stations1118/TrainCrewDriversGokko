@@ -52,6 +52,14 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  // 表示の切り替え（URL の ?names=1&embed=1）
+  // names: 線の上に軌道回路名、閉塞信号の位置に番号を出し、在線は細い赤線にする（手動進路構成で、どこからどこを取るか見る用）。列番の札は出さない
+  // embed: 管理画面・ダイヤグラムの設定画面に埋め込む用。見出しを出さず、図の高さを親の画面へ知らせる
+  const params = new URLSearchParams(location.search);
+  const NAMES = params.get("names") === "1", EMBED = params.get("embed") === "1";
+  if (EMBED) { document.querySelector("header").hidden = true; $("outside").hidden = true; $("scroll").style.padding = "0"; }
+  let signals = []; // 閉塞信号機 [{ number, direction, circuit }]
+
   let layout = null;
   const PAD = { left: 1, top: 0.5, right: 2, bottom: 1 }; // マス目
 
@@ -73,7 +81,8 @@
   // データは左（館浜）から順に「駅（yard）」と「駅間（gap）」を並べたもの。駅の中の座標は、その駅の左端を 0 とする。
   // 駅間は長さ（gap）と線ごとの回路の並びだけを書き、回路の長さは重み（閉塞の長さの比）で割り振る。
   function expand(src) {
-    const L = { unit: src.unit, unitY: src.unitY || src.unit, circuits: {}, platforms: [], labels: [], stations: [], stops: [], boxes: [], sections: [] };
+    // 軌道回路名の画面は、線の上に回路名・下に閉塞信号の番号を書くので、上下の線の間を広く取る
+    const L = { unit: src.unit, unitY: (src.unitY || src.unit) * (NAMES ? 1.6 : 1), circuits: {}, platforms: [], labels: [], stations: [], stops: [], boxes: [], sections: [] };
     const add = (name, line) => (L.circuits[name] = L.circuits[name] || []).push(line);
     let cx = 0;
     for (const e of src.sequence) {
@@ -81,7 +90,7 @@
         for (const [n, lines] of Object.entries(e.circuits)) for (const l of lines) add(n, l.map((p) => [p[0] + cx, p[1]]));
         for (const f of e.platforms || []) L.platforms.push({ x: f[0] + cx, y: f[1], w: f[2] });
         for (const t of e.labels || []) L.labels.push({ x: t[0] + cx, y: t[1], text: t[2] });
-        L.stations.push({ id: e.yard, name: e.name, x: e.nameAt[0] + cx, y: e.nameAt[1] });
+        L.stations.push({ id: e.yard, name: e.name, x: e.nameAt[0] + cx, y: e.nameAt[1], x0: cx, x1: cx + e.width });
         // 駅の到着・出発の順序の表。上りは配線と駅名より上、下りは配線より下に置く。
         // 上りは右へ進むので「到着」を左・「出発」を右、下りは左へ進むので「出発」を左・「到着」を右
         if (e.orders && e.orders.length) {
@@ -332,6 +341,51 @@
     return `<text x="${px}" y="${py - 4}" class="boxTitle">${esc(b.name)} ${b.dir}${b.what}</text>` + chipList(px, py, rows, b.dir, true);
   }
 
+  // 軌道回路名（線の上）と閉塞信号機の番号（線の下）。回路名は、その回路のいちばん長い線の中ほどに置く。
+  // 駅の番号（TH61_ など）は場所で分かるので省く。閉塞信号は守る回路の入口（下りは右端、上りは左端）に置く
+  // 分岐器の回路（46イT・46ロT など。イ・ロは分岐器の名前）は、分岐器の番号ごとにまとめて、渡り線（斜めの線）の上に「46T」と1つだけ出す
+  function circuitNames() {
+    const out = [];
+    const label = (x, y, text) => out.push(`<text x="${x}" y="${y - 6}" class="cname">${esc(text)}</text>`);
+    const segsOf = (lines) => lines.flatMap((l) => l.slice(1).map((b, i) => ({ a: l[i], b, len: Math.hypot(b[0] - l[i][0], b[1] - l[i][1]) })));
+    const switches = new Map(); // "TH75_46" → { text: "46T", diag: [], straight: [] }
+    for (const [name, lines] of Object.entries(layout.circuits)) {
+      const segs = segsOf(lines);
+      const sw = /^(TH\d+S?_)?(\d+)[イロハニホ]T$/.exec(name);
+      if (sw) {
+        const key = (sw[1] || "") + sw[2];
+        const g = switches.get(key) || { text: sw[2] + "T", diag: [], straight: [] };
+        for (const s of segs) (Math.abs(s.b[1] - s.a[1]) > 1e-6 ? g.diag : g.straight).push(s);
+        switches.set(key, g);
+        continue;
+      }
+      const best = segs.reduce((m, s) => (!m || s.len > m.len ? s : m), null);
+      if (best) label((X(best.a[0]) + X(best.b[0])) / 2, (Y(best.a[1]) + Y(best.b[1])) / 2, name.replace(/^TH\d+S?_/, ""));
+    }
+    for (const g of switches.values()) {
+      if (g.diag.length > 0) {
+        // 渡り線の真ん中（イ・ロに分かれていれば、その継ぎ目のあたり）
+        const total = g.diag.reduce((t, s) => t + s.len, 0);
+        const cx = g.diag.reduce((t, s) => t + (X(s.a[0]) + X(s.b[0])) / 2 * s.len, 0) / total;
+        const cy = g.diag.reduce((t, s) => t + (Y(s.a[1]) + Y(s.b[1])) / 2 * s.len, 0) / total;
+        label(cx, cy, g.text);
+      } else {
+        const best = g.straight.reduce((m, s) => (!m || s.len > m.len ? s : m), null);
+        if (best) label((X(best.a[0]) + X(best.b[0])) / 2, (Y(best.a[1]) + Y(best.b[1])) / 2, g.text);
+      }
+    }
+    for (const sg of signals) {
+      const lines = layout.circuits[sg.circuit];
+      if (!lines) continue;
+      const pts = lines.flat();
+      const e = pts.reduce((m, q) => (sg.direction === "下り" ? q[0] > m[0] : q[0] < m[0]) ? q : m, pts[0]);
+      const x = X(e[0]), y = Y(e[1]);
+      out.push(`<line class="sigmark" x1="${x}" y1="${y - 6}" x2="${x}" y2="${y + 6}"/>`);
+      out.push(`<text x="${x}" y="${y + 17}" class="sig">${esc(sg.number)}</text>`);
+    }
+    return out.join("");
+  }
+
   function render(s) {
     const maxX = Math.max(...Object.values(layout.circuits).flat(2).map((p) => p[0]),
       ...layout.boxes.map((b) => b.x + BOX.w / layout.unit));
@@ -340,9 +394,12 @@
     p.push(`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">`);
     p.push(`<style>
       .track { fill: none; stroke: var(--track); stroke-width: 3; stroke-linecap: butt; stroke-linejoin: miter; }
-      .route { fill: none; stroke: var(--route); stroke-width: 7; stroke-linecap: butt; stroke-linejoin: miter; }
-      .wait { fill: none; stroke: var(--wait); stroke-width: 7; stroke-dasharray: 9 5; stroke-linecap: butt; stroke-linejoin: miter; }
-      .occ { fill: none; stroke: var(--occupied); stroke-width: 7; stroke-linecap: butt; stroke-linejoin: miter; }
+      .route { fill: none; stroke: var(--route); stroke-width: ${NAMES ? 5 : 7}; stroke-linecap: butt; stroke-linejoin: miter; }
+      .wait { fill: none; stroke: var(--wait); stroke-width: ${NAMES ? 5 : 7}; stroke-dasharray: 9 5; stroke-linecap: butt; stroke-linejoin: miter; }
+      .occ { fill: none; stroke: var(--occupied); stroke-width: ${NAMES ? 4 : 7}; stroke-linecap: butt; stroke-linejoin: miter; }
+      .cname { font-size: 11px; fill: #2b5cb0; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+      .sig { font-size: 11px; font-weight: 700; fill: var(--text); text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+      .sigmark { stroke: var(--text); stroke-width: 1.5; }
       .cut { stroke: var(--bg); stroke-width: 2.5; stroke-linecap: butt; }
       .slot { fill: none; stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 2; }
       .name { font-size: 15px; font-weight: 700; fill: var(--text); text-anchor: middle; }
@@ -389,10 +446,11 @@
     for (const l of layout.labels) p.push(`<text x="${X(l.x)}" y="${Y(l.y) - 7}" class="num">${esc(l.text)}</text>`);
     for (const st of layout.stations) p.push(`<text x="${X(st.x)}" y="${Y(st.y)}" class="name">${esc(st.name)}</text>`);
     for (const st of layout.stops) p.push(`<text x="${X(st.x)}" y="${Y(st.y)}" class="stop">${esc(st.name)}</text>`);
+    if (NAMES) p.push(circuitNames());
 
-    // 列車の名札（列車がいる線の真上に重ねる）
+    // 列車の名札（列車がいる線の真上に重ねる）。軌道回路名の画面では出さない（在線は赤い線、次に着く列車は到着の表で分かる）
     const outside = [];
-    for (const t of s.tid.trains) {
+    for (const t of NAMES ? [] : s.tid.trains) {
       const a = trainAnchor(trainLines.get(t.train) || []);
       if (!a) { outside.push(`${t.train}（${t.circuits.join("・") || "位置不明"}）`); continue; }
       p.push(chip(X(a[0]) - CHIP.w / 2, Y(a[1]) - CHIP.h / 2, t.train));
@@ -418,6 +476,8 @@
     p.push(`</svg>`);
     const html = p.join("");
     if ($("map").dataset.html !== html) { $("map").innerHTML = html; $("map").dataset.html = html; }
+    // 埋め込みのとき: 親の画面に、図の高さ（横スクロールの帯を含む）を知らせる
+    if (EMBED && window.parent !== window) window.parent.postMessage({ gokkoTidHeight: document.documentElement.scrollHeight + 2 }, location.origin);
     $("gameTime").textContent = s.gameTime || "--:--:--";
     $("outside").textContent = outside.length ? "図の範囲外にいる列車: " + outside.join("、") : "";
   }
@@ -463,6 +523,7 @@
   async function refresh() {
     try {
       if (!layout) { layout = expand(await (await fetch("tid-layout.json", { cache: "no-store" })).json()); buildGraphs(); buildCuts(); }
+      if (NAMES && signals.length === 0) { try { signals = await (await fetch("/api/tid/signals", { cache: "no-store" })).json(); } catch (e) {} }
       const res = await fetch("/api/tid/state", { cache: "no-store" });
       let json = null;
       try { json = await res.json(); } catch (e) {}
