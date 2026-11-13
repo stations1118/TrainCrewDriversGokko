@@ -74,8 +74,11 @@ public sealed class StationDirRoutes
 /// </summary>
 public sealed record ShuntDef(string FromLabel, int? From, string? FromCircuit, int To, List<RouteDef> Routes, List<string> RequireFree, string? Via);
 
-/// <summary>終着の列車の入換1つ（番線 From から、Label の線路へ）。</summary>
-public sealed record ShuntOutDef(int From, string Label, List<RouteDef> Routes);
+/// <summary>
+/// 終着の列車の入換1つ（番線 From から、Label の線路へ）。同じ番線・同じ行き先（Label）が複数あれば、まとめて1つの選択肢とし、
+/// 書いた順に優先する。RequireFree の回路に他の列車がいれば次の候補（大道寺 番線→E線→Y線 を既定にし、E線がふさがっていれば直接）。
+/// </summary>
+public sealed record ShuntOutDef(int From, string Label, List<RouteDef> Routes, List<string> RequireFree, string? Via);
 
 public sealed class StationDef
 {
@@ -140,12 +143,24 @@ public sealed class DiaTrain
     /// </summary>
     public (string Number, string StationId)? Next { get; set; }
 
+    /// <summary>運行番号（列番の付け方から求めたもの。<see cref="Gokko.Common.Unyo"/>）。読めなければ null。</summary>
+    public int? Unyo { get; set; }
+
+    /// <summary>終点のあと（スタフの「折返」「引継」「滞泊」）。書かれていなければ null。</summary>
+    public DiaTurn? Turn { get; set; }
+
     /// <summary>時刻表（路線の外の駅も含む、ダイヤに書かれた全駅）。時刻は "HH:mm:ss"、書かれていなければ null。</summary>
     public List<DiaStop> Stops { get; } = new();
 
     /// <summary>駅ID → 停車するか・番線（書かれていなければ null）。</summary>
     public Dictionary<string, (string StopType, int? Track)> Stations { get; } = new();
 }
+
+/// <summary>
+/// 終点のあと。Kind は 折返（Number の列車として折り返す。Time はその発車・入換の時刻、How は「発」か「入換」）、
+/// 引継（同じ列番のまま線区の外へ）、滞泊（その駅で夜を越す）。
+/// </summary>
+public sealed record DiaTurn(string Kind, string? Number, string? Time, string? How);
 
 /// <summary>時刻表の1駅（StationId は路線の外の駅なら null。Stop は 停・通・運停）。</summary>
 public sealed record DiaStop(string Name, string? StationId, string Stop, string? Arr, string? Dep);
@@ -190,6 +205,9 @@ public sealed class RailData
     /// <summary>進路を信号機の位置から取り始めるか（ApproachTrigger）と、限界点からの余裕（閉塞の数）。切ってあれば「2つ手前の駅」で取る。</summary>
     public bool ApproachTriggerEnabled { get; set; }
     public int ApproachTriggerMargin { get; set; } = 1;
+
+    /// <summary>ダイヤ運転中、出発まで開けてから場内を開ける駅（浜園など）。RouteRules.json の departBeforeArrive。</summary>
+    public HashSet<string> DepartBeforeArrive { get; } = new();
 
     /// <summary>進路を扱う駅（路線の並び順）。</summary>
     public IEnumerable<StationDef> ControlStations =>
@@ -302,7 +320,8 @@ public sealed class RailData
                         }
                     if (e.TryGetProperty("shuntOut", out var outs))
                         foreach (var so in outs.EnumerateArray())
-                            target.ShuntOuts.Add(new ShuntOutDef(so.GetProperty("from").GetInt32(), Str(so, "label"), Resolve(List(so, "routes"))));
+                            target.ShuntOuts.Add(new ShuntOutDef(so.GetProperty("from").GetInt32(), Str(so, "label"), Resolve(List(so, "routes")),
+                                List(so, "requireFree"), Str(so, "via") is { Length: > 0 } sov ? sov : null));
                     foreach (var (prop, map) in new[] { ("arrive", target.Arrive), ("depart", target.Depart) })
                     {
                         if (!e.TryGetProperty(prop, out var arr)) continue;
@@ -354,6 +373,8 @@ public sealed class RailData
             data.DefaultDwellSeconds = root.GetProperty("defaultDwellSeconds").GetInt32();
             if (root.TryGetProperty("minLoopDwellSeconds", out var ml)) data.MinLoopDwellSeconds = ml.GetInt32();
             if (root.TryGetProperty("afterStopSeconds", out var ms)) data.AfterStopSeconds = ms.GetInt32();
+            if (root.TryGetProperty("departBeforeArrive", out var dba) && dba.ValueKind == JsonValueKind.Array)
+                foreach (var x in dba.EnumerateArray()) if (x.GetString() is { Length: > 0 } sid) data.DepartBeforeArrive.Add(sid);
             if (root.TryGetProperty("approachTrigger", out var at) && at.ValueKind == JsonValueKind.Object)
             {
                 if (at.TryGetProperty("enabled", out var ae)) data.ApproachTriggerEnabled = ae.GetBoolean();
@@ -427,6 +448,11 @@ public sealed class RailData
                 if (t.TryGetProperty("next", out var nx) && nx.ValueKind == JsonValueKind.Object
                     && NormalizeTrain(Str(nx, "number")) is { Length: > 0 } nextNumber && Str(nx, "st") is { Length: > 0 } nextStation)
                     cur.Next = (nextNumber, nextStation);
+
+                cur.Unyo ??= t.TryGetProperty("unyo", out var un) && un.ValueKind == JsonValueKind.Number ? un.GetInt32() : Gokko.Common.Unyo.FromTrain(number);
+                if (t.TryGetProperty("turn", out var tn) && tn.ValueKind == JsonValueKind.Object && Str(tn, "kind") is { Length: > 0 } turnKind)
+                    cur.Turn = new DiaTurn(turnKind, NormalizeTrain(Str(tn, "number")) is { Length: > 0 } tno ? tno : null,
+                        Str(tn, "time") is { Length: > 0 } ttime ? ttime : null, Str(tn, "how") is { Length: > 0 } thow ? thow : null);
 
                 if (cur.Stops.Count == 0)
                     foreach (var s in t.GetProperty("stops").EnumerateArray())

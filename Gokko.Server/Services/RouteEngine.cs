@@ -46,8 +46,9 @@ public sealed class RouteEngine
     private readonly Dictionary<string, TrainRun> _runs = new();
     private long _seq;
 
-    public RouteEngine(RailData data, RunTimeModel model, CentralControl central, PlayerRegistry players, IncidentManager log)
+    public RouteEngine(RailData data, RunTimeModel model, CentralControl central, PlayerRegistry players, IncidentManager log, GameClock clock)
     {
+        _clock = clock;
         _data = data;
         _model = model;
         _central = central;
@@ -57,6 +58,178 @@ public sealed class RouteEngine
     }
 
     private readonly ApproachTrigger _approach;
+    private readonly GameClock _clock;
+
+    // =========================================================================================
+    // ダイヤ運転（ロープレ時刻とダイヤの時刻）
+    // =========================================================================================
+
+    private static readonly TimeZoneInfo Japan = FindJapan();
+
+    private static TimeZoneInfo FindJapan()
+    {
+        foreach (var id in new[] { "Asia/Tokyo", "Tokyo Standard Time" })
+            try { return TimeZoneInfo.FindSystemTimeZoneById(id); } catch { }
+        return TimeZoneInfo.CreateCustomTimeZone("JST", TimeSpan.FromHours(9), "JST", "JST");
+    }
+
+    private bool DiaMode => _central.DiaMode;
+
+    /// <summary>
+    /// 今のロープレ時刻（運転日の秒。ロープレ時刻がなければ日本時間の今）。ダイヤの「24:15」のような日またぎに合わせ、4時前は 24時以降として数える。
+    /// </summary>
+    private double NowSec()
+    {
+        var t = _clock.Now ?? TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Japan).TimeOfDay;
+        var sec = t.TotalSeconds;
+        return sec < 4 * 3600 ? sec + 86400 : sec;
+    }
+
+    /// <summary>"HH:mm:ss"（24時以降も可）→ 運転日の秒。</summary>
+    private static double? ParseDiaTime(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return null;
+        var p = text.Split(':');
+        if (p.Length < 2 || !int.TryParse(p[0], out var hh) || !int.TryParse(p[1], out var mm)) return null;
+        var ss = p.Length > 2 && int.TryParse(p[2], out var x) ? x : 0;
+        return hh * 3600 + mm * 60 + ss;
+    }
+
+    private static string FormatDiaTime(double sec)
+    {
+        var t = (int)Math.Round(sec);
+        return $"{t / 3600 % 24:00}:{t / 60 % 60:00}:{t % 60:00}";
+    }
+
+    /// <summary>ダイヤのその駅の時刻（運転日の秒）。depart なら発（通過）時刻、なければ着。arrive なら着時刻、なければ発。</summary>
+    private static double? DiaSec(TrainRun run, string stationId, bool depart)
+    {
+        var stop = run.Dia?.Stops.FirstOrDefault(x => x.StationId == stationId);
+        if (stop == null) return null;
+        return depart ? ParseDiaTime(stop.Dep) ?? ParseDiaTime(stop.Arr) : ParseDiaTime(stop.Arr) ?? ParseDiaTime(stop.Dep);
+    }
+
+    /// <summary>
+    /// 入換で始まる列車の入換時刻（列番 → 運転日の秒）。前の列車のスタフの「折返|881C 08:42入換」から。
+    /// </summary>
+    private Dictionary<string, double> DiaShuntTimes => _diaShuntTimes ??= _data.Dia.Values
+        .Where(d => d.Turn is { Kind: "折返", How: "入換", Number: not null, Time: not null })
+        .Select(d => (d.Turn!.Number!, T: ParseDiaTime(d.Turn.Time)))
+        .Where(x => x.T != null)
+        .GroupBy(x => x.Item1).ToDictionary(g => g.Key, g => g.First().T!.Value);
+    private Dictionary<string, double>? _diaShuntTimes;
+
+    /// <summary>
+    /// ダイヤ運転中の始発の入換（検車区・引上線からホームへ）: スタフに入換時刻があれば、その30秒前まで開けない（遅れていれば、空きしだい）。
+    /// 引き上げてすぐ入れ換えて、ホームを早くからふさがないように。時刻が書かれていなければ待たない。
+    /// </summary>
+    private string? DiaShuntHold(TrainRun run, StationRun st)
+    {
+        if (!DiaMode || run.Dia == null || _central.OpenAt(run.Train, st.St.Id) != null) return null;
+        if (!DiaShuntTimes.TryGetValue(run.Dia.Number, out var t)) return null;
+        return NowSec() < t - DepartLeadSeconds ? $"入換時刻待ち（{FormatDiaTime(t)} 入換。{DepartLeadSeconds}秒前に開通）" : null;
+    }
+
+    /// <summary>出発まで開けてから場内を開ける駅（ダイヤ運転中。浜園）。</summary>
+    private bool DepartBeforeArrive(StationRun st) => DiaMode && _data.DepartBeforeArrive.Contains(st.St.Id);
+
+    /// <summary>
+    /// ダイヤ運転中の発車時刻: 停車列車・始発は、ダイヤの発車時刻の30秒前まで出発を開けない（遅れていれば、前が空きしだい）。
+    /// 通過列車と、出発まで開けてから入る駅（浜園）は時刻で待たない。スジずらし・発車時刻の手打ちがあれば、そちら（DepartTimeHold）を使う
+    /// </summary>
+    private string? DiaDepartHold(TrainRun run, StationRun st)
+    {
+        if (!DiaMode || run.Dia == null || _central.OpenAt(run.Train, st.St.Id) != null) return null;
+        if (!st.IsStart && st.StopType == "通過" && !st.DepartStop) return null;
+        if (DepartBeforeArrive(st)) return null;
+        if (DiaSec(run, st.St.Id, depart: true) is not { } dep) return null;
+        return NowSec() < dep - DepartLeadSeconds ? $"発車時刻待ち（{FormatDiaTime(dep)} 発。{DepartLeadSeconds}秒前に開通）" : null;
+    }
+
+    /// <summary>列車（ダイヤの列番）・駅 → その駅の出発（通過）信号機を踏んだ時刻（運転日の秒）。列車がいなくなっても残す。</summary>
+    private readonly Dictionary<(string Train, string Station), double> _departedLog = new();
+    private double? _diaSince;
+    private double _lastTickSec;
+
+    /// <summary>
+    /// ダイヤ運転中の単線区間: ダイヤでこの列車より先に、相手の駅（next）から区間へ入る対向列車のうち、
+    /// いま参加していなくて（出現前・遅れ・切断）、まだ相手の駅を出ていないもの。いれば列番を「・」でつなぐ。
+    /// 見るのは、この列車が区間に入るダイヤの時刻の30分前までに入るはずの列車。ダイヤ運転を始める（時計を動かす）より前の時刻の列車は、
+    /// 記録がないので見ない（途中から始めても、もう通り終えた列車を待ち続けない）。
+    /// </summary>
+    private string? DiaAbsentOpposing(TrainRun run, StationRun st, string next)
+    {
+        if (run.Dia == null || DiaSec(run, st.St.Id, depart: true) is not { } mine) return null;
+        var present = new HashSet<string>();
+        foreach (var r in _runs.Values.Where(r => r.Dia != null))
+        {
+            present.Add(r.Dia!.Number);
+            if (r.Dia.Next is { } nx) present.Add(nx.Number); // 途中で列番が変わる列車（1053 → 回1153）
+        }
+
+        var waiting = new List<string>();
+        foreach (var d in _data.Dia.Values)
+        {
+            if (d.Number == run.Dia.Number || present.Contains(d.Number)) continue;
+            var iNext = d.Stops.FindIndex(s => s.StationId == next);
+            var iHere = d.Stops.FindIndex(s => s.StationId == st.St.Id);
+            if (iNext < 0 || iHere < 0 || iNext > iHere) continue; // 相手の駅から入って、こちらの駅へ来る列車だけ
+            var s0 = d.Stops[iNext];
+            if (ParseDiaTime(s0.Dep ?? s0.Arr) is not { } t || t >= mine || t < mine - 1800 || t < (_diaSince ?? double.MaxValue)) continue;
+            lock (_departedLog)
+                if (_departedLog.TryGetValue((d.Number, next), out var at) && at >= t - 3600) continue; // もう相手の駅を出た
+            waiting.Add(d.Number);
+        }
+
+        return waiting.Count > 0 ? string.Join("・", waiting) : null;
+    }
+
+    /// <summary>
+    /// ダイヤ運転中: この駅から出る始発列車のダイヤの発車が、この列車の着（通過）より前で、その出発の進路と場内の進路が重なるなら、始発列車が先
+    /// （江ノ原検車区13番線から出る回送より先に、12番線に入る列車が場内を取ってしまわないように）。
+    /// </summary>
+    private string? DiaStartFirstHold(TrainRun run, StationRun st)
+    {
+        if (!DiaMode || run.Dia == null || st.ArrivePath.Count == 0) return null;
+        if (DiaSec(run, st.St.Id, depart: false) is not { } mine) return null;
+        var path = Circuits(st.ArrivePath).ToHashSet();
+        foreach (var other in _runs.Values.Where(o => o != run && o.Dia != null && o.HasPosition))
+        {
+            var os = other.Stations.FirstOrDefault(s => s.St.Id == st.St.Id && s.IsStart && !s.Done);
+            if (os == null || os.DepartPath.Count == 0) continue;
+            if (DiaSec(other, st.St.Id, depart: true) is { } theirs && theirs < mine && Circuits(os.DepartPath).Any(path.Contains))
+                return $"始発列車の発車待ち（{other.Train} が先）";
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// ダイヤ運転中の駅の出発順序（手で決めていなければ、ダイヤの発車・通過時刻の順）。ダイヤにない列車は入れない（待たない・待たせない）。
+    /// </summary>
+    private IReadOnlyList<string>? EffectiveOrder(string stationId, Dir dir)
+    {
+        if (_central.Order(stationId, dir) is { } manual) return manual;
+        if (!DiaMode) return null;
+        var list = _runs.Values.Where(r => r.Dir == dir && r.Dia != null && r.Stations.Any(s => s.St.Id == stationId && !s.Done))
+            .Select(r => (r.Train, T: DiaSec(r, stationId, depart: true))).Where(x => x.T != null).OrderBy(x => x.T).Select(x => x.Train).ToList();
+        return list.Count > 0 ? list : null;
+    }
+
+    /// <summary>ダイヤ運転中の単線区間の走行順（手で決めていなければ、区間に入る駅のダイヤの発車・通過時刻の順）。</summary>
+    private IReadOnlyList<string>? EffectiveSectionOrder(string a, string b)
+    {
+        if (_central.SectionOrder(a, b) is { } manual) return manual;
+        if (!DiaMode) return null;
+        var list = new List<(string Train, double T)>();
+        foreach (var r in _runs.Values.Where(r => r.Dia != null))
+        {
+            var entry = r.Stations.FirstOrDefault(s => (s.St.Id == a || s.St.Id == b) && NextControlStation(r, s) is { } nx && (nx == a || nx == b) && nx != s.St.Id);
+            if (entry == null || SectionCleared(r, a, b)) continue;
+            if (DiaSec(r, entry.St.Id, depart: true) is { } t) list.Add((r.Train, t));
+        }
+
+        return list.Count > 0 ? list.OrderBy(x => x.T).Select(x => x.Train).ToList() : null;
+    }
 
     /// <summary>その駅の場内（通過なら出発も）を取り始める位置（信号機）。設定で切ってあれば・計算できなければ null。</summary>
     private ApproachTrigger.Result? ApproachOf(TrainRun run, StationRun st)
@@ -274,6 +447,13 @@ public sealed class RouteEngine
 
         /// <summary>踏んだ軌道回路と、最後に踏んでいた時刻（在線位置の画面が、通ってきた枝で在線を塗るため。1分より古いものは捨てる）。</summary>
         public Dictionary<string, DateTime> SeenCircuits { get; } = new();
+
+        /// <summary>駅ごとの実際の着時刻・発時刻（ロープレ時刻の運転日の秒）。着は停車なら止まった時、通過なら駅に入った時。発は出発信号機を踏んだ時。</summary>
+        public Dictionary<string, double> ActualArr { get; } = new();
+        public Dictionary<string, double> ActualDep { get; } = new();
+
+        /// <summary>遅れ（秒）。出発信号機を踏んだときに、ダイヤの発車（通過）時刻との差で決める。ダイヤにない列車・まだ分からなければ null。</summary>
+        public double? Delay { get; set; }
     }
 
     // =========================================================================================
@@ -301,6 +481,7 @@ public sealed class RouteEngine
         lock (_lock)
         {
             if (!_runs.TryGetValue(connId, out var run)) return "在線共有モードの列車として認識されていません（列車番号・位置を確認してください）";
+            if (DiaMode && run.Dia != null) return "ダイヤ運転中は、出発要求・入換要求はできません（時刻になると自動で開通します）";
 
             // 終着の列車の入換（引上げ）: 番線に入りきっていて、その番線から出る入換があれば、それを要求する
             if (ShuntOutStation(run) is { } end)
@@ -324,11 +505,21 @@ public sealed class RouteEngine
         }
     }
 
-    /// <summary>その駅で運転を終える列車（終着、または行き止まりの番線に入る）が、今いる番線から出られる入換（引上げ）。</summary>
+    /// <summary>
+    /// その駅で運転を終える列車（終着、または行き止まりの番線に入る）が、今いる番線から出られる入換（引上げ）の選択肢。
+    /// 同じ行き先の候補（経由の違い）は、最初のものを代表にして1つにまとめる。実際の進路は <see cref="ShuntOutPath"/> で選ぶ。
+    /// </summary>
     private static List<ShuntOutDef> ShuntOutOptions(TrainRun run, StationRun st) =>
         (st.Terminal || IsTurnbackTrack(run, st)) && st.Track is { } t
-            ? st.St.Routes[run.Dir].ShuntOuts.Where(o => o.From == t).ToList()
+            ? st.St.Routes[run.Dir].ShuntOuts.Where(o => o.From == t).GroupBy(o => o.Label).Select(g => g.First()).ToList()
             : new List<ShuntOutDef>();
+
+    /// <summary>入換（引上げ）の選択肢の、実際に使う候補: 書いた順に、RequireFree の回路に他の列車がいないもの（なければ最後の候補）。</summary>
+    private static ShuntOutDef ShuntOutPath(TrainRun run, StationRun st, ShuntOutDef option, Dictionary<string, TrainRun> occupied)
+    {
+        var alts = st.St.Routes[run.Dir].ShuntOuts.Where(o => o.From == option.From && o.Label == option.Label).ToList();
+        return alts.FirstOrDefault(a => a.RequireFree.All(c => !occupied.TryGetValue(c, out var o) || o == run)) ?? alts[^1];
+    }
 
     /// <summary>入換（引上げ）を要求できる駅: 列車が番線に入りきっていて、まだ入換を要求していない。なければ null。</summary>
     private static StationRun? ShuntOutStation(TrainRun run) =>
@@ -370,6 +561,11 @@ public sealed class RouteEngine
     public void Tick()
     {
         var now = DateTime.UtcNow;
+        // ダイヤ運転を始めた時刻（運転日の秒）。時計を大きく動かしたら、そこから数え直す
+        var nowSec = NowSec();
+        if (!DiaMode) _diaSince = null;
+        else if (_diaSince == null || Math.Abs(nowSec - _lastTickSec) > 120) _diaSince = nowSec;
+        _lastTickSec = nowSec;
         var snapshot = _players.Snapshot()
             .Where(p => p.Mode == ShareMode.Shared && p.InGame && p.TrainCrewConnected && p.TrainNumber.Length > 0)
             .ToList();
@@ -935,10 +1131,21 @@ public sealed class RouteEngine
             }
 
             if (_central.TakeManual(run.Train, st.St.Id) is { } manual) ApplyManual(run, st, manual, now);
+
+            // ダイヤ運転中のダイヤの列車: 入換（引上線などからの始発・終着の引上げ）は、止まったら自動で要求する（運転士は要求できない）
+            if (DiaMode && run.Dia != null && run.Player.Speed < StopSpeedKmh)
+            {
+                if (st.IsStart && st.ShuntFrom != null && !st.ShuntRequested) st.ShuntRequested = true;
+                if (st.ShuntOutChoice == null && ShuntOutOptions(run, st).Count > 0 && (st.IsStart || FullyInTrack(run, st))) st.ShuntOutChoice = 0;
+            }
             ApplyHold(run, st, now);
 
             // 駅に着いた時刻（先頭が構内に入った。始発は認識した時刻）
-            if (st.HereUtc == null && (st.IsStart || (run.Front - st.Zone) * step >= 0)) st.HereUtc = now;
+            if (st.HereUtc == null && (st.IsStart || (run.Front - st.Zone) * step >= 0))
+            {
+                st.HereUtc = now;
+                if (!st.IsStart && st.StopType == "通過" && !st.DepartStop) run.ActualArr.TryAdd(st.St.Id, NowSec()); // 通過: 駅に入った時刻
+            }
 
             if (!st.Locked) ChooseTrack(run, st);
             else if (CanRechoose(run, st))
@@ -957,7 +1164,11 @@ public sealed class RouteEngine
             if (st.LoopArrivedUtc == null && IsLoopTrack(run, st) && FullyInTrack(run, st))
                 st.LoopArrivedUtc = now;
             if (st.InTrackUtc == null && FullyInTrack(run, st)) st.InTrackUtc = now;
-            if (st.StoppedUtc == null && FullyInTrack(run, st) && run.Player.Speed < StopSpeedKmh) st.StoppedUtc = now;
+            if (st.StoppedUtc == null && FullyInTrack(run, st) && run.Player.Speed < StopSpeedKmh)
+            {
+                st.StoppedUtc = now;
+                if (!st.IsStart) run.ActualArr.TryAdd(st.St.Id, NowSec()); // 停車: 止まった時刻
+            }
 
             // 2つ手前の駅（すべての駅）に先頭が着いたか（構内に入ったか）。始発のすぐ先などで、もう過ぎていればすぐ
             if (!st.Triggered && !st.IsStart)
@@ -987,7 +1198,18 @@ public sealed class RouteEngine
 
             // 列車がその進路に入り、通り抜けたら、その進路は使い終わり（ゲームの進路の一覧で確認できなかった進路も、ここで片付ける。
             // 残したままだと、使い終わった進路が、ほかの列車の進路と「重なる」と判定されて開通をふさぐ）
-            if (req.Def.Circuits.Any(run.Player.TrackCircuits.Contains)) req.Entered = true;
+            if (req.Def.Circuits.Any(run.Player.TrackCircuits.Contains))
+            {
+                // 出発信号機（通過の進路なら、その進路）を踏んだ時刻を、その駅の発時刻とし、ダイヤとの差を遅れにする
+                if (!req.Entered && (req.Def.IsDepartureSignal || req.Station.Track == null) && run.ActualDep.TryAdd(req.Station.St.Id, NowSec()))
+                {
+                    // 列車がいなくなっても残す記録（ダイヤ運転中の単線の交換で、対向列車がもう区間に入ったかを知るため）
+                    lock (_departedLog) _departedLog[(run.Dia?.Number ?? run.Train, req.Station.St.Id)] = NowSec();
+                    if (DiaSec(run, req.Station.St.Id, depart: true) is { } plan)
+                        run.Delay = run.ActualDep[req.Station.St.Id] - plan;
+                }
+                req.Entered = true;
+            }
             else if (req.Entered && req.CancelledUtc == null)
             {
                 req.Released = true;
@@ -1086,7 +1308,8 @@ public sealed class RouteEngine
         if (run.Dia != null && run.Dia.Stations.TryGetValue(st.St.Id, out var ds) && ds.Track is { } dt && options.Contains(dt))
         {
             (st.Track, st.TrackSource) = (dt, "ダイヤ");
-            AvoidTakenTrack(run, st, options);
+            // ダイヤ運転中は、ダイヤの番線を勝手に変えない（ふさがっていれば空くまで待つ。交換・順序はダイヤどおりに流すので、ずらすと行き違えなくなる）
+            if (!DiaMode) AvoidTakenTrack(run, st, options);
             return;
         }
 
@@ -1145,6 +1368,7 @@ public sealed class RouteEngine
         && st.Arrive != GroupState.Requested && st.Depart != GroupState.Requested
         && !st.Passing && !st.ForceArrive && !st.ForceDepart
         && st.TrackSource is "ダイヤ" or "所定" or "空き番線"
+        && !(DiaMode && st.TrackSource == "ダイヤ")
         && _central.TrackOverride(run.Train, st.St.Id) == null
         && !run.Requests.Any(r => r.Station == st && !r.Released && r.CancelledUtc == null);
 
@@ -1431,6 +1655,7 @@ public sealed class RouteEngine
         if (st.StopType == "通過" && !st.IsStart) return;
         if (_central.TrackOverride(run.Train, st.St.Id) != null) return;
         if (_central.Order(st.St.Id, run.Dir)?.Contains(run.Train) == true) return;
+        if (DiaMode && run.Dia != null) return; // ダイヤ運転中は、ダイヤの番線・順序どおり（勝手に待避させない）
         var loop = ps.TrackFor(run.Dir);
         if (!st.Options.Contains(loop) || LoopUser(run, st, loop) != null) return;
         var nextStation = _data.Line.StationAtZone(st.Zone + 2 * run.Dir.Step());
@@ -1562,7 +1787,7 @@ public sealed class RouteEngine
     /// </summary>
     private string? OrderHold(TrainRun run, StationRun st, List<RouteDef> path)
     {
-        if (_central.Order(st.St.Id, run.Dir) is not { } order) return null;
+        if (EffectiveOrder(st.St.Id, run.Dir) is not { } order) return null;
         var idx = order.ToList().IndexOf(run.Train);
         if (idx <= 0) return null;
         var mine = Circuits(path).ToHashSet();
@@ -1682,7 +1907,8 @@ public sealed class RouteEngine
             if (outIndex >= outOptions.Count) st.ShuntOutChoice = null;
             else
             {
-                var outPath = outOptions[outIndex].Routes;
+                var outDef = ShuntOutPath(run, st, outOptions[outIndex], occupied);
+                var outPath = outDef.Routes;
                 var outWait = !st.IsStart && !FullyInTrack(run, st) ? "列車が番線に入るまで"
                     : !st.IsStart && StopHold(st, now, "停車") is { } stopWait ? stopWait
                     : st.ForceShuntOut ? InterlockConflict(run, outPath, occupied)
@@ -1694,7 +1920,7 @@ public sealed class RouteEngine
                     foreach (var outRoute in Enumerable.Reverse(outPath))
                         run.Requests.Add(new RouteReq { Def = outRoute, Id = ++_seq, Station = st, Departure = true, RequestedUtc = now });
                     (st.ShuntOut, st.ShuntOutWait, st.ForceShuntOut) = (GroupState.Requested, "", false);
-                    _log.Note($"入換: {run.Train} {st.St.Name} {st.Track}番線→{outOptions[outIndex].Label}（{string.Join("・", outPath.Select(x => x.Name))}）");
+                    _log.Note($"入換: {run.Train} {st.St.Name} {st.Track}番線→{outOptions[outIndex].Label}{(outDef.Via != null ? $"（{outDef.Via}経由）" : "")}（{string.Join("・", outPath.Select(x => x.Name))}）");
                 }
             }
         }
@@ -1740,7 +1966,7 @@ public sealed class RouteEngine
             st.ShuntVia = choice!.Via;
             var wait = st.ForceShunt ? InterlockConflict(run, path, occupied)
                 : _central.IsHeld(run.Train, st.St.Id) ? "抑止（集中扱い）"
-                : TimeWait(run, st, now) ?? Conflict(run, st, path, occupied, departure: false);
+                : TimeWait(run, st, now) ?? DiaShuntHold(run, st) ?? Conflict(run, st, path, occupied, departure: false);
             if (wait != null)
             {
                 (st.Shunt, st.ShuntWait) = (GroupState.Waiting, wait);
@@ -1757,6 +1983,7 @@ public sealed class RouteEngine
         // 始発駅: 出発要求があったら、その時点の番線で確定する
         if (st.IsStart && !st.Locked)
         {
+            if (DiaMode && run.Dia != null && !st.Terminal && st.ShuntFrom == null) st.DepartureRequested = true; // ダイヤ運転中は要求なしで（時刻で開ける）
             if (!st.DepartureRequested && !_central.IsForced(run.Train, st.St.Id))
             {
                 if (!st.Terminal && st.Track != null) (st.Depart, st.DepartWait) = (GroupState.Waiting, "出発要求待ち");
@@ -1792,7 +2019,10 @@ public sealed class RouteEngine
             else
                 arriveWait = arriveHeld ? "場内抑止（集中扱い）"
                     : central ? "集中扱い（開通指示待ち）"
-                    : timeWait ?? SingleEntryHold(run, st) ?? PrevDepartHold(run, st) ?? ApproachHold(run, st) ?? (st.Track == null ? DepartTimeHold(run, st, now) : null) ?? (conflict = Conflict(run, st, st.ArrivePath, occupied, departure: false));
+                    : timeWait ?? SingleEntryHold(run, st) ?? PrevDepartHold(run, st) ?? ApproachHold(run, st) ?? (st.Track == null ? DepartTimeHold(run, st, now) : null)
+                      ?? (DepartBeforeArrive(st) && st.DepartPath.Count > 0 && st.Depart != GroupState.Requested ? "出発の開通待ち（出発まで開けてから場内）" : null)
+                      ?? DiaStartFirstHold(run, st)
+                      ?? (conflict = Conflict(run, st, st.ArrivePath, occupied, departure: false));
             st.ArriveBlocked = arriveWait != null && ReferenceEquals(arriveWait, conflict);
             if (arriveWait != null && !st.ForceArrive && st.TrackSource == "待避" && st.Track is { } lt && LoopUser(run, st, lt) is { } lu)
                 arriveWait = $"待避線ふさがり（{lu.Train}）";
@@ -1810,7 +2040,8 @@ public sealed class RouteEngine
             else if (central) wait = "集中扱い（開通指示待ち）";
             else if (timeWait != null) wait = timeWait;
             else if (st.IsStart && !st.DepartureRequested) wait = "出発要求待ち";
-            else if (needArrive && arriveWait != null) wait = $"場内待ち（{arriveWait}）";
+            else if (DepartBeforeArrive(st) && !st.IsStart && ApproachHold(run, st) is { } aw) wait = aw;
+            else if (needArrive && arriveWait != null && !DepartBeforeArrive(st)) wait = $"場内待ち（{arriveWait}）";
             else if (needArrive && LeadsToSingleTrack(run, st)) wait = "単線区間のため、場内の開通後に判断";
             else if (OrderHold(run, st, st.DepartPath) is { } ow) wait = ow;
             else wait = PassingHold(run, st, now)
@@ -1819,6 +2050,7 @@ public sealed class RouteEngine
                         ?? SingleTrackHold(run, st, now)
                         ?? TrackDelayHold(run, st, now)
                         ?? DepartTimeHold(run, st, now)
+                        ?? DiaDepartHold(run, st)
                         ?? (conflict = Conflict(run, st, st.DepartPath, occupied, departure: true));
             st.DepartBlocked = wait != null && ReferenceEquals(wait, conflict);
 
@@ -2019,8 +2251,13 @@ public sealed class RouteEngine
         if (_levers.TryGetValue(section, out var lever) && lever.Locked && lever.Dir != run.Dir)
             return $"方向てこが{lever.Dir.Label()}向き（{st.St.Name}〜{nextName}）";
 
+        // ---- ダイヤ運転中: ダイヤで先に区間へ入る対向列車が、まだ現れていなくても（遅れ・未接続）、区間に入るまで待つ ----
+        // 交換駅はダイヤどおり。相手の駅の場内が空いていても信号は取らない。走行順を手で決めた区間は、その順に従う
+        if (DiaMode && run.Dia != null && _central.SectionOrder(st.St.Id, next) == null && DiaAbsentOpposing(run, st, next) is { } absent)
+            return $"交換待ち（ダイヤ: {absent} が先に{st.St.Name}〜{nextName}を通る）";
+
         // ---- 走行順（集中扱い）: 区間ごとに決めた順で流す ----
-        var order = _central.SectionOrder(st.St.Id, next);
+        var order = EffectiveSectionOrder(st.St.Id, next); // ダイヤ運転中は、手で決めていなければダイヤの時刻順
         if (order != null && order.Contains(run.Train))
         {
             var before = order.TakeWhile(t => t != run.Train).Where(t => RunByTrain(t) is { } p && !SectionCleared(p, st.St.Id, next)).ToList();
@@ -2164,6 +2401,8 @@ public sealed class RouteEngine
             if (other.Stations.FirstOrDefault(s => s.St.Id == st.St.Id) is not { Done: false } os || IsCutOff(other, os)) continue;
             if (os.Terminal || IsTurnbackTrack(other, os)) continue; // この駅で終わる列車は抜けないので待たない（番線のふさがりは在線で判断）
             if (os.IsStart && !os.DepartureRequested && !os.ShuntRequested) continue; // 止まったままの始発列車は追い越してよい
+            // ダイヤ運転中: ダイヤでこちらが先に出る（通る）始発列車は待たない（江ノ原検車区から出る列車より先に、本線の列車を通す）
+            if (os.IsStart && DiaMode && DiaSec(other, st.St.Id, depart: true) is { } od && DiaSec(run, st.St.Id, depart: true) is { } rd && rd < od) continue;
             // 出発抑止中で、別の番線にいる先行列車は追い越してよい（駒野1番線で抑止中の列車を残して、2番線の列車を先に出す）
             if ((_central.Hold(other.Train, st.St.Id) & HoldKind.Depart) != 0 && os.Track != null && os.Track != st.Track) continue;
             if (_data.PassingStations.ContainsKey(st.St.Id) && os.Track != null && os.Track != st.Track) continue; // 待避駅で別の番線
@@ -2234,10 +2473,10 @@ public sealed class RouteEngine
 
             var start = run.Stations.FirstOrDefault(s => s.IsStart && !s.Done);
             var shunting = start?.ShuntFrom != null;
-            var canDepart = start != null && !start.Terminal && (shunting ? !start.ShuntRequested : !start.DepartureRequested);
+            var canDepart = start != null && !start.Terminal && (shunting ? !start.ShuntRequested : !start.DepartureRequested) && !(DiaMode && run.Dia != null);
             var label = shunting ? "入換要求" : "出発要求";
             // 終着の列車: 番線に入りきっていて、引上げの入換があれば「入換要求」
-            if (ShuntOutStation(run) != null) (canDepart, label) = (true, "入換要求");
+            if (ShuntOutStation(run) != null && !(DiaMode && run.Dia != null)) (canDepart, label) = (true, "入換要求");
             var message = !run.HasPosition ? "位置が分かりません（運転画面で列車を動かすと分かります）"
                 : run.GameTrain.Length > 0 && run.Train != run.GameTrain ? $"同じ列番の列車が走っているため、サーバーでは {run.Train} として扱います"
                 : null;
@@ -2345,7 +2584,7 @@ public sealed class RouteEngine
                             Max(p.Dir == r.Dir ? pp.DepAt.TryGetValue(z, out var d1) ? d1 : null : pp.ArrAt.TryGetValue(z, out var a1) ? a1 : null);
 
                 // 駅の出発順序: 同じ向きの先の列車がこの駅を出たあと
-                if (_central.Order(sid, r.Dir) is { } order && order.Contains(r.Train))
+                if (EffectiveOrder(sid, r.Dir) is { } order && order.Contains(r.Train))
                     foreach (var name in order.TakeWhile(t => t != r.Train))
                         if (RunByTrain(name) is { } p && p.Dir == r.Dir && (_central.Hold(name, sid) & HoldKind.Depart) == 0
                             && basePlans.TryGetValue(p, out var pp) && pp.DepAt.TryGetValue(z, out var d2))
@@ -2522,10 +2761,48 @@ public sealed class RouteEngine
                     [Dir.Down] = _central.Order(station.Id, Dir.Down)?.ToList() ?? new List<string>(),
                     [Dir.Up] = _central.Order(station.Id, Dir.Up)?.ToList() ?? new List<string>()
                 };
-                var trains = _runs.Values
+                var here = _runs.Values
                     .Where(r => r.HasPosition)
                     .Select(r => (Run: r, St: r.Stations.FirstOrDefault(s => s.St.Id == station.Id && !s.Done)))
                     .Where(x => x.St != null && !IsCutOff(x.Run, x.St))
+                    .ToList();
+
+                // 表示の並び（在線位置の画面の出発・到着の枠）: 実際に進路を取る順。
+                // 出発: もう出発進路を取った列車（取った順）→ 進路を取る順序（手で決めた順、ダイヤ運転中はダイヤの順）→ 抑止中は後ろ → 時刻
+                //       （ダイヤ運転中はダイヤの発車時刻、そうでなければ見込み）
+                // 到着: もう場内を取った列車（取った順）→ 着く見込みの時刻
+                var nowSec = NowSec();
+                double Eta(TrainRun r, StationRun s, bool dep)
+                {
+                    double? sec = s.IsStart ? 0 : _model.SecondsTo(RunType(r), r.Dir, r.Front, r.Fraction, station.Id);
+                    if (sec != null && dep) sec += DwellSeconds(r, s);
+                    return sec is { } v ? nowSec + v : double.MaxValue;
+                }
+                long Taken(TrainRun r, StationRun s, bool dep) =>
+                    r.Requests.Where(q => q.Station == s && q.Departure == dep && q.CancelledUtc == null).Select(q => q.Id).DefaultIfEmpty(long.MaxValue).Min();
+                var departRank = new Dictionary<string, int>();
+                var arriveRank = new Dictionary<string, int>();
+                foreach (var dir in new[] { Dir.Down, Dir.Up })
+                {
+                    var eff = EffectiveOrder(station.Id, dir)?.ToList() ?? new List<string>();
+                    var mine = here.Where(x => x.Run.Dir == dir).ToList();
+                    var dep = mine
+                        .OrderBy(x => x.St!.Depart == GroupState.Requested ? 0 : 1)
+                        .ThenBy(x => x.St!.Depart == GroupState.Requested ? Taken(x.Run, x.St, true) : 0)
+                        .ThenBy(x => eff.IndexOf(x.Run.Train) is var i && i >= 0 ? i : int.MaxValue)
+                        .ThenBy(x => (_central.Hold(x.Run.Train, station.Id) & HoldKind.Depart) != 0)
+                        .ThenBy(x => DiaMode && DiaSec(x.Run, station.Id, depart: true) is { } d ? d : Eta(x.Run, x.St!, true))
+                        .ToList();
+                    for (var i = 0; i < dep.Count; i++) departRank[dep[i].Run.Train] = i;
+                    var arr = mine
+                        .OrderBy(x => x.St!.Arrive == GroupState.Requested ? 0 : 1)
+                        .ThenBy(x => x.St!.Arrive == GroupState.Requested ? Taken(x.Run, x.St, false) : 0)
+                        .ThenBy(x => Eta(x.Run, x.St!, false))
+                        .ToList();
+                    for (var i = 0; i < arr.Count; i++) arriveRank[arr[i].Run.Train] = i;
+                }
+
+                var trains = here
                     .Select(x =>
                     {
                         double? sec = x.St!.IsStart ? 0 : _model.SecondsTo(RunType(x.Run), x.Run.Dir, x.Run.Front, x.Run.Fraction, station.Id);
@@ -2558,6 +2835,9 @@ public sealed class RouteEngine
                             arrive = arriveSec is { } a ? now.AddSeconds(a) : (DateTime?)null,
                             // 出発抑止中（順序に入っていても、ほかの列車を先に出す）
                             held = (_central.Hold(x.Run.Train, station.Id) & HoldKind.Depart) != 0,
+                            // 在線位置の画面の並び（出発・到着）。小さいほど先
+                            departRank = departRank.GetValueOrDefault(x.Run.Train, int.MaxValue),
+                            arriveRank = arriveRank.GetValueOrDefault(x.Run.Train, int.MaxValue),
                             status = Status(x.Run, x.St)
                         };
                     })
@@ -2648,7 +2928,9 @@ public sealed class RouteEngine
                     direction = r.Dir.Label(),
                     circuits = r.Player.TrackCircuits.ToList(),
                     // 少し前（1分以内）に踏んでいた回路。在線をどの枝で塗るかの手がかり（通ってきた側の枝を選ぶ）
-                    recent = r.SeenCircuits.Keys.Where(c => !r.Player.TrackCircuits.Contains(c)).ToList()
+                    recent = r.SeenCircuits.Keys.Where(c => !r.Player.TrackCircuits.Contains(c)).ToList(),
+                    // 遅れ（分）。1分以上のときだけ
+                    delay = r.Delay is { } dl && dl >= 60 ? (int)(dl / 60) : (int?)null
                 }).ToList(),
                 routes = runs.SelectMany(r => r.Requests
                     .Where(q => !q.Released && q.CancelledUtc == null)
@@ -2695,29 +2977,50 @@ public sealed class RouteEngine
 
             if (dia != null && dia.Stops.Count > 0)
             {
-                var stops = new List<object>();
+                var rows = new List<(string Name, string? Sid, string Stop, string? Arr, string? Dep)>();
                 foreach (var s in dia.Stops)
                 {
-                    switch (Override(s.StationId))
+                    rows.Add(Override(s.StationId) switch
                     {
-                        case "停車" when s.Stop == "通":
-                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = "臨停", arr = s.Arr ?? s.Dep, dep = s.Dep ?? s.Arr });
-                            break;
-                        case "通過" when s.Stop != "通":
-                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = "臨通", arr = (string?)null, dep = s.Dep ?? s.Arr });
-                            break;
-                        case "打ち切り":
-                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = "打切", arr = s.Arr ?? s.Dep, dep = (string?)null });
-                            break;
-                        default:
-                            stops.Add(new { name = s.Name, control = Control(s.StationId), stop = s.Stop, arr = s.Arr, dep = s.Dep });
-                            break;
-                    }
-
+                        "停車" when s.Stop == "通" => (s.Name, s.StationId, "臨停", s.Arr ?? s.Dep, s.Dep ?? s.Arr),
+                        "通過" when s.Stop != "通" => (s.Name, s.StationId, "臨通", null, s.Dep ?? s.Arr),
+                        "打ち切り" => (s.Name, s.StationId, "打切", s.Arr ?? s.Dep, null),
+                        _ => (s.Name, s.StationId, s.Stop, s.Arr, s.Dep)
+                    });
                     if (Override(s.StationId) == "打ち切り") break; // 打ち切った先の駅は出さない
                 }
 
-                return new { train = key, label = dia.TypeLabel, source = "ダイヤ", stops };
+                // 計画（ダイヤの時刻）と実（着いた・出た駅は実際の時刻、これからの駅は計画に今の遅れを足した見込み）。
+                // 着いた・出た駅は、計画の欄を「-」にする
+                var stepD = run?.Dir.Step() ?? 0;
+                var lastPassed = -1; // ここまでの駅はもう出た（通過した）
+                if (run is { HasPosition: true })
+                    for (var i = 0; i < rows.Count; i++)
+                    {
+                        if (rows[i].Sid is not { } sid) continue;
+                        var z = _data.Line.ZoneOfStation(sid);
+                        if (run.ActualDep.ContainsKey(sid) || z >= 0 && (run.Front - z) * stepD > 0 && (run.Rear - z) * stepD > 0) lastPassed = i;
+                    }
+
+                var delay = Math.Max(0, run?.Delay ?? 0);
+                string? Shift(string? t) => run != null && ParseDiaTime(t) is { } v ? FormatDiaTime(v + delay) : null;
+                var stops = rows.Select((r, i) =>
+                {
+                    var arrDone = i <= lastPassed || r.Sid != null && run != null && run.ActualArr.ContainsKey(r.Sid);
+                    var depDone = i <= lastPassed || r.Sid != null && run != null && run.ActualDep.ContainsKey(r.Sid);
+                    var actArr = r.Sid != null && run != null && run.ActualArr.TryGetValue(r.Sid, out var aa) ? FormatDiaTime(aa) : Shift(r.Arr);
+                    var actDep = r.Sid != null && run != null && run.ActualDep.TryGetValue(r.Sid, out var ad) ? FormatDiaTime(ad) : Shift(r.Dep);
+                    return (object)new
+                    {
+                        name = r.Name, control = Control(r.Sid), stop = r.Stop,
+                        planArr = r.Arr == null ? null : arrDone ? "-" : r.Arr,
+                        actArr = r.Arr == null ? null : actArr,
+                        planDep = r.Dep == null ? null : depDone ? "-" : r.Dep,
+                        actDep = r.Dep == null ? null : actDep
+                    };
+                }).ToList();
+
+                return new { train = key, label = dia.TypeLabel, source = "ダイヤ", delay = run?.Delay is { } dl && dl >= 60 ? (int)(dl / 60) : (int?)null, stops };
             }
 
             if (run == null || !run.HasPosition) return null;
@@ -2740,7 +3043,7 @@ public sealed class RouteEngine
                 if (Override(id) == "打ち切り") { endZone = z0; break; }
             }
 
-            var start = clock ?? DateTime.Now.TimeOfDay;
+            var start = clock ?? TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Japan).TimeOfDay;
             string Fmt(double sec) => TimeSpan.FromTicks((start + TimeSpan.FromSeconds(sec)).Ticks % TimeSpan.TicksPerDay).ToString(@"hh\:mm\:ss");
 
             var list = new List<object>();
@@ -2759,7 +3062,7 @@ public sealed class RouteEngine
                 }
                 if (z == startZone)
                 {
-                    list.Add(new { name = _data.Line.StationName(id), control = Control(id), stop = mark, arr = (string?)null, dep = (string?)Fmt(0) });
+                    list.Add(new { name = _data.Line.StationName(id), control = Control(id), stop = mark, planArr = (string?)null, actArr = (string?)null, planDep = (string?)Fmt(0), actDep = (string?)null });
                     continue;
                 }
 
@@ -2769,8 +3072,10 @@ public sealed class RouteEngine
                 list.Add(new
                 {
                     name = _data.Line.StationName(id), control = Control(id), stop = mark,
-                    arr = stops ? Fmt(sec.Value) : null,
-                    dep = z == endZone ? null : Fmt(sec.Value + dwell)
+                    planArr = stops ? Fmt(sec.Value) : null,
+                    actArr = (string?)null,
+                    planDep = z == endZone ? null : Fmt(sec.Value + dwell),
+                    actDep = (string?)null
                 });
             }
 

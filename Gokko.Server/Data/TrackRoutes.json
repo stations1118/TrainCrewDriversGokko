@@ -156,8 +156,11 @@
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LD"] }
         ],
         // 大道寺止めの入換: 3・4番線から入換Y線（既定）・E線へ
+        // Y線へは、Y線から入換するときと同じく E線経由（番線→E線 2xRE、E線→Y線 30R）を既定にし、E線に列車がいれば直接（2xRY）
         "shuntOut": [
+          { "from": 3, "label": "入換Y線", "routes": ["23RE", "30R"], "requireFree": ["TH65_ET"], "via": "E線" },
           { "from": 3, "label": "入換Y線", "routes": ["23RY"] }, { "from": 3, "label": "E線", "routes": ["23RE"] },
+          { "from": 4, "label": "入換Y線", "routes": ["24RE", "30R"], "requireFree": ["TH65_ET"], "via": "E線" },
           { "from": 4, "label": "入換Y線", "routes": ["24RY"] }, { "from": 4, "label": "E線", "routes": ["24RE"] }
         ]
       },
@@ -181,16 +184,19 @@
           { "fromCircuit": "TH65_YT", "fromLabel": "入換Y線", "to": 4, "routes": ["32LD"] }
         ],
         // 大道寺止めの入換: 1・2・3番線から入換Y線（既定）・E線へ
+        // 2・3番線から Y線へは E線経由（2xRE＋30R）を既定にし、E線に列車がいれば直接（2xRY）。1番線から E線へは進路がないので直接だけ
         "shuntOut": [
           { "from": 1, "label": "入換Y線", "routes": ["21RY"] },
+          { "from": 2, "label": "入換Y線", "routes": ["22RE", "30R"], "requireFree": ["TH65_ET"], "via": "E線" },
           { "from": 2, "label": "入換Y線", "routes": ["22RY"] }, { "from": 2, "label": "E線", "routes": ["22RE"] },
+          { "from": 3, "label": "入換Y線", "routes": ["23RE", "30R"], "requireFree": ["TH65_ET"], "via": "E線" },
           { "from": 3, "label": "入換Y線", "routes": ["23RY"] }, { "from": 3, "label": "E線", "routes": ["23RE"] }
         ]
       },
       "notes": [
         "場内は上下とも2段（上り 1RA/1RB/1RC＋2R/3R/4R、下り 13LC/13LD＋11L/12L）",
         "上りの4番線発（10R）は、下りで着いた列車の折り返し",
-        "検車区（XT/YT/ET）への入換は表に入れていない"
+        "入換Y線とホームの間は、どちら向きも E線経由を既定にする（Y線→E線 32LE→番線 29L*、番線 2xRE→E線→Y線 30R）。E線に列車がいれば直接（32L*／2xRY）"
       ]
     },
     {

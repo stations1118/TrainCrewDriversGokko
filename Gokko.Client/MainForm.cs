@@ -608,6 +608,7 @@ public sealed class MainForm : Form
 
         // ダイヤ運転中は継続乗務を常に入（ボタンは押せない）。フリー運転に戻ったら、元の入・切に戻す
         var dia = shared && state?.DiaMode == true;
+        _ = SyncGameClockAsync(dia, state?.GameTime);
         if (dia != _diaShown)
         {
             _diaShown = dia;
@@ -621,6 +622,50 @@ public sealed class MainForm : Form
 
     private bool _diaShown;
     private bool _continueBefore;
+    private string _clockSyncKey = "";
+
+    /// <summary>
+    /// ダイヤ運転中は、ゲームの時計をロープレ時刻に合わせる（実時間モード ＋ 時刻の補正 = ロープレ時刻 − このPCの今の時刻）。
+    /// 補正が10秒以上変わったとき・ゲームにつなぎ直したときに送り直す。フリー運転に戻ったら実時間モードを外す。
+    /// コマンドの書き方は資料（TrainCrewControlDesk）の mode_request と、このソフトの mode_req の両方で送る
+    /// </summary>
+    private async Task SyncGameClockAsync(bool dia, string? gameTime)
+    {
+        if (!_game.IsConnected) { _clockSyncKey = ""; return; }
+        string key;
+        int h = 0, m = 0, sec = 0;
+        if (dia && TimeSpan.TryParse(gameTime, out var roleplay))
+        {
+            var offset = roleplay - DateTime.Now.TimeOfDay;
+            var total = (int)Math.Round(offset.TotalSeconds);
+            if (total > 43200) total -= 86400;
+            if (total < -43200) total += 86400;
+            (h, m, sec) = (total / 3600, total / 60 % 60, total % 60);
+            key = $"on:{Math.Round(total / 10.0)}";
+        }
+        else key = "off";
+        if (key == _clockSyncKey) return;
+        var wasOn = _clockSyncKey.StartsWith("on");
+        _clockSyncKey = key;
+        try
+        {
+            if (key == "off")
+            {
+                if (!wasOn) return;
+                await _game.SendCommandAsync("mode_req", ["realtimemode_off"]);
+                await _game.SendCommandAsync("mode_request", ["realtimemode_off"]);
+                return;
+            }
+
+            await _game.SendCommandAsync("mode_req", ["realtimemode_on"]);
+            await _game.SendCommandAsync("mode_request", ["realtimemode_on"]);
+            await _game.SendCommandAsync("realtime_offset", [h.ToString(), m.ToString(), sec.ToString()]);
+        }
+        catch
+        {
+            _clockSyncKey = ""; // 次の周期で送り直す
+        }
+    }
 
     private static void IgnoreWheel(object? sender, MouseEventArgs e)
     {

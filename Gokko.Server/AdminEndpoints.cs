@@ -16,7 +16,7 @@ public static class AdminEndpoints
 
     public sealed record RandomRequest(bool? Enabled, int? RollIntervalSeconds, double? Probability, int? AutoReleaseSeconds, int? MaxConcurrent);
 
-    public sealed record ClockRequest(string? Time, bool? Running, bool? Clear);
+    public sealed record ClockRequest(string? Time, bool? Running, bool? Clear, double? Speed);
 
     /// <param name="Kind">抑止の種類（"arrive" 場内・"depart" 出発。省くと両方）。</param>
     public sealed record TrainStationRequest(string Train, string Station, int? Track, bool? Hold, string? Kind);
@@ -206,6 +206,13 @@ public static class AdminEndpoints
                 return Results.Ok(new { ok = true, gameTime = (string?)null });
             }
 
+            // 早回しのシミュレーション用: 進む速さ（1 = 実時間と同じ）
+            if (req.Speed is { } sp)
+            {
+                clock.SetSpeed(sp);
+                incidents.Note($"ロープレ時刻: 進む速さ {clock.Speed}倍");
+            }
+
             if (!string.IsNullOrWhiteSpace(req.Time))
             {
                 if (!TimeSpan.TryParse(req.Time.Trim(), out var t) || t < TimeSpan.Zero || t >= TimeSpan.FromDays(1))
@@ -219,7 +226,7 @@ public static class AdminEndpoints
                 clock.SetRunning(running);
             }
 
-            return Results.Ok(new { ok = true, gameTime = clock.NowText, running = clock.IsRunning });
+            return Results.Ok(new { ok = true, gameTime = clock.NowText, running = clock.IsRunning, speed = clock.Speed });
         });
     }
 

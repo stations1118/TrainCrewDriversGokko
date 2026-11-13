@@ -10,6 +10,24 @@ public sealed class GameClock
     private TimeSpan? _base;
     private DateTime _setUtc;
     private bool _running;
+    private double _speed = 1;
+
+    /// <summary>
+    /// 進む速さ（1 = 実時間と同じ）。早回しのシミュレーションのときだけ変える（管理画面の API で。本番は 1 のまま）。
+    /// </summary>
+    public double Speed
+    {
+        get { lock (_lock) return _speed; }
+    }
+
+    public void SetSpeed(double speed)
+    {
+        lock (_lock)
+        {
+            if (NowCore() is { } now) { _base = now; _setUtc = DateTime.UtcNow; }
+            _speed = Math.Clamp(speed, 0.1, 20);
+        }
+    }
 
     public void Set(TimeSpan time, bool running)
     {
@@ -59,7 +77,7 @@ public sealed class GameClock
     private TimeSpan? NowCore()
     {
         if (_base is not { } b) return null;
-        var t = _running ? b + (DateTime.UtcNow - _setUtc) : b;
+        var t = _running ? b + TimeSpan.FromTicks((long)((DateTime.UtcNow - _setUtc).Ticks * _speed)) : b;
         var ticks = t.Ticks % TimeSpan.TicksPerDay;
         if (ticks < 0) ticks += TimeSpan.TicksPerDay;
         return TimeSpan.FromTicks(ticks);

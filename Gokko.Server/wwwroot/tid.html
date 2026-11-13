@@ -339,9 +339,11 @@
     const px = X(b.x), py = Y(b.y);
     const time = (t) => (t ? Date.parse(t) : Infinity);
     const trains = o ? o.trains.filter((t) => t.direction === b.dir) : [];
+    // 並びはサーバーが決めた「実際に進路を取る順」（departRank・arriveRank）。古いサーバーなら見込み時刻
+    const rank = (t, key, fallback) => (t[key] ?? fallback);
     const rows = b.what === "到着"
-      ? trains.filter((t) => !t.arrived).sort((a, c) => time(a.arrive) - time(c.arrive))
-      : trains.filter((t) => !t.ends);
+      ? trains.filter((t) => !t.arrived).sort((a, c) => rank(a, "arriveRank", time(a.arrive)) - rank(c, "arriveRank", time(c.arrive)))
+      : trains.filter((t) => !t.ends).sort((a, c) => rank(a, "departRank", 0) - rank(c, "departRank", 0));
     return `<text x="${px}" y="${py - 4}" class="boxTitle">${esc(b.name)} ${b.dir}${b.what}</text>` + chipList(px, py, rows, b.dir, true);
   }
 
@@ -428,6 +430,7 @@
       .lever.on { fill: var(--route); font-weight: 700; }
       .arrow { font-size: 14px; fill: var(--text); text-anchor: middle; }
       .chip { font-size: 12px; font-weight: 700; text-anchor: middle; }
+      .delay { font-size: 12px; font-weight: 700; fill: #c62828; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
       .chipg { cursor: pointer; }
     </style>`);
 
@@ -475,6 +478,8 @@
       const a = trainAnchor(trainLines.get(t.train) || []);
       if (!a) { outside.push(`${t.train}（${t.circuits.join("・") || "位置不明"}）`); continue; }
       p.push(chip(X(a[0]) - CHIP.w / 2, Y(a[1]) - CHIP.h / 2, t.train));
+      // 遅れ（1分以上）: 札の右に「+3」
+      if (t.delay) p.push(`<text x="${X(a[0]) + CHIP.w / 2 + 3}" y="${Y(a[1]) + 4}" class="delay">+${t.delay}</text>`);
     }
 
     // 駅の到着・出発の順序（上り・下り）
@@ -518,12 +523,16 @@
         const pass = s.stop === "通" || s.stop === "臨通";
         const note = { "通": " 通", "運停": " 運停", "臨停": " 臨時停車", "臨通": " 臨時通過", "打切": " 打ち切り" }[s.stop] || "";
         const special = ["臨停", "臨通", "打切"].includes(s.stop);
+        // 計画（ダイヤ）と実（着いた・出た駅は実際の時刻、これからの駅は遅れを足した見込み）。着いた・出た駅の計画は「-」
+        const late = (plan, act) => plan && act && plan !== "-" && act !== plan;
         return `<tr class="${s.control ? "ctl" : ""} ${pass ? "pass" : ""}"><td>${esc(s.name)}</td>
-          <td>${pass ? "" : esc(s.arr || "")}</td><td>${esc(s.dep || "")}<span style="${special ? "color:#e07000;font-weight:700" : ""}">${note}</span></td></tr>`;
+          <td>${pass ? "" : esc(s.planArr || "")}</td><td style="${late(s.planArr, s.actArr) ? "color:#c62828" : ""}">${pass ? "" : esc(s.actArr || "")}</td>
+          <td>${esc(s.planDep || "")}</td><td style="${late(s.planDep, s.actDep) ? "color:#c62828" : ""}">${esc(s.actDep || "")}<span style="${special ? "color:#e07000;font-weight:700" : ""}">${note}</span></td></tr>`;
       }).join("");
       box.innerHTML = `<div style="margin-bottom:4px"><b>${esc(t.train)}</b> ${esc(t.label || "")}
+          ${t.delay ? `<b style="color:#c62828">${t.delay}分遅れ</b>` : ""}
           <span class="muted">（${esc(t.source)}）</span> <button data-close style="padding:0 6px;margin-left:8px">×</button></div>
-        <table><tr class="muted"><td>駅</td><td>着</td><td>発（通過）</td></tr>${rows}</table>`;
+        <table><tr class="muted"><td>駅</td><td>計画着時</td><td>実着時</td><td>計画発時</td><td>実発時</td></tr>${rows}</table>`;
       place(box, x, y);
     } catch (e) {
       box.innerHTML = `<b>${esc(train)}</b> <span class="ng">${esc(e.message)}</span> <button data-close style="padding:0 6px">×</button>`;
