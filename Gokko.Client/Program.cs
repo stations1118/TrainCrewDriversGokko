@@ -13,20 +13,25 @@ internal static class Program
         // 在線共有なら、シナリオを始める前に他列車を消す必要があるため、TRAIN CREW につながった時点ですぐ設定する
         var config = ClientConfig.Load();
         ShareMode mode;
+        var role = config.Role;
         var envMode = Environment.GetEnvironmentVariable("GOKKO_MODE"); // 開発用
         if (envMode is "shared" or "crossing")
         {
             mode = envMode == "shared" ? ShareMode.Shared : ShareMode.CrossingOnly;
+            role = Environment.GetEnvironmentVariable("GOKKO_ROLE") == "conductor" ? CrewRole.Conductor : CrewRole.Driver;
         }
         else
         {
-            using var dialog = new ModeDialog(config.Mode);
+            using var dialog = new ModeDialog(config.Mode, config.Role);
             if (dialog.ShowDialog() != DialogResult.OK || dialog.Selected is not { } selected) return; // 選ばずに閉じたら終了
             mode = selected;
+            role = dialog.SelectedRole;
         }
 
+        if (mode != ShareMode.Shared) role = CrewRole.Driver;
         config.Mode = mode;
+        config.Role = role;
         config.Save();
-        Application.Run(new MainForm(config, mode));
+        Application.Run(new MainForm(config, mode, role));
     }
 }

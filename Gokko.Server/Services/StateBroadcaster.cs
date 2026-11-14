@@ -24,10 +24,13 @@ public sealed class StateBroadcaster : BackgroundService
 
     private readonly CentralControl _central;
     private readonly ProtectionRadio _radio;
+    private readonly CrewRelay _crew;
 
     public StateBroadcaster(IHubContext<GameHub> hub, PlayerRegistry players, IncidentManager incidents, GameClock clock,
-        GameData data, RouteEngine routes, SignalCalculator signals, ServerOptions options, CentralControl central, ProtectionRadio radio, ILogger<StateBroadcaster> logger)
+        GameData data, RouteEngine routes, SignalCalculator signals, ServerOptions options, CentralControl central, ProtectionRadio radio,
+        CrewRelay crew, ILogger<StateBroadcaster> logger)
     {
+        _crew = crew;
         _central = central;
         _radio = radio;
         _hub = hub;
@@ -84,7 +87,10 @@ public sealed class StateBroadcaster : BackgroundService
     private async Task BroadcastAsync()
     {
         var players = _players.Snapshot();
-        if (players.Count == 0) return;
+        var conductors = _crew.Conductors();
+        if (players.Count == 0 && conductors.Count == 0) return;
+        var conductorCount = conductors.Where(c => c.TrainNumber.Length > 0).GroupBy(c => c.TrainNumber).ToDictionary(g => g.Key, g => g.Count());
+        var driverStates = new Dictionary<string, ClientState>(); // 列番 → 運転士への配信（車掌へも同じものを送る）
 
         var active = _incidents.Snapshot();
         var activeNames = active.Select(i => i.Crossing).ToList();
@@ -142,7 +148,37 @@ public sealed class StateBroadcaster : BackgroundService
                 }
             }
 
+            if (p.TrainNumber.Length > 0 && !p.ConnectionId.StartsWith(PlayerRegistry.GhostPrefix))
+            {
+                state.Conductors = conductorCount.GetValueOrDefault(p.TrainNumber);
+                if (p.Mode == ShareMode.Shared) driverStates.TryAdd(p.TrainNumber, state);
+            }
+
             sends.Add(SendAsync(p.ConnectionId, state));
+        }
+
+        // 車掌: 同じ列番の運転士と同じ進路・信号・特発を送る（運転士がいなければ、時刻と特発だけ）
+        foreach (var c in conductors)
+        {
+            ClientState state;
+            if (c.TrainNumber.Length > 0 && driverStates.TryGetValue(c.TrainNumber, out var d))
+            {
+                // 丸ごと複製する（あとで配信の項目が増えても、車掌に同じものが届くように）。運転士だけのものは消す
+                state = System.Text.Json.JsonSerializer.Deserialize<ClientState>(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(d))!;
+                state.DriverPresent = true;
+                state.ProtectionRadioSending = false;
+                state.CanRequestDeparture = false;
+            }
+            else
+            {
+                state = new ClientState
+                {
+                    ServerTime = now, DiaMode = _central.DiaMode, GameTime = gameTime, ActiveCrossings = activeNames, PlayerCount = players.Count,
+                    RouteMessage = c.TrainNumber.Length == 0 ? "列車番号を入れてください" : $"列番 {c.TrainNumber} の運転士がいません"
+                };
+            }
+
+            sends.Add(SendAsync(c.ConnectionId, state));
         }
 
         await Task.WhenAll(sends);

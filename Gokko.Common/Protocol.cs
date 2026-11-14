@@ -7,7 +7,7 @@ namespace Gokko.Common;
 public static class Protocol
 {
     /// <summary>通信の版。サーバーと違うクライアントは、接続時に拒否される。</summary>
-    public const int Version = 5;
+    public const int Version = 6;
 
     /// <summary>SignalR の接続先のパス（https://example.duckdns.org/hub）。</summary>
     public const string HubPath = "/hub";

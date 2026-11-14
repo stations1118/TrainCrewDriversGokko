@@ -19,6 +19,9 @@ public sealed class JoinRequest
     public string Password { get; set; } = "";
 
     public ShareMode Mode { get; set; }
+
+    /// <summary>乗務の役割。車掌は在線共有のモードで、同じ列番の運転士の列車に乗る（在線として数えない）。</summary>
+    public CrewRole Role { get; set; }
 }
 
 /// <summary>参加の結果。</summary>
@@ -126,6 +129,12 @@ public sealed class ClientState
 
     /// <summary>参加している人数。</summary>
     public int PlayerCount { get; set; }
+
+    /// <summary>運転士へ: 自分の列車に乗っている車掌の人数。</summary>
+    public int Conductors { get; set; }
+
+    /// <summary>車掌へ: 同じ列番の運転士が参加しているか。いなければ、進路・信号は届かない。</summary>
+    public bool DriverPresent { get; set; }
 
     // ---- 以下は在線共有モードのときだけ入る ----
 

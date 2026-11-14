@@ -48,8 +48,12 @@ public sealed class ServerLink
     /// <summary>接続中のモード。</summary>
     public ShareMode Mode { get; private set; }
 
-    public void Start(string url, string password, ShareMode mode)
+    /// <summary>乗務の役割（車掌なら、在線として数えない）。</summary>
+    public CrewRole Role { get; private set; }
+
+    public void Start(string url, string password, ShareMode mode, CrewRole role = CrewRole.Driver)
     {
+        Role = role;
         _cts?.Cancel();
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
@@ -199,7 +203,7 @@ public sealed class ServerLink
             {
                 await conn.StartAsync(ct);
                 var result = await conn.InvokeAsync<JoinResult>(
-                    Protocol.Join, new JoinRequest { ProtocolVersion = Protocol.Version, Password = password, Mode = Mode }, ct);
+                    Protocol.Join, new JoinRequest { ProtocolVersion = Protocol.Version, Password = password, Mode = Mode, Role = Role }, ct);
                 if (!result.Ok)
                 {
                     Status = ServerStatus.Rejected;
