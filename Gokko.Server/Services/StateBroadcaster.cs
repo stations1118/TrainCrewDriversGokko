@@ -163,13 +163,11 @@ public sealed class StateBroadcaster : BackgroundService
             ClientState state;
             if (c.TrainNumber.Length > 0 && driverStates.TryGetValue(c.TrainNumber, out var d))
             {
-                state = new ClientState
-                {
-                    ServerTime = d.ServerTime, DiaMode = d.DiaMode, GameTime = d.GameTime, Position = d.Position,
-                    ProtectionRadioReceiving = d.ProtectionRadioReceiving, ActiveCrossings = d.ActiveCrossings, VisibleIncidents = d.VisibleIncidents,
-                    PlayerCount = players.Count, Signals = d.Signals, Routes = d.Routes, DeleteRoutes = d.DeleteRoutes, Plan = d.Plan,
-                    RouteMessage = d.RouteMessage, Conductors = d.Conductors, DriverPresent = true
-                };
+                // 丸ごと複製する（あとで配信の項目が増えても、車掌に同じものが届くように）。運転士だけのものは消す
+                state = System.Text.Json.JsonSerializer.Deserialize<ClientState>(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(d))!;
+                state.DriverPresent = true;
+                state.ProtectionRadioSending = false;
+                state.CanRequestDeparture = false;
             }
             else
             {
