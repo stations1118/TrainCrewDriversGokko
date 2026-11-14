@@ -81,15 +81,26 @@
 <script>
   // 乗務タブレット。?train=列番 でその列車を表示する（クライアントの「乗務タブレット」ボタンは、自分の列番を付けて開く）。
   // 列番がなければ、走っている列車と行路の一覧から選ぶ。2秒ごとに /api/tid/tablet を読み直す。
-  // ログイン（勤怠管理の画面で作ったユーザー名）すると、その人の行路を出す。列番を付けずに開けば、その人の行路の、いま乗る列車を出す
-  // （ユーザー名はこのブラウザに覚えておく。「ログアウト」で消す）
+  // ログインすると、その人の行路を出す。列番を付けずに開けば、その人の行路の、いま乗る列車を出す。
+  // パスワードはサーバーが作って一度だけ見せる（メモしてもらう）。忘れたら秘密の質問3つで出し直す。
+  // ログインの合い札（トークン）とユーザー名はこのブラウザに覚えておく。「ログアウト」で消す
   const params = new URLSearchParams(location.search);
   let train = params.get("train") || "";
-  let user = "";
-  try { user = localStorage.getItem("gokkoTabletUser") || ""; } catch (e) {}
-  function setUser(name) {
-    user = name;
-    try { if (name) localStorage.setItem("gokkoTabletUser", name); else localStorage.removeItem("gokkoTabletUser"); } catch (e) {}
+  let user = "", token = "";
+  try { user = localStorage.getItem("gokkoTabletUser") || ""; token = localStorage.getItem("gokkoTabletToken") || ""; } catch (e) {}
+  if (!token) user = "";
+  function setUser(name, tok) {
+    user = name || ""; token = name ? tok || "" : "";
+    try {
+      if (user) { localStorage.setItem("gokkoTabletUser", user); localStorage.setItem("gokkoTabletToken", token); }
+      else { localStorage.removeItem("gokkoTabletUser"); localStorage.removeItem("gokkoTabletToken"); }
+    } catch (e) {}
+  }
+  async function post(path, body) {
+    const res = await fetch("/api/tid" + path, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { "X-Crew-Token": token } : {}) }, body: JSON.stringify(body || {}) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.message || "うまくいきませんでした");
+    return j;
   }
   let layout = null, data = null, lastOk = 0, error = "";
 
@@ -231,30 +242,124 @@
     return `<div class="pane"><h5>行路 ${esc(d.id)}　ハンドルタイム ${fmtMin(d.handleMinutes)}</h5><div class="duty-list">${items}</div></div>`;
   }
 
-  // ---- ログインの画面（勤怠管理の画面で作ったユーザー名） ----
-  function loginScreen(message) {
-    document.title = "乗務タブレット ログイン";
-    document.getElementById("app").innerHTML = `<div class="pick">
-      <div class="pane"><h5>ログイン</h5>
-        <div class="t-muted">勤怠管理の画面で作ったユーザー名を入れてください。割り当てられた行路の、いま乗る列車を表示します。</div>
-        <div class="row"><input id="uname" placeholder="ユーザー名" autocomplete="username" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"><button id="login">ログイン</button></div>
-        <div id="lmsg" class="err">${esc(message || "")}</div></div>
-      <div class="pane"><a href="tablet.html?pick=1" style="color:var(--muted)">ログインしないで列車を選ぶ</a></div></div>`;
-    const go = async () => {
-      const name = document.getElementById("uname").value.trim();
-      if (!name) return;
-      try {
-        const res = await fetch("/api/tid/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-        const j = await res.json().catch(() => ({}));
-        if (!res.ok) { document.getElementById("lmsg").textContent = j.message || "ログインできませんでした"; return; }
-        setUser(j.name);
-        location.href = "tablet.html" + (train ? "?train=" + encodeURIComponent(train) : "");
-      } catch (e) { document.getElementById("lmsg").textContent = "サーバーにつながりません"; }
-    };
-    document.getElementById("login").onclick = go;
-    document.getElementById("uname").addEventListener("keydown", (ev) => { if (ev.key === "Enter") go(); });
-    document.getElementById("uname").focus();
+  // ---- ログイン・新規登録・パスワードを忘れたとき・秘密の質問 ----
+  const inputStyle = "padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)";
+  const app = () => document.getElementById("app");
+  const afterLogin = () => { location.href = "tablet.html" + (train ? "?train=" + encodeURIComponent(train) : ""); };
+  let questionList = null;
+  async function questions() {
+    if (!questionList) questionList = (await (await fetch("/api/tid/crew/questions", { cache: "no-store" })).json()).questions;
+    return questionList;
   }
+  // 秘密の質問3つ（選ぶ欄と答えの欄）
+  async function qaFields() {
+    const qs = await questions();
+    return [0, 1, 2].map((i) => `<div style="display:grid;gap:4px">
+        <select data-q="${i}" style="${inputStyle}">${qs.map((q, j) => `<option ${j === i ? "selected" : ""}>${esc(q)}</option>`).join("")}</select>
+        <input data-a="${i}" placeholder="答え" style="${inputStyle}"></div>`).join("");
+  }
+  const readQa = () => [0, 1, 2].map((i) => ({ question: document.querySelector(`[data-q="${i}"]`).value, answer: document.querySelector(`[data-a="${i}"]`).value }));
+  const links = (...items) => `<div class="pane row">${items.join("　")}</div>`;
+  const link = (key, text) => `<a href="#" data-go="${key}" style="color:var(--muted)">${text}</a>`;
+  function bindSubmit(run) {
+    const btn = document.getElementById("submit"), msg = document.getElementById("lmsg");
+    const go = async () => { msg.textContent = ""; btn.disabled = true; try { await run(); } catch (e) { msg.textContent = e.message; } finally { btn.disabled = false; } };
+    btn.onclick = go;
+    app().querySelectorAll("input").forEach((i) => i.addEventListener("keydown", (ev) => { if (ev.key === "Enter") go(); }));
+    const first = app().querySelector("input"); if (first) first.focus();
+  }
+
+  function loginScreen(message) {
+    stopped = true;
+    document.title = "乗務タブレット ログイン";
+    app().innerHTML = `<div class="pick">
+      <div class="pane"><h5>ログイン</h5>
+        <input id="uname" placeholder="ユーザー名" autocomplete="username" style="${inputStyle}">
+        <input id="upass" placeholder="パスワード（例: k7mq-3xwp）" type="password" autocomplete="current-password" style="${inputStyle}">
+        <div class="row"><button id="submit">ログイン</button></div>
+        <div id="lmsg" class="err">${esc(message || "")}</div></div>
+      ${links(link("register", "はじめての人（新規登録）"), link("forgot", "パスワードを忘れた"), `<a href="tablet.html?pick=1" style="color:var(--muted)">ログインしないで列車を選ぶ</a>`)}</div>`;
+    bindSubmit(async () => {
+      const j = await post("/login", { name: document.getElementById("uname").value.trim(), password: document.getElementById("upass").value });
+      setUser(j.name, j.token);
+      if (j.needQuestions) await setQuestionsScreen(); else afterLogin();
+    });
+  }
+
+  async function registerScreen() {
+    app().innerHTML = `<div class="pick">
+      <div class="pane"><h5>新規登録</h5>
+        <input id="uname" placeholder="ユーザー名（20文字まで。ほかの人と同じ名前は使えません）" maxlength="20" style="${inputStyle}">
+        <div class="t-muted">パスワードを忘れたときに使う、秘密の質問を3つ決めてください（3つとも合っていれば、パスワードを出し直します）</div>
+        ${await qaFields()}
+        <div class="row"><button id="submit">登録する</button></div>
+        <div id="lmsg" class="err"></div></div>
+      ${links(link("login", "ログインに戻る"))}</div>`;
+    bindSubmit(async () => {
+      const j = await post("/register", { name: document.getElementById("uname").value.trim(), questions: readQa() });
+      setUser(j.name, j.token);
+      passwordScreen(j.name, j.password, "登録しました");
+    });
+  }
+
+  async function forgotScreen() {
+    app().innerHTML = `<div class="pick">
+      <div class="pane"><h5>パスワードを忘れた</h5>
+        <div class="t-muted">ユーザー名を入れると、登録した秘密の質問が出ます。3つとも答えられれば、新しいパスワードを出します。</div>
+        <input id="uname" placeholder="ユーザー名" style="${inputStyle}">
+        <div id="qs" style="display:grid;gap:6px"></div>
+        <div class="row"><button id="submit">次へ</button></div>
+        <div id="lmsg" class="err"></div></div>
+      ${links(link("login", "ログインに戻る"))}</div>`;
+    let asked = null;
+    bindSubmit(async () => {
+      const name = document.getElementById("uname").value.trim();
+      if (!asked) {
+        asked = (await post("/forgot", { name })).questions;
+        document.getElementById("uname").readOnly = true;
+        document.getElementById("qs").innerHTML = asked.map((q, i) => `<div style="display:grid;gap:4px"><span>${esc(q)}</span><input data-a="${i}" placeholder="答え" style="${inputStyle}"></div>`).join("");
+        document.getElementById("submit").textContent = "パスワードを出し直す";
+        document.querySelectorAll("#qs input").forEach((x) => x.addEventListener("keydown", (ev) => { if (ev.key === "Enter") document.getElementById("submit").click(); }));
+        document.querySelector('[data-a="0"]').focus();
+        return;
+      }
+      const j = await post("/forgot/reset", { name, answers: [0, 1, 2].map((i) => document.querySelector(`[data-a="${i}"]`).value) });
+      setUser(j.name, j.token);
+      passwordScreen(j.name, j.password, "新しいパスワードを出しました（前のパスワードは使えません）");
+    });
+  }
+
+  // 秘密の質問がまだ決まっていない人（勤怠管理の画面で作られた人）は、ログインのあとに決める
+  async function setQuestionsScreen() {
+    app().innerHTML = `<div class="pick">
+      <div class="pane"><h5>秘密の質問を決める</h5>
+        <div class="t-muted">${esc(user)} さん、パスワードを忘れたときに使う秘密の質問を3つ決めてください。</div>
+        ${await qaFields()}
+        <div class="row"><button id="submit">決める</button></div>
+        <div id="lmsg" class="err"></div></div></div>`;
+    bindSubmit(async () => { await post("/crew/set-questions", { questions: readQa() }); afterLogin(); });
+  }
+
+  // パスワードは一度だけ見せる。メモしたことを確かめてから進む
+  function passwordScreen(name, password, title) {
+    app().innerHTML = `<div class="pick">
+      <div class="pane"><h5>${esc(title)}</h5>
+        <div>ユーザー名 <b>${esc(name)}</b></div>
+        <div>パスワード</div>
+        <div class="mono" style="font-size:34px;font-weight:700;letter-spacing:.08em;text-align:center;background:var(--bg);border-radius:6px;padding:8px">${esc(password)}</div>
+        <div class="err">このパスワードは、この画面でしか表示しません。必ずメモしてください。</div>
+        <label><input type="checkbox" id="memo"> メモしました</label>
+        <div class="row"><button id="next" disabled>乗務タブレットへ進む</button></div></div></div>`;
+    document.getElementById("memo").onchange = (ev) => { document.getElementById("next").disabled = !ev.target.checked; };
+    document.getElementById("next").onclick = afterLogin;
+  }
+
+  app().addEventListener("click", (ev) => {
+    const a = ev.target.closest("a[data-go]");
+    if (!a) return;
+    ev.preventDefault();
+    ({ login: loginScreen, register: registerScreen, forgot: forgotScreen })[a.dataset.go]();
+  });
 
   // ---- 列車を選ぶ画面 ----
   async function pickScreen() {
@@ -276,7 +381,7 @@
     const a = ev.target.closest("a[data-logout], a[data-login]");
     if (!a) return;
     ev.preventDefault();
-    if (a.dataset.logout) { setUser(""); location.href = "tablet.html" + (train ? "?train=" + encodeURIComponent(train) : ""); }
+    if (a.dataset.logout) { post("/logout").catch(() => {}).finally(() => { setUser(""); location.href = "tablet.html" + (train ? "?train=" + encodeURIComponent(train) : ""); }); }
     else loginScreen();
   });
 
@@ -287,11 +392,10 @@
     try {
       const q = new URLSearchParams();
       if (train) q.set("train", train);
-      if (user) q.set("user", user);
-      const res = await fetch("/api/tid/tablet?" + q, { cache: "no-store" });
+      const res = await fetch("/api/tid/tablet?" + q, { cache: "no-store", headers: token ? { "X-Crew-Token": token } : {} });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        if (j.logout) { setUser(""); stopped = true; loginScreen(j.message); return; } // ユーザーが消された
+        if (j.logout) { setUser(""); loginScreen(j.message); return; } // ユーザーが消された・パスワードが出し直された
         error = j.message || "読み込めませんでした"; data = null;
         if (user && !train) notice = error; // 行路がまだない
       }

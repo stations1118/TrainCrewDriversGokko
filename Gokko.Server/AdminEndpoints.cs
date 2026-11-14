@@ -21,7 +21,13 @@ public static class AdminEndpoints
     /// <param name="Kind">抑止の種類（"arrive" 場内・"depart" 出発。省くと両方）。</param>
     public sealed record TrainStationRequest(string Train, string Station, int? Track, bool? Hold, string? Kind);
 
-    public sealed record CrewLoginRequest(string? Name);
+    public sealed record CrewLoginRequest(string? Name, string? Password);
+
+    public sealed record CrewQa(string? Question, string? Answer);
+
+    public sealed record CrewRegisterRequest(string? Name, List<CrewQa>? Questions);
+
+    public sealed record CrewResetRequest(string? Name, List<string>? Answers);
 
     public sealed record CrewAssignRequest(string Duty, string? User);
 
@@ -97,11 +103,12 @@ public static class AdminEndpoints
         var view = app.MapGroup("/api/tid");
 
         // 乗務タブレット（tablet.html）: スタフの並びの時刻表・次の駅・進路の状態・行路
-        // user（ログインした乗務員）があれば、その人の行路を出す。train がなければ、その人の行路の、いま乗る列車
-        view.MapGet("/tablet", (string? train, string? user, RouteEngine engine, DutyRoster roster, CrewRoster crew) =>
+        // ヘッダー X-Crew-Token（ログインの合い札）があれば、その人の行路を出す。train がなければ、その人の行路の、いま乗る列車
+        view.MapGet("/tablet", (HttpRequest http, string? train, RouteEngine engine, DutyRoster roster, CrewRoster crew) =>
         {
-            var name = crew.User(user);
-            if (!string.IsNullOrEmpty(user) && name == null) return Results.NotFound(new { message = $"{user} というユーザーはいません", logout = true });
+            var token = http.Headers["X-Crew-Token"].ToString();
+            var name = crew.UserOfToken(token);
+            if (token.Length > 0 && name == null) return Results.Json(new { message = "ログインが切れました。もう一度ログインしてください", logout = true }, statusCode: 401);
             var duties = name == null ? null : crew.DutiesOf(name).Select(roster.DutyById).OfType<Duty>().ToList();
             var t = string.IsNullOrEmpty(train) && duties != null ? engine.CurrentTrainOf(duties) : train;
             if (string.IsNullOrEmpty(t)) return Results.NotFound(new { message = name != null ? $"{name} さんには、まだ行路が割り当てられていません" : "列車番号がありません" });
@@ -109,11 +116,40 @@ public static class AdminEndpoints
             return engine.TabletView(t, roster, duties, name) is { } v ? Results.Ok(v) : Results.NotFound(new { message = $"{t} のダイヤはありません" });
         });
 
-        // 乗務タブレットのログイン（ユーザー名だけ。勤怠管理の画面で作ったユーザー）
-        view.MapPost("/login", (CrewLoginRequest req, CrewRoster crew, DutyRoster roster) =>
+        // ---- 乗務タブレットのログイン（パスワードはサーバーが作り、本人がメモする。忘れたら秘密の質問3つで出し直す） ----
+        IResult Bad(string message) => Results.BadRequest(new { message });
+        static List<(string, string)> Qa(List<CrewQa>? q) => (q ?? new()).Select(x => (x.Question ?? "", x.Answer ?? "")).ToList();
+
+        view.MapGet("/crew/questions", () => Results.Ok(new { questions = CrewRoster.Questions }));
+        view.MapPost("/login", (CrewLoginRequest req, CrewRoster crew) =>
         {
-            if (crew.User(req.Name) is not { } name) return Results.NotFound(new { message = "そのユーザー名はありません（勤怠管理の画面で作ってください）" });
-            return Results.Ok(new { name, duties = crew.DutiesOf(name) });
+            var (name, token, needQuestions, error) = crew.Login(req.Name, req.Password);
+            return error != null ? Bad(error) : Results.Ok(new { name, token, needQuestions });
+        });
+        view.MapPost("/register", (CrewRegisterRequest req, CrewRoster crew) =>
+        {
+            var (ok, error) = crew.Register(req.Name, Qa(req.Questions));
+            return ok == null ? Bad(error!) : Results.Ok(new { name = ok.Name, password = ok.Password, token = ok.Token });
+        });
+        view.MapPost("/crew/set-questions", (HttpRequest http, CrewRegisterRequest req, CrewRoster crew) =>
+        {
+            if (crew.UserOfToken(http.Headers["X-Crew-Token"].ToString()) is not { } name) return Results.Json(new { message = "ログインしてください" }, statusCode: 401);
+            return crew.SetQuestions(name, Qa(req.Questions)) is { } error ? Bad(error) : Results.Ok(new { ok = true });
+        });
+        view.MapPost("/forgot", (CrewLoginRequest req, CrewRoster crew) =>
+        {
+            var (questions, error) = crew.QuestionsOf(req.Name);
+            return error != null ? Bad(error) : Results.Ok(new { questions });
+        });
+        view.MapPost("/forgot/reset", (CrewResetRequest req, CrewRoster crew) =>
+        {
+            var (ok, error) = crew.ResetByAnswers(req.Name, req.Answers ?? new());
+            return ok == null ? Bad(error!) : Results.Ok(new { name = ok.Name, password = ok.Password, token = ok.Token });
+        });
+        view.MapPost("/logout", (HttpRequest http, CrewRoster crew) =>
+        {
+            crew.Logout(http.Headers["X-Crew-Token"].ToString());
+            return Results.Ok(new { ok = true });
         });
 
         // 行路の一覧（乗務タブレットで、行路を選んで見るため）
@@ -140,8 +176,8 @@ public static class AdminEndpoints
         {
             var users = crew.Users().Select(u =>
             {
-                var (online, train, last) = crew.Presence(u);
-                return new { name = u, duties = crew.DutiesOf(u), online, train, last };
+                var (online, train, last) = crew.Presence(u.Name);
+                return new { name = u.Name, hasQuestions = u.HasQuestions, created = u.Created, duties = crew.DutiesOf(u.Name), online, train, last };
             }).ToList();
             var duties = roster.Duties.Select(d => new
             {
@@ -155,8 +191,18 @@ public static class AdminEndpoints
             })).ToList();
             return Results.Ok(new { users, duties, trains, problems = roster.Problems, hasDuties = roster.Duties.Count > 0 });
         });
+        // ユーザーを作る（作ったパスワードを返す。本人に伝える。秘密の質問は本人が最初のログインで決める）
         admin.MapPost("/crew/users", (CrewLoginRequest req, CrewRoster crew) =>
-            crew.AddUser(req.Name) is { } err ? Results.BadRequest(new { message = err }) : Results.Ok(new { ok = true }));
+        {
+            var (password, error) = crew.AddUser(req.Name);
+            return error != null ? Results.BadRequest(new { message = error }) : Results.Ok(new { password });
+        });
+        // パスワードを出し直す（秘密の質問を忘れた人など）
+        admin.MapPost("/crew/reset", (CrewLoginRequest req, CrewRoster crew) =>
+        {
+            var (password, error) = crew.ResetByAdmin(req.Name);
+            return error != null ? Results.BadRequest(new { message = error }) : Results.Ok(new { password });
+        });
         admin.MapPost("/crew/users/delete", (CrewLoginRequest req, CrewRoster crew) =>
             crew.RemoveUser(req.Name) ? Results.Ok(new { ok = true }) : Results.NotFound(new { message = "そのユーザーはいません" }));
         admin.MapPost("/crew/assign", (CrewAssignRequest req, CrewRoster crew, DutyRoster roster) =>
