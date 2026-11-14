@@ -206,6 +206,12 @@ public sealed class RailData
     public bool ApproachTriggerEnabled { get; set; }
     public int ApproachTriggerMargin { get; set; } = 1;
 
+    /// <summary>
+    /// 第1場内を先に取る駅・向き → 第1場内を取り始める信号機（RouteRules.json の approachTrigger.firstHome）。
+    /// 第2場内（とその先）は、第1場内が開いている前提で計算した位置で取る。
+    /// </summary>
+    public Dictionary<(string Station, Dir Dir), string> ApproachFirstHome { get; } = new();
+
     /// <summary>ダイヤ運転中、出発まで開けてから場内を開ける駅（浜園など）。RouteRules.json の departBeforeArrive。</summary>
     public HashSet<string> DepartBeforeArrive { get; } = new();
 
@@ -379,6 +385,11 @@ public sealed class RailData
             {
                 if (at.TryGetProperty("enabled", out var ae)) data.ApproachTriggerEnabled = ae.GetBoolean();
                 if (at.TryGetProperty("margin", out var am)) data.ApproachTriggerMargin = Math.Max(0, am.GetInt32());
+                if (at.TryGetProperty("firstHome", out var fh) && fh.ValueKind == JsonValueKind.Object)
+                    foreach (var st in fh.EnumerateObject())
+                    foreach (var (label, d) in new[] { ("下り", Dir.Down), ("上り", Dir.Up) })
+                        if (st.Value.TryGetProperty(label, out var sig) && sig.GetString() is { Length: > 0 } name)
+                            data.ApproachFirstHome[(st.Name, d)] = name;
             }
 
             if (root.TryGetProperty("departDelaySeconds", out var dd))
