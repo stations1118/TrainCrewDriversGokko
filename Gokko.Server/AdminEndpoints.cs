@@ -295,7 +295,11 @@ public static class AdminEndpoints
                 id,
                 name = rail.Line.StationName(id),
                 y = rail.Line.ZoneOfStation(id),
-                control = rail.Stations.TryGetValue(id, out var s) && s.RouteControl
+                control = rail.Stations.TryGetValue(id, out var s) && s.RouteControl,
+                // ダイヤグラムを番線ごとに分けたときの段（番線の競合を見るため）。Stations.json の diagramRows、なければ進路のある番線すべて
+                tracks = !rail.Stations.TryGetValue(id, out var st) ? new List<string>()
+                    : st.DiagramRows.Count > 0 ? st.DiagramRows.Select(r => r.Label).ToList()
+                    : st.Routes.Values.SelectMany(r => r.Arrive.Keys.Concat(r.Depart.Keys)).Concat(st.TrackCircuit.Keys).Distinct().OrderBy(t => t).Select(t => t.ToString()).ToList()
             }),
             trains = engine.DiagramView(),
             orders = engine.OrdersView(),
