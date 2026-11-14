@@ -401,6 +401,7 @@
   // ---- ダイヤグラム（管理画面とダイヤグラムの設定画面で共通） ----
   // 実績（実線）と見込み（点線）。◆は進路を扱う駅を通過する（停車駅は着く）予想時刻。
   // ◆を押すと窓（番線・駅扱い・抑止・順序）。◆を横にずらすと、その駅の発車時刻を決める（スジずらし。ダブルクリックで解除）。
+  // 詳細表示では、◆を縦にずらすと、その駅の番線を変える（変えられる番線の段は緑。列車がもうその駅の進路に入っていれば変えられない）。
   // 上の「全部・上りのみ・下りのみ」で、表示する列車を絞る。
   // 「詳細表示」: 進路を扱う駅を番線ごとの段に分け、列車はその駅で使う番線の段に引く。同じ番線に同じ時間帯に2本いれば、赤く示す（番線の競合）。
   // 1分の幅・駅と駅の間隔・（詳細表示では）番線の段の高さ・表示する時間の範囲を変えられ、拡大・縮小もできる（Ctrl+ホイールでも）。
@@ -610,11 +611,11 @@
           const trackColor = m.trackSource === "集中" || m.trackSource === "駅扱い" ? "#e07000" : m.trackSource === "待避" ? "#b04fd0" : color;
           const dep = m.departAt ? `・発車時刻 ${hhmm(new Date(m.departAt).getTime(), true)}` : "";
           const tipText = `${tr.train} ${m.name}: ${m.track == null ? "通過" : m.track + "番線"}（${m.trackSource}）・${m.source} ${hhmm(new Date(m.t).getTime(), true)}${dep}（${m.status}）`
-            + "　押すと番線・駅扱い・抑止・順序" + (m.draggable ? "　横にずらすと発車時刻（ダブルクリックで解除）" : "");
+            + "　押すと番線・駅扱い・抑止・順序" + (m.draggable ? "　横にずらすと発車時刻（ダブルクリックで解除）" : "") + (view.split && m.changeable ? "　縦にずらすと番線" : "");
           if (!view.split) parts.push(`<text x="${x + 8}" y="${y + 4}" font-size="11" font-weight="700" fill="${trackColor}" pointer-events="none">${esc(trackText)}</text>`);
           parts.push(`<path d="M${x},${y - 7} L${x + 6},${y} L${x},${y + 7} L${x - 6},${y} Z" fill="${fill}" stroke="var(--panel, #fff)" stroke-width="1"
             data-train="${esc(tr.train)}" data-station="${esc(m.stationId)}" data-ti="${ti}" data-mi="${mi}" data-drag="${m.draggable ? 1 : 0}"
-            data-x="${x}" data-tip="${esc(tipText)}" style="cursor:${m.draggable ? "ew-resize" : "pointer"}"/>`);
+            data-x="${x}" data-y="${y}" data-tip="${esc(tipText)}" style="cursor:${view.split && m.changeable ? "move" : m.draggable ? "ew-resize" : "pointer"}"/>`);
         });
       });
       parts.push(...marks);
@@ -629,11 +630,11 @@
       if (box.dataset.html !== html) { box.innerHTML = html; box.dataset.html = html; }
     }
 
-    function svgX(ev) {
+    function svgPoint(ev) {
       const svg = box.querySelector("svg");
       const pt = svg.createSVGPoint();
       pt.x = ev.clientX; pt.y = ev.clientY;
-      return pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
     }
 
     function open(el) {
@@ -642,13 +643,63 @@
       openPopup({ box, anchor: el, train: tr.train, marker: m, diagram, act, onClose: () => { box.dataset.html = ""; render(diagram); } });
     }
 
+    // ◆を縦にずらしたとき: いちばん近い番線の段と、その番線に変えられるか
+    function trackTarget(d, y) {
+      const L = layout(diagram), b = L.band[d.marker.y];
+      if (!b) return null;
+      let best = null;
+      for (const [label, ry] of Object.entries(b.rows))
+        if (best == null || Math.abs(ry - y) < Math.abs(best.y - y)) best = { label, y: ry };
+      if (!best) return null;
+      const track = /^\d+$/.test(best.label) ? Number(best.label) : null;
+      const ok = d.marker.changeable && track != null && (d.marker.options || []).includes(track);
+      return { ...best, track, ok, same: track === d.marker.track };
+    }
+
+    // 縦にずらしている間、その駅の段を色分けする（変えられる番線は緑、変えられない段は灰色）
+    function showRows(d) {
+      const L = layout(diagram), b = L.band[d.marker.y], svg = box.querySelector("svg");
+      if (!b || !svg) return;
+      const ns = "http://www.w3.org/2000/svg";
+      d.overlay = document.createElementNS(ns, "g");
+      d.overlay.setAttribute("pointer-events", "none");
+      const h = Math.max(8, cur().trackPx - 2);
+      for (const [label, ry] of Object.entries(b.rows)) {
+        const track = /^\d+$/.test(label) ? Number(label) : null;
+        const ok = track != null && (d.marker.options || []).includes(track);
+        const r = document.createElementNS(ns, "rect");
+        Object.entries({ x: L.left, y: ry - h / 2, width: L.w - RIGHT - L.left, height: h,
+          fill: ok ? "rgba(46,160,67,.18)" : "rgba(128,128,128,.12)" }).forEach(([k, v]) => r.setAttribute(k, v));
+        d.overlay.appendChild(r);
+      }
+      svg.insertBefore(d.overlay, svg.firstChild.nextSibling);
+    }
+
     box.addEventListener("pointermove", (ev) => {
       if (dragging) {
-        const L = layout(diagram);
-        const x = Math.max(L.left, Math.min(L.w - RIGHT, svgX(ev)));
-        dragging.el.setAttribute("transform", `translate(${x - dragging.x0},0)`);
-        dragging.x = x;
-        if (tip) tip.textContent = `${dragging.label} → ${hhmm(L.t(x), true)} 発に変更（離すと決定）`;
+        const d = dragging, L = layout(diagram), p = svgPoint(ev);
+        // 動かし始めの向きで決める: 横 → 発車時刻（スジずらし）、縦 → 番線（詳細表示のときだけ）
+        if (!d.mode) {
+          const dx = Math.abs(p.x - d.x0), dy = Math.abs(p.y - d.y0);
+          if (Math.max(dx, dy) < 4) return;
+          d.mode = dy > dx && view.split && L.band[d.marker.y] && Object.keys(L.band[d.marker.y].rows).length > 0 ? "track" : "time";
+          if (d.mode === "track") showRows(d);
+        }
+        if (d.mode === "time") {
+          if (!d.canDrag) return;
+          const x = Math.max(L.left, Math.min(L.w - RIGHT, p.x));
+          d.el.setAttribute("transform", `translate(${x - d.x0},0)`);
+          d.x = x;
+          if (tip) tip.textContent = `${d.label} → ${hhmm(L.t(x), true)} 発に変更（離すと決定）`;
+        } else {
+          const t = trackTarget(d, p.y);
+          d.target = t;
+          d.el.setAttribute("transform", `translate(0,${(t ? t.y : p.y) - d.y0})`);
+          if (tip) tip.textContent = !t ? "" : t.same ? `${d.label}: ${rowName(t.label)}のまま`
+            : t.ok ? `${d.label} → ${rowName(t.label)}に変更（離すと決定）`
+            : !d.marker.changeable ? `${d.label}: 列車がもう進路に入っているので、番線は変えられません`
+            : `${d.label}: ${rowName(t.label)}には変えられません`;
+        }
       } else if (tip) {
         const m = ev.target.closest("path[data-train]");
         tip.textContent = m ? m.dataset.tip : "";
@@ -661,13 +712,27 @@
       ev.preventDefault();
       closePopup();
       m.setPointerCapture(ev.pointerId);
-      dragging = { el: m, train: m.dataset.train, station: m.dataset.station, x0: Number(m.dataset.x), x: Number(m.dataset.x),
-                   label: m.dataset.tip.split(":")[0], canDrag: m.dataset.drag === "1" };
+      const tr = diagram.trains[Number(m.dataset.ti)];
+      dragging = { el: m, train: m.dataset.train, station: m.dataset.station, x0: Number(m.dataset.x), y0: Number(m.dataset.y), x: Number(m.dataset.x),
+                   label: m.dataset.tip.split(":")[0], canDrag: m.dataset.drag === "1", marker: tr.markers[Number(m.dataset.mi)], mode: null };
     });
     box.addEventListener("pointerup", async () => {
       if (!dragging) return;
       const d = dragging;
       dragging = null;
+      if (d.overlay) d.overlay.remove();
+      // 縦: 番線を変える（変えられない段で離したら元に戻す）
+      if (d.mode === "track") {
+        if (d.target && d.target.ok && !d.target.same) {
+          box.dataset.html = "";
+          await act("POST", "/route/track", { train: d.train, station: d.station, track: d.target.track });
+        } else {
+          d.el.removeAttribute("transform");
+          box.dataset.html = "";
+          render(diagram);
+        }
+        return;
+      }
       // 動かさずに離したら、◆の窓（クリック）
       if (Math.abs(d.x - d.x0) < 3 || !d.canDrag) {
         d.el.removeAttribute("transform");
