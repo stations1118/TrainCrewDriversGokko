@@ -20,6 +20,12 @@ public sealed class MainForm : Form
 
     /// <summary>起動時に選んだモード（起動後は変えられない）。</summary>
     private readonly ShareMode _mode;
+
+    /// <summary>乗務の役割（起動時に選ぶ）。車掌は在線共有のモードで、同じ列番の運転士の列車に乗る。</summary>
+    private readonly CrewRole _role;
+
+    /// <summary>「乗務」タブ（在線共有のモードだけ）。運転士と車掌の間のノッチ・ドアの中継。</summary>
+    private readonly CrewPanel? _crewPanel;
     private readonly GameLink _game = new();
     private readonly ServerLink _server = new();
     private readonly EmergencyLightSync _lights = new();
@@ -69,11 +75,18 @@ public sealed class MainForm : Form
     private string _planKey = "";
     private bool _updatingPlan; // 画面の更新で番線を書き換えている間は、ユーザーの選択として扱わない
 
-    public MainForm(ClientConfig config, ShareMode mode)
+    public MainForm(ClientConfig config, ShareMode mode, CrewRole role = CrewRole.Driver)
     {
         _config = config;
         _mode = mode;
-        Text = mode == ShareMode.Shared ? "特発共有クライアント（在線共有）" : "特発共有クライアント（特発のみ）";
+        _role = mode == ShareMode.Shared ? role : CrewRole.Driver;
+        if (mode == ShareMode.Shared)
+        {
+            _crewPanel = new CrewPanel(_role, _game);
+            _crewPanel.Message += ShowMessage;
+        }
+
+        Text = _role == CrewRole.Conductor ? "特発共有クライアント（車掌）" : mode == ShareMode.Shared ? "特発共有クライアント（在線共有）" : "特発共有クライアント（特発のみ）";
         ClientSize = new Size(560, 600);
         MinimumSize = new Size(480, 520);
         StartPosition = FormStartPosition.CenterScreen;
@@ -111,6 +124,7 @@ public sealed class MainForm : Form
         };
 
         Controls.Add(BuildLayout());
+        if (_role == CrewRole.Conductor) _continueButton.Enabled = false; // 継続乗務は運転士が扱う
 
         // ゲームからの返事（SetRoute の結果）はサーバーへ知らせる
         _game.ApiMessage += (title, message) =>
@@ -228,6 +242,7 @@ public sealed class MainForm : Form
 
         _tabs.TabPages.Add(incidentPage);
         _tabs.TabPages.Add(_routeTab);
+        if (_crewPanel != null) _tabs.TabPages.Add(_crewPanel);
         AddWide(_tabs, SizeType.Percent, 100);
         AddWide(_messageLabel, SizeType.Absolute, 26);
         return layout;
@@ -289,12 +304,14 @@ public sealed class MainForm : Form
                 UpdateTrainBoxColor();
                 _routes.Reset();
                 _trackChoices.Clear();
-                _server.Start(ServerAddress.Current, _config.Password, _mode);
+                _server.Start(ServerAddress.Current, _config.Password, _mode, _role);
+                _crewPanel?.Start(ServerAddress.Current, _config.Password);
             }
             else
             {
                 // 運転会から抜けたら、特発・進路・信号を戻す（他列車の非表示と進路の手動は、アプリを閉じるまで続ける）
                 await _server.StopAsync();
+                if (_crewPanel != null) await _crewPanel.StopAsync();
                 await ClearSharedStateAsync();
             }
         }
@@ -479,6 +496,7 @@ public sealed class MainForm : Form
             // ゲームの状態をサーバーへ（応答は待たない）
             if (_server.IsJoined)
             {
+                _crewPanel?.SetTrain(trainNumber);
                 _ = _server.ReportAsync(CreateReport(game, gameConnected, trainNumber));
             }
 
@@ -575,7 +593,9 @@ public sealed class MainForm : Form
         var running = _server.Status is ServerStatus.Connecting or ServerStatus.Connected;
         _connectButton.Text = running ? "切断" : "接続";
         _passwordBox.Enabled = !running;
-        (_modeLabel.Text, _modeLabel.ForeColor) = _mode == ShareMode.Shared
+        (_modeLabel.Text, _modeLabel.ForeColor) = _role == CrewRole.Conductor
+            ? ("モード: 車掌として乗る（在線共有）", Color.DarkGreen)
+            : _mode == ShareMode.Shared
             ? ("モード: 在線を共有（集中モード）", Color.Firebrick)
             : ("モード: 特発だけを共有", Color.SteelBlue);
 
@@ -637,7 +657,7 @@ public sealed class MainForm : Form
             _routeMessage.Text = state?.RouteMessage ?? (_diaLock ? "ダイヤ運転中は、番線・進路はダイヤどおりに自動で扱います（列車からは変えられません）"
                 : state?.Plan.Count > 0 ? "番線は、手前の駅を通過するまで選べます" : "この先に、進路を扱う駅はありません");
             UpdatePlan(state?.Plan ?? new List<StationPlanView>());
-            _departButton.Enabled = state?.CanRequestDeparture == true;
+            _departButton.Enabled = state?.CanRequestDeparture == true && _role == CrewRole.Driver; // 出発要求は運転士が出す
             _departButton.Text = state?.DepartureLabel ?? "出発要求";
             _departButton.BackColor = _departButton.Enabled ? Color.SeaGreen : SystemColors.Control;
             _departButton.ForeColor = _departButton.Enabled ? Color.White : SystemColors.GrayText;
@@ -651,7 +671,7 @@ public sealed class MainForm : Form
             _diaShown = dia;
             if (dia) { _continueBefore = _continueButton.Checked; _continueButton.Checked = true; }
             else _continueButton.Checked = _continueBefore;
-            _continueButton.Enabled = !dia;
+            _continueButton.Enabled = !dia && _role == CrewRole.Driver;
         }
 
         if (DateTime.UtcNow > _messageUntil) _messageLabel.Text = "";
@@ -880,6 +900,8 @@ public sealed class MainForm : Form
             _config.TrainNumber = _confirmedTrain;
             _config.Save();
             await _server.StopAsync();
+            if (_crewPanel != null) await _crewPanel.StopAsync();
+            _crewPanel?.Shutdown();
             await LeaveGameModesAsync();
             // ワンマンの強制も外す（このソフトを使わずに遊ぶときは、ゲームの設定どおりに）
             if (_onemanApplied && _game.IsConnected)

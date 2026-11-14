@@ -34,6 +34,7 @@ builder.Services.AddSingleton<SignalCalculator>();
 builder.Services.AddSingleton<CentralControl>();
 builder.Services.AddSingleton<RouteEngine>();
 builder.Services.AddSingleton<ProtectionRadio>();
+builder.Services.AddSingleton<CrewRelay>();
 builder.Services.AddSingleton<StateBroadcaster>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<StateBroadcaster>());
 builder.Services.AddHostedService<RandomTokuhatsuService>();
@@ -75,6 +76,7 @@ app.MapGet("/", () => Results.Redirect("/admin.html"));
 app.MapGet("/healthz", (PlayerRegistry players, IncidentManager incidents) =>
     Results.Ok(new { ok = true, players = players.Count, activeIncidents = incidents.ActiveCount, protocol = Protocol.Version }));
 app.MapHub<GameHub>(Protocol.HubPath);
+app.MapHub<CrewHub>(CrewProtocol.HubPath);
 app.MapAdminEndpoints(options);
 
 app.Run();

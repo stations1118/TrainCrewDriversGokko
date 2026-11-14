@@ -14,6 +14,7 @@ public sealed class GameHub(
     StateBroadcaster broadcaster,
     RouteEngine routes,
     ProtectionRadio radio,
+    CrewRelay crew,
     ServerOptions options,
     ILogger<GameHub> logger) : Hub
 {
@@ -30,6 +31,19 @@ public sealed class GameHub(
 
         if (!PasswordMatches(request.Password))
             return new JoinResult { Message = "合言葉が違います" };
+
+        // 車掌は在線として数えない（同じ列番の運転士と同じ進路・信号を受け取るだけ）
+        if (request.Role == CrewRole.Conductor)
+        {
+            if (!crew.IsConductor(Context.ConnectionId))
+            {
+                crew.AddConductor(Context.ConnectionId);
+                logger.LogInformation("参加 {ConnectionId}（車掌）", Context.ConnectionId);
+            }
+
+            broadcaster.Trigger();
+            return new JoinResult { Ok = true, Crossings = data.Crossings.ToList() };
+        }
 
         var first = !players.IsJoined(Context.ConnectionId);
         if (first)
@@ -51,6 +65,12 @@ public sealed class GameHub(
             logger.LogInformation("強制切断 {ConnectionId}", Context.ConnectionId);
             Context.Abort();
             return false;
+        }
+
+        if (crew.IsConductor(Context.ConnectionId))
+        {
+            crew.UpdateConductor(Context.ConnectionId, report);
+            return true;
         }
 
         return players.ApplyReport(Context.ConnectionId, report);
@@ -90,6 +110,7 @@ public sealed class GameHub(
     [HubMethodName(Protocol.RequestDeparture)]
     public string RequestDeparture()
     {
+        if (crew.IsConductor(Context.ConnectionId)) return "出発要求は運転士が出します";
         var message = routes.RequestDeparture(Context.ConnectionId);
         broadcaster.Trigger();
         return message;
@@ -103,11 +124,13 @@ public sealed class GameHub(
     [HubMethodName(Protocol.RouteResult)]
     public void RouteResult(string message)
     {
+        if (crew.IsConductor(Context.ConnectionId)) return; // 車掌のゲームの返事は、運転士の進路の判断に混ぜない
         if (!string.IsNullOrEmpty(message) && message.Length < 200) routes.ReportResult(Context.ConnectionId, message);
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
+        crew.RemoveConductor(Context.ConnectionId);
         if (players.IsJoined(Context.ConnectionId))
         {
             players.Remove(Context.ConnectionId);

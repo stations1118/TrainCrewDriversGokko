@@ -38,4 +38,12 @@
     <ProjectReference Include="..\Gokko.Common\Gokko.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- TRAIN CREW の公式の入出力ライブラリ（溝月レイル/Acty）。ソフトに同梱する形での再配布は可。解析・改変はしない -->
+    <Reference Include="TrainCrewInput">
+      <HintPath>lib\TrainCrewInput.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
 </Project>

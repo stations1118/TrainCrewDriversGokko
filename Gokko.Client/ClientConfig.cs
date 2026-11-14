@@ -15,6 +15,9 @@ public sealed class ClientConfig
     /// <summary>接続のモード。まだ選んでいなければ null（初めて接続するときに選ぶ）。</summary>
     public ShareMode? Mode { get; set; }
 
+    /// <summary>乗務の役割（運転士・車掌）。車掌は在線共有のモードだけ。</summary>
+    public CrewRole Role { get; set; }
+
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GokkoClient", "client.json");
 

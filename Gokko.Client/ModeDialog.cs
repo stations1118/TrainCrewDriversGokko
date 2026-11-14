@@ -7,10 +7,13 @@ public sealed class ModeDialog : Form
 {
     public ShareMode? Selected { get; private set; }
 
-    public ModeDialog(ShareMode? current)
+    /// <summary>選んだ乗務の役割（「車掌として乗る」なら車掌）。</summary>
+    public CrewRole SelectedRole { get; private set; }
+
+    public ModeDialog(ShareMode? current, CrewRole currentRole = CrewRole.Driver)
     {
         Text = "接続のモード";
-        ClientSize = new Size(480, 360);
+        ClientSize = new Size(480, 470);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = MinimizeBox = false;
         StartPosition = FormStartPosition.CenterParent;
@@ -18,8 +21,9 @@ public sealed class ModeDialog : Form
 
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(14) };
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
 
         layout.Controls.Add(new Label
         {
@@ -29,7 +33,7 @@ public sealed class ModeDialog : Form
             Font = new Font(Font.FontFamily, 11f, FontStyle.Bold)
         });
 
-        Button Choice(string title, string body, ShareMode mode, Color color)
+        Button Choice(string title, string body, ShareMode mode, Color color, CrewRole role = CrewRole.Driver)
         {
             var b = new Button
             {
@@ -41,10 +45,11 @@ public sealed class ModeDialog : Form
                 FlatStyle = FlatStyle.Flat
             };
             b.FlatAppearance.BorderColor = color;
-            b.FlatAppearance.BorderSize = current == mode ? 3 : 1;
+            b.FlatAppearance.BorderSize = current == mode && currentRole == role ? 3 : 1;
             b.Click += (_, _) =>
             {
                 Selected = mode;
+                SelectedRole = role;
                 DialogResult = DialogResult.OK;
                 Close();
             };
@@ -58,6 +63,10 @@ public sealed class ModeDialog : Form
             "他の参加者と在線を共有します。ゲームの他列車は消え、進路はサーバーが開通させ、" +
             "他の参加者の位置に合わせて信号が変わります。特発も共有します。シナリオを始める前に起動してください。",
             ShareMode.Shared, Color.Firebrick));
+        layout.Controls.Add(Choice("車掌として乗る（在線共有）",
+            "同じ列番の運転士の列車に、車掌として乗ります。ゲームは運転士モードで、運転士と同じシナリオを始めてください。" +
+            "列車は運転士のノッチで動き、ドアは自分で扱います。",
+            ShareMode.Shared, Color.DarkGreen, CrewRole.Conductor));
         Controls.Add(layout);
     }
 }
