@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  乗務タブレット（tablet.html）の画面の配置。XAML と同じく、入れ物（Grid・Stack）と部品を入れ子で書きます。
+  書き換えたら、タブレットの画面を開き直す（再読み込み）だけで反映します（サーバーの再起動はいりません）。
+
+  入れ物
+    Grid     Columns="1.6*,1*" のように列の幅を「*」の比で書く。子は Grid.Column="0" などで列を指定（省略は順番）
+    Stack    子を縦に並べる。Gap で間隔（px）
+    Header   上の帯。子を横に並べる。Spacer で残りを空ける
+  部品
+    Text     Bind の値を出す。Style="Large" で大きく、"Muted" で薄く。Prefix・Suffix で前後に文字を足す
+    Badge    種別の札（Bind="train.type"）
+    Delay    遅れ（1分以上のときだけ出す）
+    Clock    ロープレ時刻
+    Staff    スタフと同じ並びの時刻表。Actual="true" で実績の列を出す
+    NextStation  次の駅・番線・時刻・進路の状態
+    Duty     受け持つ行路（Data/Duties.csv）。行路がなければ何も出さない
+    TrainNext    終点のあと（列番変更・折返）
+    StatusBar    接続の状態と最終更新
+  Bind で使える値
+    train.number  train.type  train.label  train.dest  train.unyo  duty.id  duty.handle  delay  gameTime  crew.name（ログインした乗務員）
+-->
+<Tablet FontSize="13">
+  <Header>
+    <Text Bind="train.number" Style="Large" />
+    <Badge Bind="train.type" />
+    <Text Bind="train.dest" Suffix="行" />
+    <Text Bind="duty.id" Prefix="行路 " Style="Muted" />
+    <Text Bind="train.unyo" Prefix="運行 " Style="Muted" />
+    <Text Bind="crew.name" Suffix=" さん" Style="Muted" />
+    <Spacer />
+    <Delay />
+    <Clock />
+  </Header>
+  <Grid Columns="1.6*,1*" Gap="10">
+    <Stack Grid.Column="0" Gap="6">
+      <Staff Actual="true" />
+      <TrainNext />
+    </Stack>
+    <Stack Grid.Column="1" Gap="10">
+      <NextStation />
+      <Duty />
+    </Stack>
+  </Grid>
+  <StatusBar />
+</Tablet>

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>勤怠管理</title>
+<style>
+  /* 勤怠管理: 乗務員（ユーザー）を作り、行路（Data/Duties.csv）に割り当てる。管理画面と同じ管理キーで使う。
+     見た目は、昔の Windows の事務用アプリ風（灰色の地・青いタイトルバー・タブ・枠囲み・一覧表・ステータスバー） */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: #ece9d8; color: #000; font: 12px/1.4 "MS UI Gothic", "Meiryo UI", Tahoma, sans-serif; display: flex; flex-direction: column; }
+  .titlebar { background: linear-gradient(#0a5fd8 0%, #3a8cf3 8%, #0f5fe0 40%, #0a4fc9 88%, #0842a6 100%); color: #fff; font: bold 13px Tahoma, "MS UI Gothic", sans-serif;
+    padding: 5px 8px; text-shadow: 1px 1px #0b2f80; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #0831a0; }
+  .titlebar .icon { width: 16px; height: 16px; background: #fff; border: 1px solid #08389c; border-radius: 2px; display: inline-grid; place-items: center; color: #0a4fc9; font-size: 10px; text-shadow: none; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 8px; border-bottom: 1px solid #aca899; box-shadow: 0 1px #fff; }
+  .toolbar .sep { width: 1px; align-self: stretch; background: #aca899; box-shadow: 1px 0 #fff; margin: 0 2px; }
+  .content { flex: 1; padding: 8px 10px; overflow: auto; }
+  input[type=text], input[type=password], select {
+    font: inherit; background: #fff; border: 1px solid #7f9db9; padding: 2px 3px; border-radius: 0; height: 21px; }
+  button { font: inherit; color: #000; min-width: 75px; height: 23px; padding: 0 8px; border: 1px solid #003c74; border-radius: 3px;
+    background: linear-gradient(#fff, #f4f3ee 45%, #e3e0d0 90%, #d6d0bf); cursor: default; }
+  button:hover { box-shadow: inset 0 0 0 1px #f8b330; }
+  button:active { background: linear-gradient(#e3e0d0, #f4f3ee); }
+  button.small { min-width: 0; height: 19px; padding: 0 6px; font-size: 11px; }
+  /* タブ（プロパティシート風） */
+  .tabs { display: flex; gap: 2px; padding-left: 4px; position: relative; top: 1px; }
+  .tab { padding: 3px 12px; border: 1px solid #919b9c; border-bottom: none; background: linear-gradient(#fff, #ecebe5); border-radius: 3px 3px 0 0; cursor: default; }
+  .tab.on { background: #fcfcfe; border-top: 2px solid #ffc83c; padding-bottom: 5px; position: relative; top: -2px; }
+  .sheet { border: 1px solid #919b9c; background: #fcfcfe; padding: 10px; min-height: 380px; }
+  fieldset { border: 1px solid #d0d0bf; border-radius: 3px; padding: 6px 10px 10px; margin: 0 0 10px; }
+  legend { color: #0046d5; padding: 0 3px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
+  .note { color: #444; margin: 2px 0 6px; }
+  /* 一覧表（リストビュー風） */
+  .list { border: 1px solid #7f9db9; background: #fff; overflow: auto; max-height: 360px; }
+  table { border-collapse: collapse; width: 100%; }
+  th { position: sticky; top: 0; font-weight: normal; text-align: left; white-space: nowrap; padding: 2px 6px;
+    background: linear-gradient(#fff, #ebeadb); border-right: 1px solid #c7c5b2; border-bottom: 2px solid #d6d2c2; }
+  td { padding: 2px 6px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; vertical-align: middle; }
+  tr:hover td { background: #e8eef9; }
+  .mono { font-family: "MS Gothic", "Courier New", monospace; }
+  .run { color: #008000; font-weight: bold; }
+  .ng { color: #c00000; }
+  .muted { color: #808080; }
+  .chip { font-family: "MS Gothic", "Courier New", monospace; margin-right: 6px; }
+  .chip.run { color: #008000; font-weight: bold; }
+  .statusbar { display: flex; gap: 2px; padding: 2px; border-top: 1px solid #aca899; background: #ece9d8; }
+  .statusbar span { border: 1px solid; border-color: #aca899 #fff #fff #aca899; padding: 1px 6px; }
+  .statusbar span.grow { flex: 1; }
+  /* 確認・お知らせの窓（メッセージボックス風） */
+  .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .15); display: grid; place-items: center; z-index: 9; }
+  .dialog { background: #ece9d8; border: 1px solid #0831a0; box-shadow: 2px 2px 6px rgba(0, 0, 0, .4); min-width: 320px; max-width: 90vw; }
+  .dialog .body { padding: 14px 16px; display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
+  .dialog .mark { width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(#5a9ef8, #1d5fd0); color: #fff; font: bold 20px Georgia, serif; display: grid; place-items: center; }
+  .dialog .mark.warn { background: radial-gradient(#ffe36b, #e7a600); color: #000; border-radius: 3px; }
+  .dialog .pw { font: bold 22px "MS Gothic", "Courier New", monospace; letter-spacing: .1em; background: #fff; border: 1px solid #7f9db9; padding: 4px 10px; margin: 6px 0; display: inline-block; }
+  .dialog .buttons { display: flex; justify-content: center; gap: 8px; padding: 0 0 12px; }
+</style>
+</head>
+<body>
+<div class="titlebar"><span class="icon">勤</span>勤怠管理 － 乗務員・行路割当</div>
+<div class="toolbar">
+  <label>管理キー: <input id="key" type="password" size="14" autocomplete="off"></label>
+  <button id="saveKey">接続</button>
+  <span class="sep"></span>
+  <button id="reload">最新の情報に更新</button>
+  <span class="sep"></span>
+  <a href="admin.html">管理画面へ</a>
+</div>
+
+<div class="content">
+  <div class="tabs" id="tabs">
+    <span class="tab" data-tab="users">乗務員</span>
+    <span class="tab" data-tab="duties">行路の割り当て</span>
+    <span class="tab" data-tab="trains">列車ごとの担当</span>
+  </div>
+  <div class="sheet">
+    <div data-sheet="users">
+      <fieldset><legend>乗務員の登録</legend>
+        <div class="note">ユーザー名を入れて［登録］を押すと、パスワードを自動で発行します。本人に伝えてください。<br>
+          本人が乗務タブレットで新規登録することもできます（このときは本人の画面にパスワードが出ます）。</div>
+        <div class="row">ユーザー名: <input id="newUser" type="text" maxlength="20" size="20"> <button id="addUser">登録</button></div>
+      </fieldset>
+      <fieldset><legend>乗務員の一覧</legend>
+        <div class="note">パスワードを忘れた人は、乗務タブレットで秘密の質問に答えれば自分で再発行できます。秘密の質問も忘れた人は［再発行］を押してください。</div>
+        <div class="list" id="users"></div>
+      </fieldset>
+    </div>
+    <div data-sheet="duties">
+      <fieldset><legend>行路の割り当て</legend>
+        <div class="note">行路ごとに担当の乗務員を選んでください。同じ人に複数の行路を割り当ててもかまいません。緑の列番は走行中の列車です。</div>
+        <div class="list" id="duties"></div>
+      </fieldset>
+    </div>
+    <div data-sheet="trains">
+      <fieldset><legend>列車ごとの担当</legend>
+        <div class="row"><label><input type="checkbox" id="onlyRunning"> 走行中の列車のみ表示</label>
+          　検索: <input id="trainFilter" type="text" size="14"></div>
+        <div class="list" id="trains"></div>
+      </fieldset>
+    </div>
+    <fieldset id="problemsBox" hidden><legend>行路表の注意</legend><div id="problems"></div></fieldset>
+  </div>
+</div>
+
+<div class="statusbar"><span id="conn" class="grow">未接続</span><span id="countUsers">乗務員 0 名</span><span id="countDuties">行路 0 件</span><span id="clock">--:--</span></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let key = "";
+  try { key = sessionStorage.getItem("gokkoAdminKey") || ""; } catch (e) {}
+  $("key").value = key;
+  let data = null;
+  let tab = "users";
+  try { tab = localStorage.getItem("gokkoKintaiTab") || "users"; } catch (e) {}
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const hm = (t) => (t ? t.slice(0, 5) : "--:--");
+  const fmtMin = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+  function setHtml(el, html) { if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
+
+  // メッセージボックス。buttons は ["OK"] や ["はい", "いいえ"]。押したボタンの文字を返す
+  function box(html, buttons = ["OK"], warn = false) {
+    return new Promise((resolve) => {
+      const m = document.createElement("div");
+      m.className = "modal";
+      m.innerHTML = `<div class="dialog"><div class="titlebar"><span class="icon">勤</span>勤怠管理</div>
+        <div class="body"><div class="mark ${warn ? "warn" : ""}">${warn ? "!" : "i"}</div><div>${html}</div></div>
+        <div class="buttons">${buttons.map((b) => `<button data-b="${esc(b)}">${esc(b)}</button>`).join("")}</div></div>`;
+      m.addEventListener("click", (ev) => { const b = ev.target.closest("button[data-b]"); if (b) { m.remove(); resolve(b.dataset.b); } });
+      document.body.appendChild(m);
+      m.querySelector(`button[data-b="${esc(buttons[buttons.length - 1])}"]`).focus();
+    });
+  }
+  const showPassword = (name, pw, what) => box(`${esc(what)}<br><br>ユーザー名: <b>${esc(name)}</b><br>パスワード:<br><span class="pw">${esc(pw)}</span><br>
+    このパスワードは、この画面を閉じると二度と表示されません。<br>本人に伝えてください。`);
+
+  async function api(method, path, body) {
+    const res = await fetch("/api/admin" + path, {
+      method, headers: { "X-Admin-Key": key, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined, cache: "no-store"
+    });
+    let json = null;
+    try { json = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((json && (json.message || json.detail)) || ("HTTP " + res.status));
+    return json;
+  }
+  async function act(method, path, body) {
+    try { const r = await api(method, path, body); await refresh(); return r; }
+    catch (e) { await box(esc(e.message), ["OK"], true); return null; }
+  }
+
+  function showTab() {
+    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("on", t.dataset.tab === tab));
+    document.querySelectorAll("[data-sheet]").forEach((s) => { s.hidden = s.dataset.sheet !== tab; });
+  }
+
+  function draw() {
+    if (!data) return;
+    const users = data.users;
+    const t = (d) => d ? new Date(d).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "";
+    setHtml($("users"), `<table><tr><th>ユーザー名</th><th>担当行路</th><th>秘密の質問</th><th>タブレット</th><th>登録日</th><th>操作</th></tr>
+      ${users.length === 0 ? `<tr><td colspan="6" class="muted">（登録されている乗務員はいません）</td></tr>` : users.map((u) => `<tr>
+        <td>${esc(u.name)}</td>
+        <td class="mono">${u.duties.length ? esc(u.duties.join(", ")) : `<span class="muted">なし</span>`}</td>
+        <td>${u.hasQuestions ? "設定済" : `<span class="ng">未設定</span>`}</td>
+        <td>${u.online ? `<span class="run">ログイン中</span> <span class="mono">${esc(u.train || "")}</span>` : `<span class="muted">${u.last ? "最終 " + t(u.last) : "－"}</span>`}</td>
+        <td>${u.created ? new Date(u.created).toLocaleDateString("ja-JP") : ""}</td>
+        <td><button class="small" data-reset="${esc(u.name)}">再発行</button> <button class="small" data-del="${esc(u.name)}">削除</button></td></tr>`).join("")}</table>`);
+
+    const options = (sel) => `<option value="">（未割当）</option>` + users.map((u) => `<option value="${esc(u.name)}" ${u.name === sel ? "selected" : ""}>${esc(u.name)}</option>`).join("");
+    const running = new Set(data.trains.filter((x) => x.running).map((x) => x.train));
+    if (!(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.duty))
+      setHtml($("duties"), `<table><tr><th>行路</th><th>始業</th><th>終業</th><th>ハンドル</th><th>乗務列車</th><th>担当者</th></tr>
+        ${!data.hasDuties ? `<tr><td colspan="6" class="muted">（行路表 Data/Duties.csv がありません）</td></tr>` : data.duties.map((d) => { const v = d.view; return `<tr>
+          <td class="mono">${esc(v.id)}</td><td class="mono">${hm(v.start)}</td><td class="mono">${hm(v.end)}</td><td class="mono">${fmtMin(v.handleMinutes)}</td>
+          <td>${v.items.filter((x) => x.kind !== "休憩").map((x) => `<span class="chip ${running.has(x.train) ? "run" : ""}" title="${esc(x.kind)} ${esc(x.from || "")} ${hm(x.dep)} → ${esc(x.to || "")} ${hm(x.arr)}">${esc(x.train)}</span>`).join("")}</td>
+          <td><select data-duty="${esc(v.id)}">${options(d.user)}</select>${d.user ? "" : ` <span class="ng">未割当</span>`}</td></tr>`; }).join("")}</table>`);
+
+    const only = $("onlyRunning").checked, q = $("trainFilter").value.trim();
+    const rows = data.trains.filter((x) => (!only || x.running) && (!q || x.train.includes(q) || (x.user || "").includes(q) || x.duty.includes(q)));
+    const online = new Set(users.filter((u) => u.online).map((u) => u.name));
+    setHtml($("trains"), `<table><tr><th>列車番号</th><th>種別</th><th>行路</th><th>担当者</th><th>タブレット</th><th>状態</th></tr>
+      ${rows.length === 0 ? `<tr><td colspan="6" class="muted">（該当する列車はありません）</td></tr>` : rows.map((x) => `<tr>
+        <td class="mono">${esc(x.train)}</td><td>${esc(x.kind)}</td><td class="mono">${esc(x.duty)}</td>
+        <td>${x.user ? esc(x.user) : `<span class="ng">未割当</span>`}</td>
+        <td>${x.user && online.has(x.user) ? `<span class="run">ログイン中</span>` : ""}</td>
+        <td>${x.running ? `<span class="run">走行中</span>` : ""}</td></tr>`).join("")}</table>`);
+
+    $("problemsBox").hidden = !data.problems.length;
+    setHtml($("problems"), data.problems.map((p) => `<div>${esc(p)}</div>`).join(""));
+    $("countUsers").textContent = `乗務員 ${users.length} 名`;
+    $("countDuties").textContent = `行路 ${data.duties.length} 件（未割当 ${data.duties.filter((d) => !d.user).length}）`;
+  }
+
+  async function refresh() {
+    $("clock").textContent = new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    if (!key) { $("conn").textContent = "管理キーを入力して［接続］を押してください"; return; }
+    try {
+      data = await api("GET", "/crew");
+      $("conn").textContent = "接続しました";
+      draw();
+    } catch (e) { $("conn").textContent = "エラー: " + e.message; }
+  }
+
+  $("tabs").addEventListener("click", (ev) => {
+    const t = ev.target.closest(".tab");
+    if (!t) return;
+    tab = t.dataset.tab;
+    try { localStorage.setItem("gokkoKintaiTab", tab); } catch (e) {}
+    showTab();
+  });
+  $("saveKey").onclick = () => { key = $("key").value; try { sessionStorage.setItem("gokkoAdminKey", key); } catch (e) {} refresh(); };
+  $("reload").onclick = refresh;
+  $("addUser").onclick = async () => {
+    const n = $("newUser").value.trim();
+    if (!n) return;
+    const r = await act("POST", "/crew/users", { name: n });
+    if (r) { $("newUser").value = ""; await showPassword(n, r.password, "乗務員を登録しました。"); }
+  };
+  $("newUser").addEventListener("keydown", (ev) => { if (ev.key === "Enter") $("addUser").click(); });
+  $("users").addEventListener("click", async (ev) => {
+    const del = ev.target.closest("button[data-del]");
+    if (del && await box(`乗務員「${esc(del.dataset.del)}」を削除しますか？<br>割り当てていた行路は未割当になります。`, ["はい", "いいえ"], true) === "はい")
+      await act("POST", "/crew/users/delete", { name: del.dataset.del });
+    const rs = ev.target.closest("button[data-reset]");
+    if (rs && await box(`「${esc(rs.dataset.reset)}」のパスワードを再発行しますか？<br>今のパスワードは使えなくなり、ログイン中のタブレットもログアウトします。`, ["はい", "いいえ"], true) === "はい") {
+      const r = await act("POST", "/crew/reset", { name: rs.dataset.reset });
+      if (r) await showPassword(rs.dataset.reset, r.password, "パスワードを再発行しました。");
+    }
+  });
+  $("duties").addEventListener("change", async (ev) => {
+    const s = ev.target.closest("select[data-duty]");
+    if (s) { s.blur(); await act("POST", "/crew/assign", { duty: s.dataset.duty, user: s.value || null }); }
+  });
+  $("onlyRunning").onchange = draw;
+  $("trainFilter").oninput = draw;
+  showTab();
+  refresh();
+  setInterval(refresh, 3000);
+</script>
+</body>
+</html>
