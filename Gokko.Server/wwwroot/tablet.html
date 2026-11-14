@@ -80,9 +80,17 @@
 <div id="app"></div>
 <script>
   // 乗務タブレット。?train=列番 でその列車を表示する（クライアントの「乗務タブレット」ボタンは、自分の列番を付けて開く）。
-  // 列番がなければ、走っている列車と行路の一覧から選ぶ。2秒ごとに /api/tid/tablet を読み直す
+  // 列番がなければ、走っている列車と行路の一覧から選ぶ。2秒ごとに /api/tid/tablet を読み直す。
+  // ログイン（勤怠管理の画面で作ったユーザー名）すると、その人の行路を出す。列番を付けずに開けば、その人の行路の、いま乗る列車を出す
+  // （ユーザー名はこのブラウザに覚えておく。「ログアウト」で消す）
   const params = new URLSearchParams(location.search);
   let train = params.get("train") || "";
+  let user = "";
+  try { user = localStorage.getItem("gokkoTabletUser") || ""; } catch (e) {}
+  function setUser(name) {
+    user = name;
+    try { if (name) localStorage.setItem("gokkoTabletUser", name); else localStorage.removeItem("gokkoTabletUser"); } catch (e) {}
+  }
   let layout = null, data = null, lastOk = 0, error = "";
 
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -102,6 +110,7 @@
       case "duty.handle": return data.duty ? fmtMin(data.duty.handleMinutes) : "";
       case "delay": return data.delay ?? "";
       case "gameTime": return data.gameTime;
+      case "crew.name": return data.crew ?? "";
       default: return "";
     }
   }
@@ -143,7 +152,9 @@
       return `<div class="status"><span><span class="dot ${ok ? "ok" : "ng"}"></span>サーバー${ok ? "" : "（更新が止まっています）"}</span>
         <span>${data && data.running ? "走行中" : "まだ走っていない（ダイヤを表示）"}</span>
         <span>最終更新 ${age == null ? "-" : age + "秒前"}</span>
-        <span><a href="tablet.html" style="color:var(--muted)">列車を選び直す</a></span>${error ? `<span class="err">${esc(error)}</span>` : ""}</div>`;
+        <span>${user ? `ログイン: ${esc(user)}（<a href="#" data-logout="1" style="color:var(--muted)">ログアウト</a>）`
+          : `<a href="#" data-login="1" style="color:var(--muted)">ログイン</a>`}</span>
+        <span><a href="tablet.html${user ? "" : "?pick=1"}" style="color:var(--muted)">${user ? "行路の列車に戻る" : "列車を選び直す"}</a></span>${error ? `<span class="err">${esc(error)}</span>` : ""}</div>`;
     }
   };
   const children = (el) => [...el.children].map(render).join("");
@@ -220,6 +231,31 @@
     return `<div class="pane"><h5>行路 ${esc(d.id)}　ハンドルタイム ${fmtMin(d.handleMinutes)}</h5><div class="duty-list">${items}</div></div>`;
   }
 
+  // ---- ログインの画面（勤怠管理の画面で作ったユーザー名） ----
+  function loginScreen(message) {
+    document.title = "乗務タブレット ログイン";
+    document.getElementById("app").innerHTML = `<div class="pick">
+      <div class="pane"><h5>ログイン</h5>
+        <div class="t-muted">勤怠管理の画面で作ったユーザー名を入れてください。割り当てられた行路の、いま乗る列車を表示します。</div>
+        <div class="row"><input id="uname" placeholder="ユーザー名" autocomplete="username" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"><button id="login">ログイン</button></div>
+        <div id="lmsg" class="err">${esc(message || "")}</div></div>
+      <div class="pane"><a href="tablet.html?pick=1" style="color:var(--muted)">ログインしないで列車を選ぶ</a></div></div>`;
+    const go = async () => {
+      const name = document.getElementById("uname").value.trim();
+      if (!name) return;
+      try {
+        const res = await fetch("/api/tid/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) { document.getElementById("lmsg").textContent = j.message || "ログインできませんでした"; return; }
+        setUser(j.name);
+        location.href = "tablet.html" + (train ? "?train=" + encodeURIComponent(train) : "");
+      } catch (e) { document.getElementById("lmsg").textContent = "サーバーにつながりません"; }
+    };
+    document.getElementById("login").onclick = go;
+    document.getElementById("uname").addEventListener("keydown", (ev) => { if (ev.key === "Enter") go(); });
+    document.getElementById("uname").focus();
+  }
+
   // ---- 列車を選ぶ画面 ----
   async function pickScreen() {
     let trains = [], duties = [];
@@ -229,23 +265,48 @@
     document.getElementById("app").innerHTML = `<div class="pick">
       <div class="pane"><h5>列番を入れて開く</h5><div class="row"><input id="no" placeholder="例: 995C" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"><button id="open">開く</button></div></div>
       <div class="pane"><h5>走っている列車</h5><div class="row">${trains.length ? trains.map(go).join("") : "<span class='t-muted'>いません</span>"}</div></div>
-      <div class="pane"><h5>行路</h5>${duties.length ? duties.map((d) => `<div><b class="mono">${esc(d.id)}</b>　<span class="row" style="display:inline-flex">${d.trains.map(go).join("")}</span></div>`).join("") : "<span class='t-muted'>行路表（Duties.csv）はまだありません</span>"}</div></div>`;
+      <div class="pane"><h5>行路</h5>${duties.length ? duties.map((d) => `<div><b class="mono">${esc(d.id)}</b>　<span class="row" style="display:inline-flex">${d.trains.map(go).join("")}</span></div>`).join("") : "<span class='t-muted'>行路表（Duties.csv）はまだありません</span>"}</div>
+      <div class="pane">${user ? `ログイン: ${esc(user)}（<a href="#" data-logout="1" style="color:var(--muted)">ログアウト</a>）` : `<a href="#" data-login="1" style="color:var(--muted)">ログイン</a>`}</div></div>`;
     document.querySelectorAll("button[data-train]").forEach((b) => b.onclick = () => { location.search = "?train=" + encodeURIComponent(b.dataset.train); });
     document.getElementById("open").onclick = () => { const v = document.getElementById("no").value.trim(); if (v) location.search = "?train=" + encodeURIComponent(v); };
   }
 
+  // ログアウト・ログインの文字（ステータスバーと選ぶ画面）
+  document.addEventListener("click", (ev) => {
+    const a = ev.target.closest("a[data-logout], a[data-login]");
+    if (!a) return;
+    ev.preventDefault();
+    if (a.dataset.logout) { setUser(""); location.href = "tablet.html" + (train ? "?train=" + encodeURIComponent(train) : ""); }
+    else loginScreen();
+  });
+
+  let stopped = false;
   async function refresh() {
+    if (stopped) return;
+    let notice = null;
     try {
-      const res = await fetch("/api/tid/tablet?train=" + encodeURIComponent(train), { cache: "no-store" });
-      if (!res.ok) { error = res.status === 404 ? `${train} のダイヤはありません` : "読み込めませんでした"; data = null; }
+      const q = new URLSearchParams();
+      if (train) q.set("train", train);
+      if (user) q.set("user", user);
+      const res = await fetch("/api/tid/tablet?" + q, { cache: "no-store" });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        if (j.logout) { setUser(""); stopped = true; loginScreen(j.message); return; } // ユーザーが消された
+        error = j.message || "読み込めませんでした"; data = null;
+        if (user && !train) notice = error; // 行路がまだない
+      }
       else { data = await res.json(); error = ""; lastOk = Date.now(); }
     } catch (e) { error = "サーバーにつながりません"; }
     document.title = data ? `${data.train} 乗務タブレット` : "乗務タブレット";
-    document.getElementById("app").innerHTML = data ? render(layout) : `<div class="pick"><div class="pane err">${esc(error)}</div><a href="tablet.html" style="color:var(--muted)">列車を選び直す</a></div>`;
+    document.getElementById("app").innerHTML = data ? render(layout)
+      : `<div class="pick"><div class="pane err">${esc(error)}</div>
+          <div class="pane">${user ? `ログイン: ${esc(user)}（<a href="#" data-logout="1" style="color:var(--muted)">ログアウト</a>）　` : ""}<a href="tablet.html?pick=1" style="color:var(--muted)">列車を選ぶ</a></div></div>`;
   }
 
   (async () => {
-    if (!train) { await pickScreen(); return; }
+    // 列番もログインもなければログインの画面。?pick=1 なら列車を選ぶ画面
+    if (params.get("pick")) { await pickScreen(); return; }
+    if (!train && !user) { loginScreen(); return; }
     try {
       const xml = await (await fetch("tablet-layout.xml", { cache: "no-store" })).text();
       layout = new DOMParser().parseFromString(xml, "application/xml").documentElement;

@@ -27,6 +27,7 @@ builder.Services.AddSingleton(options.Random); // 管理画面から書き換え
 builder.Services.AddSingleton(data);
 builder.Services.AddSingleton(rail);
 builder.Services.AddSingleton(DutyRoster.Load(dataDir, rail)); // 行路表（Data/Duties.csv。なければ空）
+builder.Services.AddSingleton(sp => new CrewRoster(dataDir, sp.GetService<ILogger<CrewRoster>>())); // 乗務員と行路の割り当て（Data/Crew.json）
 builder.Services.AddSingleton<PlayerRegistry>();
 builder.Services.AddSingleton<GameClock>();
 builder.Services.AddSingleton<IncidentManager>();

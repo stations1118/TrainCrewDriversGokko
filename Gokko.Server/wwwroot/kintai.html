@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>勤怠管理</title>
+<style>
+  /* 勤怠管理: 乗務員（ユーザー名）を作り、行路（Data/Duties.csv）に割り当てる。管理画面と同じ管理キーで使う */
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --text: #1d2330; --muted: #6b7280; --line: #e3e6eb;
+    --accent: #2563eb; --danger: #c62828; --ok: #1b7f3b; --chip: #eef1f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171c; --panel: #1d2128; --text: #e6e8eb; --muted: #9aa3ae; --line: #2e333c;
+      --accent: #6b9cff; --danger: #ff6b6b; --ok: #5fd08a; --chip: #272c35; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Yu Gothic UI", "Hiragino Sans", system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 1; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  main { display: grid; gap: 16px; padding: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+  section.wide { grid-column: 1 / -1; }
+  h2 { font-size: 14px; margin: 0 0 10px; }
+  input, select, button { font: inherit; color: inherit; }
+  input, select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+  button { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger { color: var(--danger); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .muted { color: var(--muted); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-weight: normal; color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .mono { font-family: "Consolas", "Menlo", monospace; }
+  .chip { display: inline-block; background: var(--chip); border-radius: 4px; padding: 0 6px; margin: 1px 2px; font-family: "Consolas", "Menlo", monospace; font-size: 12px; }
+  .chip.run { background: var(--ok); color: #fff; }
+  .on { color: var(--ok); font-weight: bold; }
+  .none { color: var(--danger); }
+  #error { color: var(--danger); }
+</style>
+</head>
+<body>
+<header>
+  <h1>勤怠管理</h1>
+  <label>管理キー <input id="key" type="password" size="18" autocomplete="off"></label>
+  <button id="saveKey">保存</button>
+  <span id="conn" class="muted">未接続</span>
+  <span id="error"></span>
+  <a href="admin.html" class="muted" style="margin-left:auto">管理画面へ</a>
+</header>
+
+<main>
+  <section>
+    <h2>乗務員</h2>
+    <div class="muted" style="margin-bottom:8px">ここで作ったユーザー名で、乗務タブレットにログインします（合言葉はありません）。</div>
+    <div class="row">
+      <input id="newUser" placeholder="ユーザー名" maxlength="20">
+      <button id="addUser" class="primary">作る</button>
+    </div>
+    <div id="users"></div>
+  </section>
+
+  <section>
+    <h2>行路の割り当て</h2>
+    <div class="muted" style="margin-bottom:8px">行路ごとに、乗務する人を選びます。同じ人に複数の行路を割り当ててもかまいません。緑の列番は、いま走っている列車です。</div>
+    <div id="duties" class="scroll"></div>
+  </section>
+
+  <section class="wide">
+    <h2>列車ごとの担当</h2>
+    <div class="muted" style="margin-bottom:8px">この列車にはこの人が乗る、の一覧です（行路表の順）。</div>
+    <div class="row"><label><input type="checkbox" id="onlyRunning"> 走っている列車だけ</label>
+      <input id="trainFilter" placeholder="列番・名前で絞る" size="16"></div>
+    <div id="trains" class="scroll"></div>
+  </section>
+
+  <section class="wide" id="problemsBox" hidden>
+    <h2>行路表の注意</h2>
+    <div id="problems" class="muted"></div>
+  </section>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let key = "";
+  try { key = sessionStorage.getItem("gokkoAdminKey") || ""; } catch (e) {}
+  $("key").value = key;
+  let data = null;
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const hm = (t) => (t ? t.slice(0, 5) : "--:--");
+  const fmtMin = (m) => `${Math.floor(m / 60)}時間${String(m % 60).padStart(2, "0")}分`;
+  function setHtml(el, html) { if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
+
+  async function api(method, path, body) {
+    const res = await fetch("/api/admin" + path, {
+      method, headers: { "X-Admin-Key": key, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined, cache: "no-store"
+    });
+    let json = null;
+    try { json = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((json && (json.message || json.detail)) || ("HTTP " + res.status));
+    return json;
+  }
+  async function act(method, path, body) {
+    try { await api(method, path, body); $("error").textContent = ""; await refresh(); }
+    catch (e) { $("error").textContent = e.message; }
+  }
+
+  function draw() {
+    if (!data) return;
+    const users = data.users;
+    // 乗務員
+    setHtml($("users"), users.length === 0 ? `<div class="muted">まだいません</div>` : `<table>
+      <tr><th>名前</th><th>行路</th><th>タブレット</th><th></th></tr>
+      ${users.map((u) => `<tr><td><b>${esc(u.name)}</b></td>
+        <td>${u.duties.length ? u.duties.map((d) => `<span class="chip">${esc(d)}</span>`).join("") : `<span class="muted">なし</span>`}</td>
+        <td>${u.online ? `<span class="on">ログイン中</span>${u.train ? ` <span class="mono">${esc(u.train)}</span>` : ""}`
+          : `<span class="muted">${u.last ? "最後 " + new Date(u.last).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "—"}</span>`}</td>
+        <td><button class="danger" data-del="${esc(u.name)}">消す</button></td></tr>`).join("")}</table>`);
+
+    // 行路の割り当て
+    const options = (sel) => `<option value="">（担当なし）</option>` + users.map((u) => `<option value="${esc(u.name)}" ${u.name === sel ? "selected" : ""}>${esc(u.name)}</option>`).join("");
+    const running = new Set(data.trains.filter((t) => t.running).map((t) => t.train));
+    if (!(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.duty))
+      setHtml($("duties"), !data.hasDuties ? `<div class="muted">行路表（サーバーの Data/Duties.csv）がまだありません</div>` : `<table>
+        <tr><th>行路</th><th>時間</th><th>ハンドルタイム</th><th>列車</th><th>担当</th></tr>
+        ${data.duties.map((d) => { const v = d.view; return `<tr>
+          <td><b class="mono">${esc(v.id)}</b></td>
+          <td class="mono">${hm(v.start)}〜${hm(v.end)}</td>
+          <td>${fmtMin(v.handleMinutes)}</td>
+          <td>${v.items.filter((x) => x.kind !== "休憩").map((x) => `<span class="chip ${running.has(x.train) ? "run" : ""}" title="${esc(x.kind)} ${esc(x.from || "")} ${hm(x.dep)} → ${esc(x.to || "")} ${hm(x.arr)}">${esc(x.train)}</span>`).join("")}</td>
+          <td><select data-duty="${esc(v.id)}">${options(d.user)}</select>${d.user ? "" : ` <span class="none">未割り当て</span>`}</td></tr>`; }).join("")}</table>`);
+
+    // 列車ごとの担当
+    const only = $("onlyRunning").checked, q = $("trainFilter").value.trim();
+    const rows = data.trains.filter((t) => (!only || t.running) && (!q || t.train.includes(q) || (t.user || "").includes(q) || t.duty.includes(q)));
+    const online = new Set(users.filter((u) => u.online).map((u) => u.name));
+    setHtml($("trains"), rows.length === 0 ? `<div class="muted">${data.hasDuties ? "該当する列車はありません" : "行路表がまだありません"}</div>` : `<table>
+      <tr><th>列車</th><th>種別</th><th>行路</th><th>担当</th><th>状態</th></tr>
+      ${rows.map((t) => `<tr><td><b class="mono">${esc(t.train)}</b></td><td class="muted">${esc(t.kind)}</td><td class="mono">${esc(t.duty)}</td>
+        <td>${t.user ? esc(t.user) + (online.has(t.user) ? ` <span class="on">●</span>` : "") : `<span class="none">未割り当て</span>`}</td>
+        <td>${t.running ? `<span class="on">走行中</span>` : ""}</td></tr>`).join("")}</table>`);
+
+    $("problemsBox").hidden = !data.problems.length;
+    setHtml($("problems"), data.problems.map((p) => `<div>${esc(p)}</div>`).join(""));
+  }
+
+  async function refresh() {
+    if (!key) { $("conn").textContent = "管理キーを入れてください"; return; }
+    try {
+      data = await api("GET", "/crew");
+      $("conn").textContent = "接続中"; $("conn").className = "on";
+      draw();
+    } catch (e) { $("conn").textContent = e.message; $("conn").className = "none"; }
+  }
+
+  $("saveKey").onclick = () => { key = $("key").value; try { sessionStorage.setItem("gokkoAdminKey", key); } catch (e) {} refresh(); };
+  $("addUser").onclick = async () => { const n = $("newUser").value.trim(); if (!n) return; await act("POST", "/crew/users", { name: n }); $("newUser").value = ""; };
+  $("newUser").addEventListener("keydown", (ev) => { if (ev.key === "Enter") $("addUser").click(); });
+  $("users").addEventListener("click", async (ev) => {
+    const b = ev.target.closest("button[data-del]");
+    if (b && confirm(`${b.dataset.del} を消しますか？（割り当てていた行路は担当なしになります）`)) await act("POST", "/crew/users/delete", { name: b.dataset.del });
+  });
+  $("duties").addEventListener("change", async (ev) => {
+    const s = ev.target.closest("select[data-duty]");
+    if (s) { s.blur(); await act("POST", "/crew/assign", { duty: s.dataset.duty, user: s.value || null }); }
+  });
+  $("onlyRunning").onchange = draw;
+  $("trainFilter").oninput = draw;
+  refresh();
+  setInterval(refresh, 3000);
+</script>
+</body>
+</html>

@@ -18,7 +18,7 @@
     TrainNext    終点のあと（列番変更・折返）
     StatusBar    接続の状態と最終更新
   Bind で使える値
-    train.number  train.type  train.label  train.dest  train.unyo  duty.id  duty.handle  delay  gameTime
+    train.number  train.type  train.label  train.dest  train.unyo  duty.id  duty.handle  delay  gameTime  crew.name（ログインした乗務員）
 -->
 <Tablet FontSize="13">
   <Header>
@@ -27,6 +27,7 @@
     <Text Bind="train.dest" Suffix="行" />
     <Text Bind="duty.id" Prefix="行路 " Style="Muted" />
     <Text Bind="train.unyo" Prefix="運行 " Style="Muted" />
+    <Text Bind="crew.name" Suffix=" さん" Style="Muted" />
     <Spacer />
     <Delay />
     <Clock />

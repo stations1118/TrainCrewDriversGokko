@@ -21,6 +21,10 @@ public static class AdminEndpoints
     /// <param name="Kind">抑止の種類（"arrive" 場内・"depart" 出発。省くと両方）。</param>
     public sealed record TrainStationRequest(string Train, string Station, int? Track, bool? Hold, string? Kind);
 
+    public sealed record CrewLoginRequest(string? Name);
+
+    public sealed record CrewAssignRequest(string Duty, string? User);
+
     public sealed record StationModeRequest(string Station, bool Central);
 
     public sealed record PassingRequest(int? MarginSeconds, int? ToleranceSeconds);
@@ -93,8 +97,24 @@ public static class AdminEndpoints
         var view = app.MapGroup("/api/tid");
 
         // 乗務タブレット（tablet.html）: スタフの並びの時刻表・次の駅・進路の状態・行路
-        view.MapGet("/tablet", (string? train, RouteEngine engine, DutyRoster roster) =>
-            engine.TabletView(train ?? "", roster) is { } t ? Results.Ok(t) : Results.NotFound(new { message = "この列車のダイヤはありません" }));
+        // user（ログインした乗務員）があれば、その人の行路を出す。train がなければ、その人の行路の、いま乗る列車
+        view.MapGet("/tablet", (string? train, string? user, RouteEngine engine, DutyRoster roster, CrewRoster crew) =>
+        {
+            var name = crew.User(user);
+            if (!string.IsNullOrEmpty(user) && name == null) return Results.NotFound(new { message = $"{user} というユーザーはいません", logout = true });
+            var duties = name == null ? null : crew.DutiesOf(name).Select(roster.DutyById).OfType<Duty>().ToList();
+            var t = string.IsNullOrEmpty(train) && duties != null ? engine.CurrentTrainOf(duties) : train;
+            if (string.IsNullOrEmpty(t)) return Results.NotFound(new { message = name != null ? $"{name} さんには、まだ行路が割り当てられていません" : "列車番号がありません" });
+            if (name != null) crew.Seen(name, t);
+            return engine.TabletView(t, roster, duties, name) is { } v ? Results.Ok(v) : Results.NotFound(new { message = $"{t} のダイヤはありません" });
+        });
+
+        // 乗務タブレットのログイン（ユーザー名だけ。勤怠管理の画面で作ったユーザー）
+        view.MapPost("/login", (CrewLoginRequest req, CrewRoster crew, DutyRoster roster) =>
+        {
+            if (crew.User(req.Name) is not { } name) return Results.NotFound(new { message = "そのユーザー名はありません（勤怠管理の画面で作ってください）" });
+            return Results.Ok(new { name, duties = crew.DutiesOf(name) });
+        });
 
         // 行路の一覧（乗務タブレットで、行路を選んで見るため）
         view.MapGet("/duties", (DutyRoster roster) => Results.Ok(new { duties = roster.Duties.Select(d => new { id = d.Id, trains = d.Items.Where(x => x.Kind != "休憩").Select(x => x.Train) }), problems = roster.Problems }));
@@ -114,6 +134,36 @@ public static class AdminEndpoints
             orders = engine.OrdersView(),
             sections = engine.SectionsView()
         }));
+
+        // ---- 勤怠管理（kintai.html）: 乗務員（ユーザー名）と、行路への割り当て ----
+        admin.MapGet("/crew", (CrewRoster crew, DutyRoster roster, RouteEngine engine) =>
+        {
+            var users = crew.Users().Select(u =>
+            {
+                var (online, train, last) = crew.Presence(u);
+                return new { name = u, duties = crew.DutiesOf(u), online, train, last };
+            }).ToList();
+            var duties = roster.Duties.Select(d => new
+            {
+                view = engine.DutyView(d, null),
+                user = crew.AssignedTo(d.Id)
+            }).ToList();
+            // 列車ごとの担当（この列車にはこの人が乗る）
+            var trains = roster.Duties.SelectMany(d => d.Items.Where(x => x.Kind != "休憩").Select(x => new
+            {
+                train = x.Train, kind = x.Kind, duty = d.Id, user = crew.AssignedTo(d.Id), running = engine.IsRunning(x.Train)
+            })).ToList();
+            return Results.Ok(new { users, duties, trains, problems = roster.Problems, hasDuties = roster.Duties.Count > 0 });
+        });
+        admin.MapPost("/crew/users", (CrewLoginRequest req, CrewRoster crew) =>
+            crew.AddUser(req.Name) is { } err ? Results.BadRequest(new { message = err }) : Results.Ok(new { ok = true }));
+        admin.MapPost("/crew/users/delete", (CrewLoginRequest req, CrewRoster crew) =>
+            crew.RemoveUser(req.Name) ? Results.Ok(new { ok = true }) : Results.NotFound(new { message = "そのユーザーはいません" }));
+        admin.MapPost("/crew/assign", (CrewAssignRequest req, CrewRoster crew, DutyRoster roster) =>
+        {
+            if (roster.DutyById(req.Duty) == null) return Results.NotFound(new { message = $"行路 {req.Duty} はありません" });
+            return crew.Assign(req.Duty, req.User) is { } err ? Results.BadRequest(new { message = err }) : Results.Ok(new { ok = true });
+        });
 
         admin.MapGet("/state", (GameData data, IncidentManager incidents, PlayerRegistry players, GameClock clock, RandomOptions random, ProtectionRadio radio) =>
         {
