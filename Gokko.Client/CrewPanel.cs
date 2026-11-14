@@ -10,7 +10,7 @@ namespace Gokko.Client;
 /// ・運転士: 自分のノッチ・レバーサー・戸閉を読んで、サーバーの中継（/crew）へ送る（サーバーが記録する）。
 ///   車掌のドア・ブザーの操作が届いたら、自分のゲームで同じボタンを押す
 /// ・車掌: 届いた運転士のノッチ・レバーサーを、自分のゲームへそのまま送る（TrainCrewInput）。
-///   自分のゲームでドアが開いた・閉まったら、運転士へ送る。運転士の操作が3秒届かなくなったら非常ブレーキ
+///   自分のゲームでドアが開いた・閉まったら、運転士へ送る。運転士の操作が3秒届かなくなったら常用最大ブレーキ（B8 の直通非常は使わない）
 /// ・車掌は、サーバーに記録した運転士の操作を再生して、1台で流れを確かめられる
 /// 車掌のときは、届いた操作と自分の列車の状態を %APPDATA%\GokkoClient\crew\ に CSV で残す（ずれを調べるため）。
 /// </summary>
@@ -18,6 +18,18 @@ public sealed class CrewPanel : TabPage
 {
     private const int StaleMs = 3000;
     private const int HeartbeatMs = 500;
+
+    /// <summary>
+    /// 運転士の操作が届かないとき・車掌をやめるときにかけるブレーキ（常用最大）。
+    /// B8 は直通非常で、3000形はブレーキ方式の都合でしばらく動けなくなるので使わない。
+    /// </summary>
+    private const int ServiceMaxBrake = 7;
+
+    /// <summary>車掌が戸閉の状態を知らせる間隔。</summary>
+    private const int DoorStatusMs = 1000;
+
+    /// <summary>運転士のゲームのドアが、車掌のゲームとこれだけ食い違ったままなら、合わせ直す（ドアが動く時間より長く）。</summary>
+    private const int DoorMismatchMs = 5000;
 
     private readonly CrewRole _role;
     private readonly GameLink _game;
@@ -39,6 +51,10 @@ public sealed class CrewPanel : TabPage
     private DriverInput? _lastSent;
     private long _lastSentMs;
     private readonly ConcurrentQueue<ConductorInput> _fromConductor = new();
+    private bool? _conductorAllClose;
+    private long _conductorDoorMs;
+    private long _doorMismatchSinceMs;
+    private long _lastDoorFixMs;
 
     // 車掌
     private volatile DriverInput? _latestInput;
@@ -49,6 +65,8 @@ public sealed class CrewPanel : TabPage
     private bool _haveDriver;
     private bool _emergency;
     private bool? _ownAllClose;
+    private long _lastDoorButtonMs;
+    private long _lastDoorStatusMs;
     private DriverInput? _appliedInput;
     private StreamWriter? _log;
 
@@ -99,18 +117,24 @@ public sealed class CrewPanel : TabPage
         Button DoorButton(string text, string action)
         {
             var b = new Button { Text = text, Dock = DockStyle.Fill, Font = new Font("Yu Gothic UI", 11f, FontStyle.Bold) };
-            b.Click += async (_, _) => await _tci.PressAsync(action);
+            b.Click += async (_, _) => await DoorAsync(action);
             return b;
         }
 
-        doors.Controls.Add(DoorButton("ドア開", "DoorOpn"), 0, 0);
-        doors.Controls.Add(DoorButton("ドア閉", "DoorCls"), 1, 0);
-        doors.Controls.Add(DoorButton("再開閉", "ReOpenSW"), 2, 0);
+        doors.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        doors.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        doors.Controls.Add(DoorButton("左 開", "DoorOpnLeft"), 0, 0);
+        doors.Controls.Add(DoorButton("左 閉", "DoorClsLeft"), 1, 0);
+        doors.Controls.Add(DoorButton("右 開", "DoorOpnRight"), 2, 0);
+        doors.Controls.Add(DoorButton("右 閉", "DoorClsRight"), 3, 0);
+        doors.Controls.Add(DoorButton("両側 開", "DoorOpn"), 0, 1);
+        doors.Controls.Add(DoorButton("両側 閉", "DoorCls"), 1, 1);
+        doors.Controls.Add(DoorButton("再開閉", "ReOpenSW"), 2, 1);
         var buzzer = new Button { Text = "ブザー", Dock = DockStyle.Fill, Font = new Font("Yu Gothic UI", 11f, FontStyle.Bold) };
         buzzer.MouseDown += (_, _) => Buzzer(true);
         buzzer.MouseUp += (_, _) => Buzzer(false);
-        doors.Controls.Add(buzzer, 3, 0);
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+        doors.Controls.Add(buzzer, 3, 1);
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 96));
         layout.Controls.Add(doors);
 
         // 記録の再生（車掌だけ）
@@ -144,7 +168,7 @@ public sealed class CrewPanel : TabPage
             ForeColor = SystemColors.GrayText,
             Text = _role == CrewRole.Conductor
                 ? "車掌: ゲームは運転士モードで、運転士と同じシナリオ・同じ列番で始めてください。列車は運転士のノッチで動きます（自分のマスコンは触らない）。" +
-                  "ドアはゲームのキーか上のボタンで扱い、開け閉めは運転士のゲームにも伝わります。"
+                  "ドアは上のボタン（左右別）かゲームのキーで扱い、開け閉めは運転士のゲームにも伝わります（ゲームのキーは両側の開・閉として伝わります）。"
                 : "運転士: 同じ列番で車掌が乗ると、ノッチを車掌のゲームへ送ります。ドアは車掌が扱います。運転の操作はサーバーに記録されます。"
         });
         return layout;
@@ -204,14 +228,13 @@ public sealed class CrewPanel : TabPage
 
     private void DriverTick(TciState? s)
     {
+        var now = Environment.TickCount64;
         while (_fromConductor.TryDequeue(out var c))
         {
+            _conductorAllClose = c.AllClose;
+            _conductorDoorMs = now;
             switch (c.Action)
             {
-                case "DoorOpn" or "DoorCls" or "ReOpenSW":
-                    _ = _tci.PressAsync(c.Action);
-                    ShowDoor(c.Action switch { "DoorOpn" => "車掌: ドア開", "DoorCls" => "車掌: ドア閉", _ => "車掌: 再開閉" });
-                    break;
                 case "Buzzer":
                     _tci.SetButton("Buzzer", true);
                     ShowDoor("車掌: ブザー");
@@ -219,10 +242,36 @@ public sealed class CrewPanel : TabPage
                 case "BuzzerOff":
                     _tci.SetButton("Buzzer", false);
                     break;
+                case { Length: > 0 }:
+                    _ = _tci.PressAsync(c.Action);
+                    _lastDoorFixMs = now; // 押したばかりなので、しばらく合わせ直さない
+                    _doorMismatchSinceMs = 0;
+                    ShowDoor("車掌: " + DoorLabel(c.Action));
+                    break;
             }
         }
 
         if (s == null || !s.InGame || !_crew.IsJoined) return;
+
+        // 押した操作が効かなかったとき（1回目の戸閉が効かないことがある）に備えて、
+        // 止まっている間に車掌のゲームとドアが食い違ったままなら、両側の開・閉で合わせ直す
+        if (_conductorAllClose is { } want && now - _conductorDoorMs < StaleMs && s.Speed < 0.5f && want != s.AllClose)
+        {
+            if (_doorMismatchSinceMs == 0) _doorMismatchSinceMs = now;
+            if (now - _doorMismatchSinceMs > DoorMismatchMs && now - _lastDoorFixMs > DoorMismatchMs)
+            {
+                var action = want ? "DoorCls" : "DoorOpn";
+                _ = _tci.PressAsync(action);
+                _lastDoorFixMs = now;
+                _doorMismatchSinceMs = 0;
+                ShowDoor("ドアを車掌に合わせました（" + DoorLabel(action) + "）");
+            }
+        }
+        else
+        {
+            _doorMismatchSinceMs = 0;
+        }
+
         var game = _game.Latest;
         var input = new DriverInput
         {
@@ -247,12 +296,18 @@ public sealed class CrewPanel : TabPage
             return;
         }
 
-        // 自分のゲームのドアが開いた・閉まったら、運転士へ
-        if (_ownAllClose is { } before && before != s.AllClose)
+        // 自分のゲームのキーでドアを開け閉めしたら、両側の開・閉として運転士へ
+        // （このタブのボタンで押したときは、ボタンの操作をそのまま送っているので送らない）
+        var now = Environment.TickCount64;
+        if (_ownAllClose is { } before && before != s.AllClose && now - _lastDoorButtonMs > 4000)
         {
             var action = s.AllClose ? "DoorCls" : "DoorOpn";
-            _crew.SendConductorInput(new ConductorInput { Action = action, AllClose = s.AllClose, TraveledDistance = _game.Latest?.TraveledDistance ?? 0 });
-            ShowDoor(s.AllClose ? "ドア閉 → 運転士へ" : "ドア開 → 運転士へ");
+            SendConductor(action, s);
+            ShowDoor(DoorLabel(action) + " → 運転士へ");
+        }
+        else if (now - _lastDoorStatusMs > DoorStatusMs)
+        {
+            SendConductor("", s); // 戸閉の状態だけ（運転士のゲームが食い違ったら合わせ直す）
         }
 
         _ownAllClose = s.AllClose;
@@ -274,24 +329,52 @@ public sealed class CrewPanel : TabPage
         }
         else if (_haveDriver && !_emergency)
         {
-            // 運転士の操作が届かない: 走り続けないように非常ブレーキ
-            _tci.SetNotch(0, 8, force: true);
+            // 運転士の操作が届かない: 走り続けないように常用最大ブレーキ（直通非常の B8 は使わない）
+            _tci.SetNotch(0, ServiceMaxBrake, force: true);
             _emergency = true;
-            Message?.Invoke("運転士の操作が届かないので、非常ブレーキをかけました");
+            Message?.Invoke($"運転士の操作が届かないので、ブレーキ（B{ServiceMaxBrake}）をかけました");
         }
     }
+
+    private void SendConductor(string action, TciState? s)
+    {
+        _crew.SendConductorInput(new ConductorInput
+        {
+            Action = action, AllClose = s?.AllClose ?? _ownAllClose ?? true, TraveledDistance = _game.Latest?.TraveledDistance ?? 0
+        });
+        _lastDoorStatusMs = Environment.TickCount64;
+    }
+
+    /// <summary>このタブのドアのボタン: 自分のゲームで押し、車掌なら同じ操作を運転士へ送る。</summary>
+    private async Task DoorAsync(string action)
+    {
+        _lastDoorButtonMs = Environment.TickCount64;
+        if (_role == CrewRole.Conductor)
+        {
+            SendConductor(action, _tci.Read());
+            ShowDoor(DoorLabel(action) + " → 運転士へ");
+        }
+
+        await _tci.PressAsync(action);
+    }
+
+    private static string DoorLabel(string action) => action switch
+    {
+        "DoorOpn" => "両側 開", "DoorCls" => "両側 閉", "DoorOpnLeft" => "左 開", "DoorClsLeft" => "左 閉",
+        "DoorOpnRight" => "右 開", "DoorClsRight" => "右 閉", "ReOpenSW" => "再開閉", _ => action
+    };
 
     private void Buzzer(bool on)
     {
         _tci.SetButton("Buzzer", on);
-        if (_role == CrewRole.Conductor) _crew.SendConductorInput(new ConductorInput { Action = on ? "Buzzer" : "BuzzerOff" });
+        if (_role == CrewRole.Conductor) SendConductor(on ? "Buzzer" : "BuzzerOff", null);
     }
 
     /// <summary>車掌をやめるとき: 送ったノッチを中立・ブレーキに戻しておく（自分のマスコンで動かせるように）。</summary>
     private void ReleaseControl()
     {
         if (_role != CrewRole.Conductor || !_haveDriver) return;
-        _tci.SetNotch(0, 8, force: true);
+        _tci.SetNotch(0, ServiceMaxBrake, force: true);
         _haveDriver = false;
         _latestInput = null;
     }
@@ -319,7 +402,7 @@ public sealed class CrewPanel : TabPage
     private static string Notch(int power, int brake, int reverser)
     {
         var r = reverser switch { 1 => "前", -1 => "後", _ => "切" };
-        var n = brake > 0 ? $"B{brake}" : power > 0 ? $"P{power}" : "N";
+        var n = brake >= 8 ? "非常" : brake > 0 ? $"B{brake}" : power > 0 ? $"P{power}" : "N";
         return $"{n}　（{r}）";
     }
 
@@ -352,7 +435,7 @@ public sealed class CrewPanel : TabPage
             }
             else
             {
-                _notchLabel.Text = (_emergency ? "非常（操作が届きません）" : "運転士 " + Notch(input.Power, input.Brake, input.Reverser));
+                _notchLabel.Text = (_emergency ? "ブレーキ（操作が届きません）" : "運転士 " + Notch(input.Power, input.Brake, input.Reverser));
                 _notchLabel.ForeColor = _emergency ? Color.Firebrick : age < StaleMs ? Color.ForestGreen : Color.DarkOrange;
                 var gap = (game?.TraveledDistance ?? 0) - input.TraveledDistance;
                 _gapLabel.Text = string.Create(CultureInfo.InvariantCulture,

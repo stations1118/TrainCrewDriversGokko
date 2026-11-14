@@ -107,7 +107,16 @@ public sealed class DriverInput
 /// <summary>車掌の操作。ドアは「開ける・閉める」の指示として送り、運転士のゲームでも同じ操作をする。</summary>
 public sealed class ConductorInput
 {
-    /// <summary>"DoorOpn"、"DoorCls"、"ReOpenSW"、"Buzzer"（押した）、"BuzzerOff"（離した）のどれか。</summary>
+    /// <summary>
+    /// 送ってよい操作（TrainCrewInput の InputAction の名前）。"" は操作なし（戸閉の状態だけ知らせる。1秒ごと）。
+    /// DoorOpn・DoorCls は両側、DoorOpnLeft などは片側。"BuzzerOff" はブザーを離した。
+    /// </summary>
+    public static readonly IReadOnlySet<string> Actions = new HashSet<string>
+    {
+        "", "DoorOpn", "DoorCls", "DoorOpnLeft", "DoorClsLeft", "DoorOpnRight", "DoorClsRight", "ReOpenSW", "Buzzer", "BuzzerOff"
+    };
+
+    /// <summary><see cref="Actions"/> のどれか。</summary>
     public string Action { get; set; } = "";
 
     /// <summary>車掌のゲームで、全部のドアが閉まっているか。</summary>

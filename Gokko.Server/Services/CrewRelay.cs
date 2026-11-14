@@ -151,7 +151,7 @@ public sealed class CrewRelay(IHubContext<CrewHub> hub, ILogger<CrewRelay> logge
             train = m.TrainNumber;
         }
 
-        if (input.Action is not ("" or "DoorOpn" or "DoorCls" or "ReOpenSW" or "Buzzer" or "BuzzerOff")) return Task.CompletedTask;
+        if (!ConductorInput.Actions.Contains(input.Action ?? "-")) return Task.CompletedTask;
         return hub.Clients.Group(Group(train, CrewRole.Driver)).SendAsync(CrewProtocol.ReceiveConductorInput, input);
     }
 
