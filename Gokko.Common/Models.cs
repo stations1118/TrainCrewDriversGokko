@@ -135,6 +135,13 @@ public sealed class ClientState
     /// <summary>取り消す進路。クライアントは、ゲームにあれば DeleteRoute2 で送る。</summary>
     public List<RouteKey> DeleteRoutes { get; set; } = new();
 
+    /// <summary>
+    /// ほかの参加者の列車の、開通している進路（その列車のゲームで開通を確かめ、列車がまだ入っていないもの）。
+    /// クライアントは自分のゲームにも設定し（対向列車の出発が開くのが見えるように）、ここからなくなったら取り消す。
+    /// 自分のゲームにはその列車がいないので、ゲームの自動解除はあてにしない。
+    /// </summary>
+    public List<RouteCommand> OtherRoutes { get; set; } = new();
+
     /// <summary>他の参加者の在線で落とす信号の現示。ここにない信号は、ゲームの現示に戻す（None を送る）。</summary>
     public List<SignalCommand> Signals { get; set; } = new();
 
