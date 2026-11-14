@@ -406,7 +406,7 @@ public sealed class RouteEngine
         public string? Message { get; set; }
 
         /// <summary>走った実績（ダイヤグラム用）。先頭のゾーンが変わるたびに記録し、30分より古いものは捨てる。</summary>
-        public List<(DateTime Utc, double Y)> History { get; } = new();
+        public List<(DateTime Utc, double Y, string? Row)> History { get; } = new();
 
         /// <summary>踏んだ軌道回路と、最後に踏んでいた時刻（在線位置の画面が、通ってきた枝で在線を塗るため。1分より古いものは捨てる）。</summary>
         public Dictionary<string, DateTime> SeenCircuits { get; } = new();
@@ -952,13 +952,38 @@ public sealed class RouteEngine
 
         // ダイヤグラム用の実績（駅のゾーンを目盛りにした位置）
         var now = DateTime.UtcNow;
-        var pos = PlotY(run);
-        if (run.History.Count == 0 || Math.Abs(run.History[^1].Y - pos) > 0.05 || (now - run.History[^1].Utc).TotalSeconds > 20)
-            run.History.Add((now, pos));
+        var pos = DiagramY(run);
+        var row = SidingRow(run);
+        if (run.History.Count == 0 || Math.Abs(run.History[^1].Y - pos) > 0.05 || run.History[^1].Row != row || (now - run.History[^1].Utc).TotalSeconds > 20)
+            run.History.Add((now, pos, row));
         run.History.RemoveAll(h => (now - h.Utc).TotalMinutes > 30);
     }
 
     /// <summary>ダイヤグラムの縦の位置（駅＝偶数のゾーン。駅間は、進んだ割合で按分）。</summary>
+    /// <summary>
+    /// ダイヤグラムの縦の位置。踏んでいる回路がすべて1つの駅の構内の回路（駅IDで始まる回路）なら、その駅にいるものとする
+    /// （大道寺の 44T のような分岐の回路は駅間のゾーンに入っているが、入換で通るときに線が駅の外へ跳ねないように）。それ以外は PlotY。
+    /// </summary>
+    private double DiagramY(TrainRun run)
+    {
+        var circuits = run.Player.TrackCircuits;
+        if (circuits.Count > 0 && circuits[0].IndexOf('_') is var i and > 0)
+        {
+            var sid = circuits[0][..i];
+            var zone = _data.Line.ZoneOfStation(sid);
+            if (zone >= 0 && circuits.All(c => c.StartsWith(sid + "_", StringComparison.Ordinal))) return zone;
+        }
+
+        return PlotY(run);
+    }
+
+    /// <summary>ダイヤグラムの段: 駅で、入換線など（Stations.json の diagramRows で軌道回路を書いた段）にいれば、その段の名前。</summary>
+    private string? SidingRow(TrainRun run)
+    {
+        if (DiagramY(run) is var y && y % 2 != 0 || _data.Line.StationAtZone((int)y) is not { } sid || !_data.Stations.TryGetValue(sid, out var st)) return null;
+        return st.DiagramRows.FirstOrDefault(r => r.Circuit != null && run.Player.TrackCircuits.Contains(r.Circuit)).Label;
+    }
+
     private static double PlotY(TrainRun run)
     {
         if (run.Front % 2 == 0) return run.Front;
@@ -2640,8 +2665,10 @@ public sealed class RouteEngine
                     train = r.Train,
                     type = r.Type,
                     direction = r.Dir.Label(),
-                    history = r.History.Select(h => new { t = h.Utc, y = h.Y }),
+                    history = r.History.Select(h => new { t = h.Utc, y = h.Y, row = h.Row }),
                     forecast,
+                    // 駅ごとの番線（通った駅も含む。ダイヤグラムの番線の段に線を引くため）
+                    tracks = r.Stations.Where(s => s.Track != null).Select(s => new { y = s.Zone, track = s.Track }),
                     markers
                 };
             }).ToList();
@@ -2671,7 +2698,7 @@ public sealed class RouteEngine
         // 行き止まりの番線に入る駅・終着（列車別設定の打ち切りを含む）があれば、線はその駅で切る
         if (r.Stations.FirstOrDefault(s => !s.Done && (IsTurnbackTrack(r, s) || s.Terminal)) is { } cut) terminalZone = cut.Zone;
 
-        var points = new List<object> { new { t = now, y = PlotY(r) } };
+        var points = new List<object> { new { t = now, y = DiagramY(r), row = SidingRow(r) } };
         var arrAt = new Dictionary<int, DateTime>();
         var depAt = new Dictionary<int, DateTime>();
         double extra = 0;
@@ -2757,7 +2784,7 @@ public sealed class RouteEngine
             }
         }
 
-        var points = new List<object> { new { t = now, y = PlotY(r) } };
+        var points = new List<object> { new { t = now, y = DiagramY(r), row = SidingRow(r) } };
         var arrAt = new Dictionary<int, DateTime>();
         var depAt = new Dictionary<int, DateTime>();
         var first = r.Front % 2 == 0 ? r.Front : r.Front + step;

@@ -100,6 +100,9 @@ public sealed class StationDef
 
     /// <summary>方向 → 所定の番線の決まり（キー → 番線）。</summary>
     public Dictionary<Dir, Dictionary<string, int>> DefaultTracks { get; } = new();
+
+    /// <summary>ダイヤグラムを番線ごとに分けたときの段（上から順。Label は番線か入換線の名前、Circuit は入換線の軌道回路）。空なら進路のある番線すべて。</summary>
+    public List<(string Label, string? Circuit)> DiagramRows { get; } = new();
 }
 
 public sealed class SignalDef
@@ -260,6 +263,12 @@ public sealed class RailData
                     SingleTrackStation = Str(s, "track") == "単線",
                     RouteControl = s.TryGetProperty("routeControl", out var rc) && rc.GetBoolean()
                 };
+                if (s.TryGetProperty("diagramRows", out var dr))
+                    foreach (var row in dr.EnumerateArray().Select(x => x.GetString() ?? ""))
+                    {
+                        var p = row.Split(':', 2);
+                        st.DiagramRows.Add((p[0], p.Length > 1 ? p[1] : null));
+                    }
                 data.Stations[st.Id] = st;
                 // 番線の軌道回路: 「N番線へ」の進路の最後の回路のうち、いちばん多く出てくるもの
                 // （新野崎の 10LC は 34T まで、4L が 4LT まで。どちらも「3番線へ」なので、多い方の 4LT を番線の回路とする）

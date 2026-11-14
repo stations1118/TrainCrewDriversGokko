@@ -401,98 +401,240 @@
   // ---- ダイヤグラム（管理画面とダイヤグラムの設定画面で共通） ----
   // 実績（実線）と見込み（点線）。◆は進路を扱う駅を通過する（停車駅は着く）予想時刻。
   // ◆を押すと窓（番線・駅扱い・抑止・順序）。◆を横にずらすと、その駅の発車時刻を決める（スジずらし。ダブルクリックで解除）。
-  // 上の「全部・上りのみ・下りのみ」で、表示する列車を絞る
+  // 詳細表示では、◆を縦にずらすと、その駅の番線を変える（変えられる番線の段は緑。列車がもうその駅の進路に入っていれば変えられない）。
+  // 上の「全部・上りのみ・下りのみ」で、表示する列車を絞る。
+  // 「詳細表示」: 進路を扱う駅を番線ごとの段に分け、列車はその駅で使う番線の段に引く。同じ番線に同じ時間帯に2本いれば、赤く示す（番線の競合）。
+  // 1分の幅・駅と駅の間隔・（詳細表示では）番線の段の高さ・表示する時間の範囲を変えられ、拡大・縮小もできる（Ctrl+ホイールでも）。
+  // 設定は通常表示と詳細表示で別々に、見る人ごとにブラウザに残す。通常表示を「元に戻す」にしているときは、これまでどおり画面の幅に合わせる
   function diagramView({ box, tip, filter, act }) {
-    const DG = { w: 1000, left: 92, right: 12, top: 18, rowPx: 17, pastMin: 10, futureMin: 30 };
+    const RIGHT = 12, TOP = 18, BOTTOM = 24;
+    const DEFAULTS = {
+      // 通常表示（これまでの図: 幅 1000 に過去10分・先30分。駅の間隔は 17）
+      n: { minPx: (1000 - 92 - RIGHT) / 40, stationPx: 17, trackPx: 14, pastMin: 10, futureMin: 30 },
+      d: { minPx: 22, stationPx: 34, trackPx: 14, pastMin: 10, futureMin: 30 }
+    };
+    const LIMITS = { minPx: [4, 120], stationPx: [8, 200], trackPx: [8, 60], pastMin: [0, 120], futureMin: [5, 240] };
+    let view = { split: false, n: { ...DEFAULTS.n }, d: { ...DEFAULTS.d } };
+    try {
+      const saved = JSON.parse(localStorage.getItem("gokkoDiagramView2") || "{}");
+      view = { split: !!saved.split, n: { ...DEFAULTS.n, ...saved.n }, d: { ...DEFAULTS.d, ...saved.d } };
+    } catch (e) {}
+    const cur = () => (view.split ? view.d : view.n);
+    const isDefault = (v, def) => Object.keys(def).every((k) => v[k] === def[k]);
     let diagram = null;
     let dragging = null;
     let shown = "全部";
     try { shown = localStorage.getItem("gokkoDiagramFilter") || "全部"; } catch (e) {}
+    box.style.overflowX = "auto";
 
+    const clamp = (k, v) => Math.round(Math.max(LIMITS[k][0], Math.min(LIMITS[k][1], v)));
+    function save() { try { localStorage.setItem("gokkoDiagramView2", JSON.stringify(view)); } catch (e) {} }
+    function redraw() { save(); drawFilter(); box.dataset.html = ""; render(diagram); }
+
+    const step = (k, label, unit) => `<span class="dg-set" title="${label}">${label}
+        <button data-dg-step="${k}" data-dg-dir="-1">−</button><b>${Math.round(cur()[k])}</b>${unit}<button data-dg-step="${k}" data-dg-dir="1">＋</button></span>`;
     function drawFilter() {
       if (!filter) return;
       filter.innerHTML = ["全部", "上りのみ", "下りのみ"].map((f) =>
-        `<button data-filter="${f}" class="${f === shown ? "primary" : ""}">${f}</button>`).join(" ");
+        `<button data-filter="${f}" class="${f === shown ? "primary" : ""}">${f}</button>`).join(" ")
+        + `<button data-dg-detail="1" class="${view.split ? "primary" : ""}" style="margin-left:12px" title="番線ごとの段に分け、番線の競合を見る">詳細表示</button>
+        <button data-dg-zoom="1.25" title="1分の幅・駅の間隔${view.split ? "・番線の段" : ""}をまとめて大きく（Ctrl+ホイールでも）">拡大</button>
+        <button data-dg-zoom="0.8" title="まとめて小さく">縮小</button>
+        ${step("minPx", "1分の幅", "px")} ${step("stationPx", "駅の間隔", "px")}
+        ${view.split ? step("trackPx", "番線の段", "px") : ""}
+        ${step("pastMin", "過去", "分")} ${step("futureMin", "先", "分")}
+        <button data-dg-reset="1" title="表示の設定を最初に戻す">元に戻す</button>`;
     }
-    if (filter) filter.addEventListener("click", (ev) => {
-      const b = ev.target.closest("button[data-filter]");
-      if (!b) return;
-      shown = b.dataset.filter;
-      try { localStorage.setItem("gokkoDiagramFilter", shown); } catch (e) {}
-      drawFilter();
-      box.dataset.html = "";
-      render(diagram);
-    });
+    if (filter) {
+      filter.addEventListener("click", (ev) => {
+        const b = ev.target.closest("button");
+        if (!b) return;
+        const v = cur();
+        if (b.dataset.filter) {
+          shown = b.dataset.filter;
+          try { localStorage.setItem("gokkoDiagramFilter", shown); } catch (e) {}
+        } else if (b.dataset.dgStep) {
+          const k = b.dataset.dgStep, dir = Number(b.dataset.dgDir);
+          const inc = k === "pastMin" || k === "futureMin" ? 5 : Math.max(1, Math.round(v[k] * 0.15));
+          v[k] = clamp(k, v[k] + dir * inc);
+        } else if (b.dataset.dgZoom) zoom(Number(b.dataset.dgZoom));
+        else if (b.dataset.dgReset) view[view.split ? "d" : "n"] = { ...DEFAULTS[view.split ? "d" : "n"] };
+        else if (b.dataset.dgDetail) view.split = !view.split;
+        else return;
+        redraw();
+      });
+    }
+    function zoom(f) {
+      const v = cur();
+      for (const k of ["minPx", "stationPx", "trackPx"]) v[k] = clamp(k, v[k] * f);
+    }
+    box.addEventListener("wheel", (ev) => {
+      if (!ev.ctrlKey) return;
+      ev.preventDefault();
+      zoom(ev.deltaY < 0 ? 1.1 : 1 / 1.1);
+      redraw();
+    }, { passive: false });
     drawFilter();
 
+    // 縦の並び。駅ごとに、名前の線（y）と、番線の段（rows: 番線 → y）、上端・下端（駅間の線をつなぐところ）
     function layout(d) {
-      const ys = d.stations.map((s) => s.y);
-      const minY = Math.min(...ys), maxY = Math.max(...ys);
-      const h = (maxY - minY) / 2 * DG.rowPx;
+      const stations = [...d.stations].sort((a, b) => a.y - b.y);
+      const c = cur();
+      const left = view.split ? 118 : 92;
+      const rowsOf = (s) => (view.split && s.control && s.tracks && s.tracks.length > 0 ? s.tracks : []);
+      const band = {};
+      let y = TOP;
+      for (const s of stations) {
+        const tracks = rowsOf(s);
+        const rows = {};
+        tracks.forEach((t, i) => { rows[t] = y + 10 + (i + 0.5) * c.trackPx; });
+        const bottom = tracks.length ? y + 10 + (tracks.length - 0.5) * c.trackPx : y;
+        band[s.y] = { s, y, rows, top: tracks.length ? rows[tracks[0]] : y, bottom };
+        y = (tracks.length ? y + 10 + tracks.length * c.trackPx : y) + c.stationPx;
+      }
+      const height = y - c.stationPx + BOTTOM;
+      const zones = stations.map((s) => s.y);
       const now = new Date(d.now).getTime();
-      const t0 = now - DG.pastMin * 60000, t1 = now + DG.futureMin * 60000;
+      const t0 = now - c.pastMin * 60000, t1 = now + c.futureMin * 60000;
+      const w = left + (c.pastMin + c.futureMin) * c.minPx + RIGHT;
+      // ゾーンと番線から縦の位置。駅ちょうどなら番線の段（番線が分からなければ駅の線）、駅間なら前後の駅の端をつなぐ
+      function yOf(z, track) {
+        const b = band[z];
+        if (b) return track != null && b.rows[String(track)] != null ? b.rows[String(track)] : b.y;
+        let i = zones.findIndex((x) => x > z);
+        if (i <= 0) return band[zones[i < 0 ? zones.length - 1 : 0]].y;
+        const a = band[zones[i - 1]], c = band[zones[i]];
+        return a.bottom + (z - zones[i - 1]) / (zones[i] - zones[i - 1]) * (c.top - a.bottom);
+      }
       return {
-        height: DG.top + h + 24, now, t0, t1,
-        x: (t) => DG.left + (new Date(t).getTime() - t0) / (t1 - t0) * (DG.w - DG.left - DG.right),
-        t: (x) => t0 + (x - DG.left) / (DG.w - DG.left - DG.right) * (t1 - t0),
-        y: (z) => DG.top + (z - minY) / 2 * DG.rowPx
+        stations, band, left, w, height, now, t0, t1, y: yOf, minPx: c.minPx, fit: !view.split && isDefault(view.n, DEFAULTS.n), // 通常表示を元のままにしているときは、画面の幅に合わせる
+        x: (t) => left + (new Date(t).getTime() - t0) / 60000 * c.minPx,
+        t: (x) => t0 + (x - left) / c.minPx * 60000
       };
     }
 
     const visible = (tr) => shown === "全部" || (shown === "上りのみ" ? tr.direction === "上り" : tr.direction === "下り");
+
+    // 列車ごとの、駅にいる時間（着〜発。通過は一瞬）と、その駅の番線
+    function occupancy(d) {
+      const list = [];
+      for (const tr of d.trains) {
+        const tracks = trackMap(tr);
+        const pts = [...tr.history, ...tr.forecast].map((p) => ({ t: new Date(p.t).getTime(), y: p.y, track: p.row ?? tracks[p.y] }));
+        let cur = null;
+        for (const p of pts) {
+          const atStation = Number.isInteger(p.y) && p.y % 2 === 0;
+          if (cur && cur.y === p.y && cur.track === p.track) { cur.end = Math.max(cur.end, p.t); cur.start = Math.min(cur.start, p.t); continue; }
+          if (cur) list.push(cur);
+          cur = atStation ? { train: tr.train, tr, y: p.y, track: p.track, start: p.t, end: p.t } : null;
+        }
+        if (cur) list.push(cur);
+      }
+      return list.filter((o) => o.track != null);
+    }
+
+    // 同じ駅・同じ番線に、時間の重なる2本（番線の競合）
+    function conflicts(d) {
+      const occ = occupancy(d);
+      const out = [];
+      for (let i = 0; i < occ.length; i++)
+        for (let j = i + 1; j < occ.length; j++) {
+          const a = occ[i], b = occ[j];
+          if (a.train === b.train || a.y !== b.y || a.track !== b.track) continue;
+          const start = Math.max(a.start, b.start), end = Math.min(a.end, b.end);
+          if (start <= end) out.push({ y: a.y, track: a.track, trains: [a.train, b.train], start, end });
+        }
+      return out;
+    }
+
+    // 段の名前: 数字なら「N番線」、入換線などは「X線」
+    const rowName = (t) => (/^\d+$/.test(String(t)) ? `${t}番線` : `${t}線`);
+
+    function trackMap(tr) {
+      const m = {};
+      for (const x of tr.tracks || []) m[x.y] = String(x.track);
+      for (const x of tr.markers) if (x.track != null) m[x.y] = String(x.track);
+      return m;
+    }
 
     function render(d) {
       if (!d) return;
       diagram = d;
       if (dragging || popup) return; // ずらしている間・◆の窓を開いている間は描き直さない
       const L = layout(d);
-      const parts = [`<svg viewBox="0 0 ${DG.w} ${L.height}" width="100%" style="display:block">`];
-      for (const s of d.stations) {
-        const y = L.y(s.y);
-        parts.push(`<line x1="${DG.left}" x2="${DG.w - DG.right}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="${s.control ? 1.6 : 0.6}"/>`);
-        parts.push(`<text x="${DG.left - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="${s.control ? "var(--text)" : "var(--muted)"}" font-weight="${s.control ? 600 : 400}">${esc(s.name)}</text>`);
+      const parts = [`<svg viewBox="0 0 ${L.w} ${L.height}" ${L.fit ? `width="100%"` : `width="${L.w}" height="${L.height}"`} style="display:block">`];
+      for (const s of L.stations) {
+        const b = L.band[s.y];
+        const rowTracks = Object.keys(b.rows);
+        parts.push(`<line x1="${L.left}" x2="${L.w - RIGHT}" y1="${b.y}" y2="${b.y}" stroke="var(--line)" stroke-width="${s.control ? 1.6 : 0.6}"/>`);
+        parts.push(`<text x="${L.left - 6}" y="${b.y + 4}" text-anchor="end" font-size="11" fill="${s.control ? "var(--text)" : "var(--muted)"}" font-weight="${s.control ? 600 : 400}">${esc(s.name)}</text>`);
+        for (const t of rowTracks) {
+          const ry = b.rows[t];
+          parts.push(`<line x1="${L.left}" x2="${L.w - RIGHT}" y1="${ry}" y2="${ry}" stroke="var(--line)" stroke-width="0.5" stroke-dasharray="2 3"/>`);
+          parts.push(`<text x="${L.left - 6}" y="${ry + 3.5}" text-anchor="end" font-size="10" fill="var(--muted)">${esc(rowName(t))}</text>`);
+        }
       }
+      const every = L.minPx >= 40 ? 1 : L.minPx >= 10 ? 5 : 10; // 時刻を書く間隔（分）
       const first = Math.ceil(L.t0 / 60000) * 60000;
       for (let t = first; t <= L.t1; t += 60000) {
-        const x = L.x(t), five = new Date(t).getMinutes() % 5 === 0;
-        parts.push(`<line x1="${x}" x2="${x}" y1="${DG.top - 6}" y2="${L.height - 18}" stroke="var(--line)" stroke-width="${five ? 1 : 0.4}"/>`);
-        if (five) parts.push(`<text x="${x}" y="${L.height - 4}" text-anchor="middle" font-size="10" fill="var(--muted)">${hhmm(t)}</text>`);
+        const x = L.x(t), min = new Date(t).getMinutes(), five = min % 5 === 0;
+        if (L.minPx < 8 && !five) continue;
+        parts.push(`<line x1="${x}" x2="${x}" y1="${TOP - 6}" y2="${L.height - 18}" stroke="var(--line)" stroke-width="${five ? 1 : 0.4}"/>`);
+        if (min % every === 0) parts.push(`<text x="${x}" y="${L.height - 4}" text-anchor="middle" font-size="10" fill="var(--muted)">${hhmm(t)}</text>`);
       }
       const nx = L.x(L.now);
-      parts.push(`<line x1="${nx}" x2="${nx}" y1="${DG.top - 10}" y2="${L.height - 18}" stroke="var(--danger)" stroke-width="1.2"/>`);
+      parts.push(`<line x1="${nx}" x2="${nx}" y1="${TOP - 10}" y2="${L.height - 18}" stroke="var(--danger)" stroke-width="1.2"/>`);
+
+      // 番線の競合（詳細表示のとき、その番線の段に赤い枠つきの帯。短い重なりでも見えるように前後を少し広げ、線と◆の上に描く）
+      const found = view.split ? conflicts(d).filter((c) => c.end >= L.t0) : [];
+      const marks = [];
+      for (const c of found) {
+        if (c.start > L.t1) continue;
+        const x1 = Math.max(L.left, L.x(c.start) - 8), x2 = Math.min(L.w - RIGHT, L.x(c.end) + 8);
+        const cy = L.y(c.y, c.track), h = Math.max(10, cur().trackPx);
+        marks.push(`<rect x="${x1}" y="${cy - h / 2}" width="${Math.max(4, x2 - x1)}" height="${h}" rx="3" fill="rgba(229,57,53,.25)" stroke="#e53935" stroke-width="1.5" pointer-events="none"/>`);
+      }
+
       d.trains.forEach((tr, ti) => {
         if (!visible(tr)) return;
         const color = TYPE_COLORS[tr.type] || "var(--text)";
-        const pts = (arr) => arr.map((p) => `${L.x(p.t).toFixed(1)},${L.y(p.y).toFixed(1)}`).join(" ");
+        const tracks = trackMap(tr);
+        const pts = (arr) => arr.map((p) => `${L.x(p.t).toFixed(1)},${L.y(p.y, p.row ?? tracks[p.y]).toFixed(1)}`).join(" ");
         if (tr.history.length > 1) parts.push(`<polyline points="${pts(tr.history)}" fill="none" stroke="${color}" stroke-width="2"/>`);
         if (tr.forecast.length > 1) parts.push(`<polyline points="${pts(tr.forecast)}" fill="none" stroke="${color}" stroke-width="1.6" stroke-dasharray="5 4"/>`);
         const cur = tr.forecast[0];
-        parts.push(`<text x="${L.x(cur.t) + 6}" y="${L.y(cur.y) - 5}" font-size="11" font-weight="600" fill="${color}">${esc(tr.train)}</text>`);
+        parts.push(`<text x="${L.x(cur.t) + 6}" y="${L.y(cur.y, cur.row ?? tracks[cur.y]) - 5}" font-size="11" font-weight="600" fill="${color}">${esc(tr.train)}</text>`);
         tr.markers.forEach((m, mi) => {
-          const x = L.x(m.t), y = L.y(m.y);
+          const x = L.x(m.t), y = L.y(m.y, m.track);
           const fill = m.held ? "#c62828" : !m.editable ? "#999" : m.departAt ? "#e0a800" : "#3aa0d8";
           const trackText = m.track == null ? "通" : String(m.track);
           const trackColor = m.trackSource === "集中" || m.trackSource === "駅扱い" ? "#e07000" : m.trackSource === "待避" ? "#b04fd0" : color;
           const dep = m.departAt ? `・発車時刻 ${hhmm(new Date(m.departAt).getTime(), true)}` : "";
           const tipText = `${tr.train} ${m.name}: ${m.track == null ? "通過" : m.track + "番線"}（${m.trackSource}）・${m.source} ${hhmm(new Date(m.t).getTime(), true)}${dep}（${m.status}）`
-            + "　押すと番線・駅扱い・抑止・順序" + (m.draggable ? "　横にずらすと発車時刻（ダブルクリックで解除）" : "");
-          parts.push(`<text x="${x + 8}" y="${y + 4}" font-size="11" font-weight="700" fill="${trackColor}" pointer-events="none">${esc(trackText)}</text>`);
+            + "　押すと番線・駅扱い・抑止・順序" + (m.draggable ? "　横にずらすと発車時刻（ダブルクリックで解除）" : "") + (view.split && m.changeable ? "　縦にずらすと番線" : "");
+          if (!view.split) parts.push(`<text x="${x + 8}" y="${y + 4}" font-size="11" font-weight="700" fill="${trackColor}" pointer-events="none">${esc(trackText)}</text>`);
           parts.push(`<path d="M${x},${y - 7} L${x + 6},${y} L${x},${y + 7} L${x - 6},${y} Z" fill="${fill}" stroke="var(--panel, #fff)" stroke-width="1"
             data-train="${esc(tr.train)}" data-station="${esc(m.stationId)}" data-ti="${ti}" data-mi="${mi}" data-drag="${m.draggable ? 1 : 0}"
-            data-x="${x}" data-tip="${esc(tipText)}" style="cursor:${m.draggable ? "ew-resize" : "pointer"}"/>`);
+            data-x="${x}" data-y="${y}" data-tip="${esc(tipText)}" style="cursor:${view.split && m.changeable ? "move" : m.draggable ? "ew-resize" : "pointer"}"/>`);
         });
       });
+      parts.push(...marks);
       parts.push(`</svg>`);
       if (!d.trains.some(visible)) parts.push(`<div class="muted">表示する列車はいません</div>`);
+      if (found.length > 0) {
+        const name = (y) => (L.band[y] ? L.band[y].s.name : y);
+        parts.push(`<div style="color:var(--danger); margin-top:4px"><b>番線の競合</b> ` + found.map((c) =>
+          `${esc(name(c.y))} ${esc(rowName(c.track))}: ${esc(c.trains.join("・"))}（${hhmm(c.start, true)}〜${hhmm(c.end, true)}）`).join("／") + `</div>`);
+      }
       const html = parts.join("");
       if (box.dataset.html !== html) { box.innerHTML = html; box.dataset.html = html; }
     }
 
-    function svgX(ev) {
+    function svgPoint(ev) {
       const svg = box.querySelector("svg");
       const pt = svg.createSVGPoint();
       pt.x = ev.clientX; pt.y = ev.clientY;
-      return pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
     }
 
     function open(el) {
@@ -501,12 +643,63 @@
       openPopup({ box, anchor: el, train: tr.train, marker: m, diagram, act, onClose: () => { box.dataset.html = ""; render(diagram); } });
     }
 
+    // ◆を縦にずらしたとき: いちばん近い番線の段と、その番線に変えられるか
+    function trackTarget(d, y) {
+      const L = layout(diagram), b = L.band[d.marker.y];
+      if (!b) return null;
+      let best = null;
+      for (const [label, ry] of Object.entries(b.rows))
+        if (best == null || Math.abs(ry - y) < Math.abs(best.y - y)) best = { label, y: ry };
+      if (!best) return null;
+      const track = /^\d+$/.test(best.label) ? Number(best.label) : null;
+      const ok = d.marker.changeable && track != null && (d.marker.options || []).includes(track);
+      return { ...best, track, ok, same: track === d.marker.track };
+    }
+
+    // 縦にずらしている間、その駅の段を色分けする（変えられる番線は緑、変えられない段は灰色）
+    function showRows(d) {
+      const L = layout(diagram), b = L.band[d.marker.y], svg = box.querySelector("svg");
+      if (!b || !svg) return;
+      const ns = "http://www.w3.org/2000/svg";
+      d.overlay = document.createElementNS(ns, "g");
+      d.overlay.setAttribute("pointer-events", "none");
+      const h = Math.max(8, cur().trackPx - 2);
+      for (const [label, ry] of Object.entries(b.rows)) {
+        const track = /^\d+$/.test(label) ? Number(label) : null;
+        const ok = track != null && (d.marker.options || []).includes(track);
+        const r = document.createElementNS(ns, "rect");
+        Object.entries({ x: L.left, y: ry - h / 2, width: L.w - RIGHT - L.left, height: h,
+          fill: ok ? "rgba(46,160,67,.18)" : "rgba(128,128,128,.12)" }).forEach(([k, v]) => r.setAttribute(k, v));
+        d.overlay.appendChild(r);
+      }
+      svg.insertBefore(d.overlay, svg.firstChild.nextSibling);
+    }
+
     box.addEventListener("pointermove", (ev) => {
       if (dragging) {
-        const x = Math.max(DG.left, Math.min(DG.w - DG.right, svgX(ev)));
-        dragging.el.setAttribute("transform", `translate(${x - dragging.x0},0)`);
-        dragging.x = x;
-        if (tip) tip.textContent = `${dragging.label} → ${hhmm(layout(diagram).t(x), true)} 発に変更（離すと決定）`;
+        const d = dragging, L = layout(diagram), p = svgPoint(ev);
+        // 動かし始めの向きで決める: 横 → 発車時刻（スジずらし）、縦 → 番線（詳細表示のときだけ）
+        if (!d.mode) {
+          const dx = Math.abs(p.x - d.x0), dy = Math.abs(p.y - d.y0);
+          if (Math.max(dx, dy) < 4) return;
+          d.mode = dy > dx && view.split && L.band[d.marker.y] && Object.keys(L.band[d.marker.y].rows).length > 0 ? "track" : "time";
+          if (d.mode === "track") showRows(d);
+        }
+        if (d.mode === "time") {
+          if (!d.canDrag) return;
+          const x = Math.max(L.left, Math.min(L.w - RIGHT, p.x));
+          d.el.setAttribute("transform", `translate(${x - d.x0},0)`);
+          d.x = x;
+          if (tip) tip.textContent = `${d.label} → ${hhmm(L.t(x), true)} 発に変更（離すと決定）`;
+        } else {
+          const t = trackTarget(d, p.y);
+          d.target = t;
+          d.el.setAttribute("transform", `translate(0,${(t ? t.y : p.y) - d.y0})`);
+          if (tip) tip.textContent = !t ? "" : t.same ? `${d.label}: ${rowName(t.label)}のまま`
+            : t.ok ? `${d.label} → ${rowName(t.label)}に変更（離すと決定）`
+            : !d.marker.changeable ? `${d.label}: 列車がもう進路に入っているので、番線は変えられません`
+            : `${d.label}: ${rowName(t.label)}には変えられません`;
+        }
       } else if (tip) {
         const m = ev.target.closest("path[data-train]");
         tip.textContent = m ? m.dataset.tip : "";
@@ -519,13 +712,27 @@
       ev.preventDefault();
       closePopup();
       m.setPointerCapture(ev.pointerId);
-      dragging = { el: m, train: m.dataset.train, station: m.dataset.station, x0: Number(m.dataset.x), x: Number(m.dataset.x),
-                   label: m.dataset.tip.split(":")[0], canDrag: m.dataset.drag === "1" };
+      const tr = diagram.trains[Number(m.dataset.ti)];
+      dragging = { el: m, train: m.dataset.train, station: m.dataset.station, x0: Number(m.dataset.x), y0: Number(m.dataset.y), x: Number(m.dataset.x),
+                   label: m.dataset.tip.split(":")[0], canDrag: m.dataset.drag === "1", marker: tr.markers[Number(m.dataset.mi)], mode: null };
     });
     box.addEventListener("pointerup", async () => {
       if (!dragging) return;
       const d = dragging;
       dragging = null;
+      if (d.overlay) d.overlay.remove();
+      // 縦: 番線を変える（変えられない段で離したら元に戻す）
+      if (d.mode === "track") {
+        if (d.target && d.target.ok && !d.target.same) {
+          box.dataset.html = "";
+          await act("POST", "/route/track", { train: d.train, station: d.station, track: d.target.track });
+        } else {
+          d.el.removeAttribute("transform");
+          box.dataset.html = "";
+          render(diagram);
+        }
+        return;
+      }
       // 動かさずに離したら、◆の窓（クリック）
       if (Math.abs(d.x - d.x0) < 3 || !d.canDrag) {
         d.el.removeAttribute("transform");
