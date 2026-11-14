@@ -25,6 +25,7 @@ public sealed class MainForm : Form
     private readonly EmergencyLightSync _lights = new();
     private readonly RouteApplier _routes = new();
     private readonly SignalApplier _signals = new();
+    private readonly OtherRouteApplier _otherRoutes = new();
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 500 };
     private readonly Dictionary<string, int> _trackChoices = new();
 
@@ -328,6 +329,7 @@ public sealed class MainForm : Form
         {
             _routes.Reset();
             _signals.Reset();
+            _otherRoutes.Reset();
         }
         _wasGameConnected = connected;
         _lastScreen = screen;
@@ -367,6 +369,7 @@ public sealed class MainForm : Form
         if (_mode != ShareMode.Shared) return;
         await _routes.ClearAllAsync(_game, EffectiveTrainNumber(_game.Latest));
         await _signals.ClearAllAsync(_game);
+        await _otherRoutes.ClearAllAsync(_game);
     }
 
     private bool _onemanApplied;
@@ -414,6 +417,7 @@ public sealed class MainForm : Form
         {
             if (!_game.Stopped)
             {
+                await _otherRoutes.ClearAllAsync(_game);
                 await LeaveGameModesAsync();
                 if (_onemanApplied && _game.IsConnected)
                     try { await SendOnemanAsync(false); } catch { }
@@ -421,12 +425,14 @@ public sealed class MainForm : Form
                 _onemanApplied = false;
                 _routes.Reset();
                 _signals.Reset();
+                _otherRoutes.Reset();
                 ShowMessage("TRAIN CREW との接続を切りました（ゲームの設定は元に戻しました）");
             }
             else
             {
                 _routes.Reset();
                 _signals.Reset();
+                _otherRoutes.Reset();
                 _game.Start();
                 ShowMessage("TRAIN CREW につなぎ直します");
             }
@@ -495,6 +501,7 @@ public sealed class MainForm : Form
             {
                 await _routes.TickAsync(_game, state, trainNumber);
                 await _signals.TickAsync(_game, state);
+                await _otherRoutes.TickAsync(_game, state);
             }
 
             UpdateView(state);
@@ -880,6 +887,7 @@ public sealed class MainForm : Form
             _config.TrainNumber = _confirmedTrain;
             _config.Save();
             await _server.StopAsync();
+            await _otherRoutes.ClearAllAsync(_game);
             await LeaveGameModesAsync();
             // ワンマンの強制も外す（このソフトを使わずに遊ぶときは、ゲームの設定どおりに）
             if (_onemanApplied && _game.IsConnected)

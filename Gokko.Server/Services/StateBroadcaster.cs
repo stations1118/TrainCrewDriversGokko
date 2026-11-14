@@ -131,6 +131,7 @@ public sealed class StateBroadcaster : BackgroundService
                 {
                     state.Routes = output.Routes;
                     state.DeleteRoutes = output.Deletes;
+                    state.OtherRoutes = _routes.OtherRoutes(p.ConnectionId);
                     state.Plan = output.Plan;
                     state.CanRequestDeparture = output.CanRequestDeparture;
                     state.DepartureLabel = output.DepartureLabel;

@@ -2424,6 +2424,7 @@ public sealed class RouteEngine
             foreach (var g in run.Player.GameRoutes.Where(g => stuck.Contains(g.Interlock) && !wanted.Contains(g)))
             {
                 if (_data.Routes.TryGetValue(g, out var def) && def.Circuits.Any(run.Player.TrackCircuits.Contains)) continue;
+                if (_mirror.Any(m => m.Conn != run.ConnId && m.Route.Interlocking == g.Interlock && m.Route.RouteName == g.Route)) continue; // ほかの列車の進路（クライアントが写したもの）は消さない
                 deletes.Add(new RouteKey { Interlocking = g.Interlock, RouteName = g.Route });
                 if (_orphanLogged.Add((run.ConnId, g.Interlock, g.Route)))
                     _log.Note($"残っていた進路を取消: {run.Train} {g.Interlock} {g.Route}（要求していない進路が、新しい進路の開通をふさいでいたため）");
@@ -2458,6 +2459,39 @@ public sealed class RouteEngine
 
         foreach (var (conn, a) in _appear)
             _outputs[conn] = new Output(new(), new(), new(), false, "出発要求", $"出現待ち: {a.Reason}");
+
+        // ほかの参加者のゲームにも設定する進路: その列車のゲームで開通を確かめ、列車がまだ入っていないもの
+        // （入ったら外す。本物の信号も、列車が過ぎると停止に戻る。その先は在線による停止の上限で守る）
+        _mirror.Clear();
+        foreach (var run in _runs.Values)
+        foreach (var r in run.Requests.Where(r => r.Seen && !r.Entered && !r.Released && r.CancelledUtc == null))
+            _mirror.Add((run.ConnId, r.Station.Zone, new RouteCommand
+            {
+                Id = r.Id, Interlocking = r.Def.Interlock, RouteName = r.Def.Name,
+                Indicator = r.Def.IsDepartureSignal ? run.Indicator : r.Def.Indicator,
+                UseTrainType = false,
+                TrainNumber = run.GameTrain.Length > 0 ? run.GameTrain : run.Train,
+                StopType = r.Station.StopType
+            }));
+    }
+
+    private readonly List<(string Conn, int Zone, RouteCommand Route)> _mirror = new();
+
+    /// <summary>ほかの列車の進路を送る範囲（区間の番号の差。駅は2つおきなので、4 で前後2駅）。</summary>
+    private const int MirrorZones = 4;
+
+    /// <summary>その参加者のゲームにも設定する、ほかの列車の進路（自分の列車の前後2駅の分。自分の列車の進路と同じものは除く）。</summary>
+    public List<RouteCommand> OtherRoutes(string connId)
+    {
+        lock (_lock)
+        {
+            // 自分の列車の位置が分からなければ送らない。見えるのは近くの信号機だけなので、前後2駅の進路だけ送る（回線を軽くするため）
+            if (!_runs.TryGetValue(connId, out var run) || !run.HasPosition) return new List<RouteCommand>();
+            var mine = run.Requests.Where(r => !r.Released).Select(r => (r.Def.Interlock, r.Def.Name)).ToHashSet();
+            return _mirror.Where(m => m.Conn != connId && Math.Abs(m.Zone - run.Front) <= MirrorZones
+                                      && !mine.Contains((m.Route.Interlocking, m.Route.RouteName)))
+                .Select(m => m.Route).ToList();
+        }
     }
 
     /// <summary>
