@@ -11,6 +11,9 @@ namespace Gokko.Server.Services;
 /// 4. 取り始めるのは S(d+1+余裕) を過ぎたとき（余裕 0 なら限界点ちょうど。要求から開通まで数秒かかる）
 /// 手前の信号機が枝分かれしていれば、枝ごとに計算する（列車がいる枝の信号機で判定する）。
 /// 前の駅の出発・場内信号機も、閉塞信号機と同じにたどる。
+///
+/// 第1場内を先に取る駅（RouteRules.json の approachTrigger.firstHome。大道寺の上り）は、決めた信号機を過ぎたら第1場内だけ開け、
+/// 第2場内（通過なら出発も）は 1. の「開けないとき」を「第1場内だけ開いている」として計算した位置で開ける。
 /// </summary>
 public sealed class ApproachTrigger
 {
@@ -19,7 +22,7 @@ public sealed class ApproachTrigger
 
     private readonly RailData _data;
     private readonly Dictionary<string, List<string>> _previous = new();
-    private readonly Dictionary<(string Station, Dir Dir, int? Track, bool Passing, int Margin), Result?> _cache = new();
+    private readonly Dictionary<(string Station, Dir Dir, int? Track, bool Passing, int Margin, bool FirstHomeOpen), Result?> _cache = new();
 
     /// <param name="Triggers">取り始める信号機（枝ごと）</param>
     /// <param name="Limits">限界点の信号機（これを過ぎたら、現示の変化が見える。枝ごと）</param>
@@ -89,24 +92,20 @@ public sealed class ApproachTrigger
     /// <summary>
     /// その駅・向き・番線（null は通過の進路）で、停車か通過かのときの取り始める位置。場内信号機が分からなければ null。
     /// </summary>
-    public Result? For(string stationId, Dir dir, StationDirRoutes routes, int? track, bool passing, int margin)
+    /// <param name="firstHomeOpen">
+    /// 第1場内を先に取る駅（RouteRules.json の approachTrigger.firstHome）の第2場内のとき true。
+    /// 「開けないとき」を、全部停止ではなく「第1場内だけ開いている（第2場内から先は停止）」として比べる。
+    /// </param>
+    public Result? For(string stationId, Dir dir, StationDirRoutes routes, int? track, bool passing, int margin, bool firstHomeOpen = false)
     {
-        var key = (stationId, dir, track, passing, margin);
+        var key = (stationId, dir, track, passing, margin, firstHomeOpen);
         if (_cache.TryGetValue(key, out var cached)) return cached;
 
-        // この駅のこの向きの場内・出発信号機
-        var stationSignals = routes.Arrive.Values.SelectMany(x => x).Concat(routes.Depart.Values.SelectMany(x => x)).Concat(routes.Through)
-            .Select(r => r.Signal).Where(s => s.Length > 0).ToHashSet();
-        // 開ける進路: 番線の場内（通過なら出発も）。通過の進路（江ノ原信号場）はそれだけ
-        var arrive = track is { } t ? routes.Arrive.GetValueOrDefault(t) : routes.Through;
-        if (arrive == null || arrive.Count == 0) return Store(null);
-        var opened = arrive.Select(r => r.Signal).Where(s => s.Length > 0).ToHashSet();
-        if (passing && track is { } t2 && routes.Depart.TryGetValue(t2, out var dep)) opened.UnionWith(dep.Select(r => r.Signal).Where(s => s.Length > 0));
-        // いちばん手前の場内信号機: 開ける進路の信号機のうち、ほかの信号機の先（next）に出てこないもの
-        var home = opened.FirstOrDefault(s => arrive.Any(r => r.Signal == s) && !opened.Any(o => o != s && Nexts(o).Contains(s)));
-        if (home == null) return Store(null);
+        if (Home(routes, track, passing) is not { } h) return Store(null);
+        var (stationSignals, opened, home) = h;
 
         var openPhase = Phase(home, stationSignals, opened, new Dictionary<string, string>());
+        var closedPhase = firstHomeOpen ? Phase(home, stationSignals, new HashSet<string> { home }, new Dictionary<string, string>()) : "R";
         var triggers = new List<string>();
         var limits = new List<string>();
         var changed = new List<string>();
@@ -114,7 +113,7 @@ public sealed class ApproachTrigger
         foreach (var path in Paths(home))
         {
             if (path.Count == 0) continue;
-            var closed = Upstream(Own, path, "R");
+            var closed = Upstream(Own, path, closedPhase);
             var open = Upstream(Own, path, openPhase);
             var d = 0; // 現示が変わる一番手前（1 = S1）
             for (var i = 0; i < path.Count; i++) if (closed[i] != open[i]) d = i + 1;
@@ -135,5 +134,51 @@ public sealed class ApproachTrigger
             _cache[key] = r;
             return r;
         }
+    }
+
+    /// <summary>
+    /// 第1場内を先に取る駅で、第1場内だけを取り始める位置。trigger（決めた信号機）を過ぎたら取る。
+    /// Near は trigger から第1場内までの各信号機が守る回路。trigger が手前の信号機の並びになければ null。
+    /// </summary>
+    public Result? FirstHome(string stationId, Dir dir, StationDirRoutes routes, int? track, bool passing, string trigger)
+    {
+        var key = (stationId, dir, track, passing, trigger);
+        if (_firstCache.TryGetValue(key, out var cached)) return cached;
+        Result? result = null;
+        if (Home(routes, track, passing) is { } h)
+        {
+            var home = h.Home;
+            var near = new HashSet<string>();
+            foreach (var path in Paths(home))
+            {
+                var idx = path.IndexOf(trigger);
+                if (idx < 0) continue;
+                foreach (var s in path.Take(idx + 1))
+                    if (_data.Signals.TryGetValue(s, out var sd)) near.UnionWith(sd.Protects);
+            }
+
+            if (near.Count > 0) result = new Result(home, [trigger], [], near, []);
+        }
+
+        _firstCache[key] = result;
+        return result;
+    }
+
+    private readonly Dictionary<(string, Dir, int?, bool, string), Result?> _firstCache = new();
+
+    /// <summary>
+    /// この駅のこの向きの場内・出発信号機、開ける信号機（番線の場内。通過なら出発も。通過の進路はそれだけ）、
+    /// いちばん手前の場内信号機（開ける信号機のうち、ほかの信号機の先に出てこないもの）。分からなければ null。
+    /// </summary>
+    private (HashSet<string> StationSignals, HashSet<string> Opened, string Home)? Home(StationDirRoutes routes, int? track, bool passing)
+    {
+        var stationSignals = routes.Arrive.Values.SelectMany(x => x).Concat(routes.Depart.Values.SelectMany(x => x)).Concat(routes.Through)
+            .Select(r => r.Signal).Where(s => s.Length > 0).ToHashSet();
+        var arrive = track is { } t ? routes.Arrive.GetValueOrDefault(t) : routes.Through;
+        if (arrive == null || arrive.Count == 0) return null;
+        var opened = arrive.Select(r => r.Signal).Where(s => s.Length > 0).ToHashSet();
+        if (passing && track is { } t2 && routes.Depart.TryGetValue(t2, out var dep)) opened.UnionWith(dep.Select(r => r.Signal).Where(s => s.Length > 0));
+        var home = opened.FirstOrDefault(s => arrive.Any(r => r.Signal == s) && !opened.Any(o => o != s && Nexts(o).Contains(s)));
+        return home == null ? null : (stationSignals, opened, home);
     }
 }

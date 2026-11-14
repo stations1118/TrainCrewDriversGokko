@@ -198,8 +198,40 @@ public sealed class RouteEngine
     private ApproachTrigger.Result? ApproachOf(TrainRun run, StationRun st)
     {
         if (!_data.ApproachTriggerEnabled || st.IsStart) return null;
-        var passing = st.StopType == "通過" && !st.DepartStop && !st.Terminal && !IsTurnbackTrack(run, st);
-        return _approach.For(st.St.Id, run.Dir, st.St.Routes[run.Dir], st.Track, passing, _data.ApproachTriggerMargin);
+        return _approach.For(st.St.Id, run.Dir, st.St.Routes[run.Dir], st.Track, IsPassingRoute(run, st), _data.ApproachTriggerMargin,
+            firstHomeOpen: _data.ApproachFirstHome.ContainsKey((st.St.Id, run.Dir)));
+    }
+
+    private bool IsPassingRoute(TrainRun run, StationRun st) =>
+        st.StopType == "通過" && !st.DepartStop && !st.Terminal && !IsTurnbackTrack(run, st);
+
+    /// <summary>第1場内を先に取る駅（approachTrigger.firstHome）で、第1場内だけを取り始める位置。それ以外の駅は null。</summary>
+    private ApproachTrigger.Result? FirstHomeOf(TrainRun run, StationRun st, int? track = null)
+    {
+        if (!_data.ApproachTriggerEnabled || st.IsStart || !_data.ApproachFirstHome.TryGetValue((st.St.Id, run.Dir), out var trigger)) return null;
+        return _approach.FirstHome(st.St.Id, run.Dir, st.St.Routes[run.Dir], track ?? st.Track, IsPassingRoute(run, st), trigger);
+    }
+
+    /// <summary>番線を決める前（どの番線でも）に、第1場内の取り始めを過ぎたか。過ぎたら番線を確定する。</summary>
+    private bool PassedFirstHomeAnyTrack(TrainRun run, StationRun st) =>
+        _data.ApproachFirstHome.ContainsKey((st.St.Id, run.Dir))
+        && st.St.Routes[run.Dir].Arrive.Keys.Any(t => FirstHomeOf(run, st, t) is { } fh && PassedApproach(run, st, fh));
+
+    /// <summary>
+    /// 第1場内を先に取る駅で、第1場内の取り始めを過ぎ、第2場内の取り始め待ちだけで止まっているなら、第1場内の進路だけ先に開ける。
+    /// 第2場内は、ふだんどおり場内の組として、第1場内が開いている前提の位置で開ける（開いている第1場内は送り直さない）。
+    /// </summary>
+    private void RequestFirstHome(TrainRun run, StationRun st, Dictionary<string, TrainRun> occupied, string? otherWait, DateTime now)
+    {
+        if (otherWait != null || FirstHomeOf(run, st) is not { } fh || !PassedApproach(run, st, fh)) return;
+        var outer = st.ArrivePath.Where(d => d.Signal == fh.Home).ToList();
+        if (outer.Count == 0 || outer.Count == st.ArrivePath.Count) return;
+        var live = run.Requests.Where(r => r.Station == st && !r.Released && r.CancelledUtc == null).Select(r => r.Def).ToHashSet();
+        if (outer.All(live.Contains)) return;
+        if (Conflict(run, st, outer, occupied, departure: false) != null) return;
+        foreach (var r in Enumerable.Reverse(outer).Where(r => !live.Contains(r)))
+            run.Requests.Add(new RouteReq { Def = r, Id = ++_seq, Station = st, Departure = false, RequestedUtc = now });
+        RouteLog(now, run, st, "第1場内", outer);
     }
 
     /// <summary>駅・向き・番線ごとの、進路を取り始める位置の一覧（確かめる用）。margin は限界点からの余裕（閉塞の数）。</summary>
@@ -215,11 +247,14 @@ public sealed class RouteEngine
             foreach (var track in tracks)
             foreach (var passing in track == null ? new[] { true } : routes.Depart.ContainsKey(track.Value) ? new[] { false, true } : new[] { false })
             {
-                var r = _approach.For(st.Id, dir, routes, track, passing, margin);
+                var first = _data.ApproachFirstHome.GetValueOrDefault((st.Id, dir));
+                var r = _approach.For(st.Id, dir, routes, track, passing, margin, firstHomeOpen: first != null);
+                var fh = first != null ? _approach.FirstHome(st.Id, dir, routes, track, passing, first) : null;
                 list.Add(new
                 {
                     station = st.Name, direction = dir.Label(), track, kind = passing ? "通過" : "停車",
-                    home = r?.Home, changed = r?.Changed, limits = r?.Limits, triggers = r?.Triggers
+                    home = r?.Home, changed = r?.Changed, limits = r?.Limits, triggers = r?.Triggers,
+                    firstHomeTriggers = fh?.Triggers // 第1場内だけ先に取る位置（firstHome の駅。triggers はそのあとの第2場内）
                 });
             }
         }
@@ -1153,7 +1188,8 @@ public sealed class RouteEngine
             {
                 var triggerZone = st.Zone - 2 * TriggerAhead(run, st) * step;
                 // 取り始める信号機（ApproachTrigger）を先に過ぎたら、そこで番線を確定する（駅が近く、2つ手前の駅より手前になる所）
-                if ((run.Front - triggerZone) * step >= 0 || ApproachOf(run, st) is { } ap && PassedApproach(run, st, ap))
+                if ((run.Front - triggerZone) * step >= 0 || ApproachOf(run, st) is { } ap && PassedApproach(run, st, ap)
+                    || PassedFirstHomeAnyTrack(run, st))
                 {
                     st.Triggered = true;
                     st.TriggeredUtc = now;
@@ -1984,7 +2020,7 @@ public sealed class RouteEngine
         var timeWait = TimeWait(run, st, now);
 
         // 場内（通過を含む）を開通できるか。先に判定だけして、送るのは出発のあと
-        string? arriveWait = null;
+        string? arriveWait = null, approachWait = null;
         var needArrive = st.ArrivePath.Count > 0 && st.Arrive != GroupState.Requested && !st.IsStart;
         st.ArriveBlocked = false;
         if (needArrive)
@@ -1994,11 +2030,13 @@ public sealed class RouteEngine
             else
                 arriveWait = arriveHeld ? "場内抑止（集中扱い）"
                     : central ? "集中扱い（開通指示待ち）"
-                    : timeWait ?? SingleEntryHold(run, st) ?? PrevDepartHold(run, st) ?? ApproachHold(run, st) ?? (st.Track == null ? DepartTimeHold(run, st, now) : null)
+                    : timeWait ?? SingleEntryHold(run, st) ?? PrevDepartHold(run, st) ?? (approachWait = ApproachHold(run, st)) ?? (st.Track == null ? DepartTimeHold(run, st, now) : null)
                       ?? (DepartBeforeArrive(st) && st.DepartPath.Count > 0 && st.Depart != GroupState.Requested ? "出発の開通待ち（出発まで開けてから場内）" : null)
                       ?? DiaStartFirstHold(run, st)
                       ?? (conflict = Conflict(run, st, st.ArrivePath, occupied, departure: false));
             st.ArriveBlocked = arriveWait != null && ReferenceEquals(arriveWait, conflict);
+            // 第2場内の取り始め待ちだけなら、第1場内を先に開ける駅では第1場内だけ開ける
+            if (approachWait != null && ReferenceEquals(arriveWait, approachWait)) RequestFirstHome(run, st, occupied, DiaStartFirstHold(run, st), now);
             if (arriveWait != null && !st.ForceArrive && st.TrackSource == "待避" && st.Track is { } lt && LoopUser(run, st, lt) is { } lu)
                 arriveWait = $"待避線ふさがり（{lu.Train}）";
         }
@@ -2125,8 +2163,9 @@ public sealed class RouteEngine
         foreach (var old in run.Requests.Where(o => !o.Released && o.CancelledUtc != null && path.Contains(o.Def)))
             old.Released = true;
 
-        // 遠い方から送る（信号機が、先の進路の開通を見てから現示を出せるように）
-        foreach (var r in Enumerable.Reverse(path))
+        // 遠い方から送る（信号機が、先の進路の開通を見てから現示を出せるように）。先に開けた第1場内（RequestFirstHome）は送り直さない
+        var live = run.Requests.Where(o => o.Station == st && !o.Released && o.CancelledUtc == null).Select(o => o.Def).ToHashSet();
+        foreach (var r in Enumerable.Reverse(path).Where(r => !live.Contains(r)))
             run.Requests.Add(new RouteReq { Def = r, Id = ++_seq, Station = st, Departure = departure, RequestedUtc = now });
         RouteLog(now, run, st, departure ? "出発" : st.Track == null ? "通過" : "場内", path);
         if (departure) (st.Depart, st.DepartWait) = (GroupState.Requested, "");
