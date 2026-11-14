@@ -92,6 +92,13 @@ public static class AdminEndpoints
         // 在線位置の画面（tid.html）。見るだけで、操作はできない。合言葉なしで誰でも見られる
         var view = app.MapGroup("/api/tid");
 
+        // 乗務タブレット（tablet.html）: スタフの並びの時刻表・次の駅・進路の状態・行路
+        view.MapGet("/tablet", (string? train, RouteEngine engine, DutyRoster roster) =>
+            engine.TabletView(train ?? "", roster) is { } t ? Results.Ok(t) : Results.NotFound(new { message = "この列車のダイヤはありません" }));
+
+        // 行路の一覧（乗務タブレットで、行路を選んで見るため）
+        view.MapGet("/duties", (DutyRoster roster) => Results.Ok(new { duties = roster.Duties.Select(d => new { id = d.Id, trains = d.Items.Where(x => x.Kind != "休憩").Select(x => x.Train) }), problems = roster.Problems }));
+
         view.MapGet("/timetable", (string? train, RouteEngine engine, GameClock clock) =>
             engine.Timetable(train ?? "", clock.Now) is { } t ? Results.Ok(t) : Results.NotFound(new { message = "この列車の時刻表はありません" }));
 

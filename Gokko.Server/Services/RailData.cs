@@ -163,7 +163,7 @@ public sealed class DiaTrain
 public sealed record DiaTurn(string Kind, string? Number, string? Time, string? How);
 
 /// <summary>時刻表の1駅（StationId は路線の外の駅なら null。Stop は 停・通・運停）。</summary>
-public sealed record DiaStop(string Name, string? StationId, string Stop, string? Arr, string? Dep);
+public sealed record DiaStop(string Name, string? StationId, string Stop, string? Arr, string? Dep, int? Track = null, string? Note = null);
 
 /// <summary>標準運転時分の1区間。</summary>
 public sealed record RunTimeRow(string Type, Dir Dir, string From, string To, bool FromStops, bool ToStops, int Seconds);
@@ -457,7 +457,9 @@ public sealed class RailData
                 if (cur.Stops.Count == 0)
                     foreach (var s in t.GetProperty("stops").EnumerateArray())
                         cur.Stops.Add(new DiaStop(Str(s, "name"), Str(s, "st") is { Length: > 0 } sid0 ? sid0 : null, Str(s, "stop"),
-                            Str(s, "arr") is { Length: > 0 } a0 ? a0 : null, Str(s, "dep") is { Length: > 0 } d0 ? d0 : null));
+                            Str(s, "arr") is { Length: > 0 } a0 ? a0 : null, Str(s, "dep") is { Length: > 0 } d0 ? d0 : null,
+                            s.TryGetProperty("track", out var tk0) && tk0.ValueKind == JsonValueKind.Number ? tk0.GetInt32() : null,
+                            Str(s, "note") is { Length: > 0 } n0 ? n0 : null));
 
                 string? lastStation = null;
                 foreach (var s in t.GetProperty("stops").EnumerateArray())

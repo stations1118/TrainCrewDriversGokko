@@ -26,6 +26,7 @@ builder.Services.AddSingleton(options);
 builder.Services.AddSingleton(options.Random); // 管理画面から書き換える（運転会中だけ有効。再起動で appsettings の値に戻る）
 builder.Services.AddSingleton(data);
 builder.Services.AddSingleton(rail);
+builder.Services.AddSingleton(DutyRoster.Load(dataDir, rail)); // 行路表（Data/Duties.csv。なければ空）
 builder.Services.AddSingleton<PlayerRegistry>();
 builder.Services.AddSingleton<GameClock>();
 builder.Services.AddSingleton<IncidentManager>();

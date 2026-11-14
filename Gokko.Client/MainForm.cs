@@ -36,6 +36,7 @@ public sealed class MainForm : Form
     private readonly Button _confirmButton = new() { Text = "確定" };
     private readonly Button _connectButton = new() { Text = "接続" };
     private readonly Button _gameButton = new() { Text = "ゲーム切断" };
+    private readonly Button _tabletButton = new() { Text = "乗務タブレット" };
 
     /// <summary>確定した列車番号（空ならシナリオの列番）。入力欄を書き換えただけでは変わらない。</summary>
     private string _confirmedTrain = "";
@@ -85,6 +86,7 @@ public sealed class MainForm : Form
 
         _connectButton.Click += async (_, _) => await ToggleConnectionAsync();
         _gameButton.Click += async (_, _) => await ToggleGameAsync();
+        _tabletButton.Click += (_, _) => OpenTablet();
         _confirmButton.Click += async (_, _) => await ConfirmTrainAsync();
         _trainBox.KeyDown += async (_, e) =>
         {
@@ -171,7 +173,9 @@ public sealed class MainForm : Form
         _modeLabel.Margin = new Padding(10, 7, 0, 0);
         _gameButton.Size = new Size(100, 30);
         _gameButton.Margin = new Padding(8, 3, 0, 3);
-        buttons.Controls.AddRange([_connectButton, _gameButton, _modeLabel]);
+        _tabletButton.Size = new Size(110, 30);
+        _tabletButton.Margin = new Padding(8, 3, 0, 3);
+        buttons.Controls.AddRange([_connectButton, _gameButton, _tabletButton, _modeLabel]);
         AddWide(buttons, SizeType.Absolute, 40);
 
         foreach (var l in new[] { _serverLabel, _gameLabel, _infoLabel, _messageLabel })
@@ -435,6 +439,21 @@ public sealed class MainForm : Form
         {
             _gameButton.Text = _game.Stopped ? "ゲーム接続" : "ゲーム切断";
             _gameButton.Enabled = true;
+        }
+    }
+
+    /// <summary>乗務タブレット（サーバーの tablet.html）を、自分の列番を付けてブラウザで開く。列番がなければ、列車を選ぶ画面を開く。</summary>
+    private void OpenTablet()
+    {
+        var train = EffectiveTrainNumber(_game.Latest);
+        var url = ServerAddress.Current.TrimEnd('/') + "/tablet.html" + (train.Length > 0 ? "?train=" + Uri.EscapeDataString(train) : "");
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch
+        {
+            ShowMessage("ブラウザを開けませんでした: " + url);
         }
     }
 

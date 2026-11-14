@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>乗務タブレット</title>
+<style>
+  /* 乗務タブレット。配置は tablet-layout.xml（XAML 風）で決める。スタフ（紙）の部分は、暗い表示でも白地 */
+  :root {
+    --bg: #1b2533; --panel: #22304a; --bar: #26354b; --fg: #e8eef6; --muted: #93a3b8; --line: #33445c;
+    --ok: #1f8a4c; --warn: #c98400; --ng: #c62828; --info: #2f6fc0;
+    --paper: #ffffff; --ink: #111111; --rule: #222222; --stop: #6eb4f7; --now: #fff2a8; --done: #8a8a8a; --late: #c62828;
+    --mono: "Consolas", "Menlo", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--fg); font-family: "Yu Gothic UI", "Meiryo", "Hiragino Sans", sans-serif; font-size: 13px; line-height: 1.5; padding: 8px; }
+  button, select { font: inherit; }
+  .header { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; background: var(--bar); border-radius: 8px; padding: 6px 12px; margin-bottom: 8px; }
+  .t-large { font-family: var(--mono); font-size: 22px; font-weight: 700; }
+  .t-muted { color: var(--muted); font-size: 12px; }
+  .spacer { flex: 1; }
+  .badge { font-size: 12px; font-weight: 700; border-radius: 4px; padding: 1px 8px; color: #fff; background: #607089; }
+  .delay { font-family: var(--mono); font-weight: 700; color: #fff; background: var(--warn); border-radius: 4px; padding: 0 6px; }
+  .clock { font-family: var(--mono); font-size: 18px; }
+  .grid { display: grid; }
+  .stack { display: grid; align-content: start; min-width: 0; }
+  @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr) !important; } }
+  .pane { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+  .pane h5 { margin: 0 0 6px; font-size: 11px; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+  .big { font-size: 20px; font-weight: 700; }
+  .route { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 1px 8px; }
+  .route.ok { background: var(--ok); color: #fff; }
+  .route.wait { color: var(--warn); border: 1px solid var(--warn); }
+  .route.req { color: var(--muted); border: 1px solid var(--line); }
+  .status { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; background: var(--line); }
+  .dot.ok { background: var(--ok); } .dot.ng { background: var(--ng); }
+  .pick { max-width: 520px; margin: 40px auto; display: grid; gap: 10px; }
+  .pick .pane { display: grid; gap: 8px; }
+  .pick button { border: 1px solid var(--line); background: var(--bar); color: var(--fg); border-radius: 6px; padding: 6px 10px; cursor: pointer; text-align: left; }
+  .pick .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .err { color: #ffb4b4; }
+
+  /* スタフ */
+  .staff { background: var(--paper); color: var(--ink); border: 2px solid var(--rule); border-radius: 4px; min-width: 0; }
+  .staff-scroll { overflow-x: auto; }
+  table.staff-tt { border-collapse: collapse; width: 100%; font-size: 13px; color: var(--ink); }
+  .staff-tt th { font-size: 10px; font-weight: 700; text-align: center; border: 1px solid var(--rule); padding: 1px 2px; background: var(--paper); }
+  .staff-tt td { border: 1px solid var(--rule); padding: 0 4px; height: 1.6em; vertical-align: middle; font-variant-numeric: tabular-nums; background: var(--paper); }
+  .staff-tt tr.arr td:not(.st):not(.h) { border-bottom-color: transparent; }
+  .staff-tt tr.arr + tr.dep td { border-top-color: transparent; }
+  .staff-tt td.st { font-size: 17px; font-weight: 700; white-space: nowrap; width: 30%; }
+  .staff-tt td.st.stop { background: var(--stop); }
+  .staff-tt td.st.pass { font-size: 13px; font-weight: 400; }
+  .staff-tt td.st.off { color: #555; }
+  .staff-tt td.h { text-align: center; font-weight: 700; font-size: 14px; width: 8%; }
+  .staff-tt td.m, .staff-tt td.s { text-align: center; font-family: var(--mono); width: 9%; }
+  .staff-tt tr.arr td.m { text-align: right; }
+  .staff-tt tr.dep.stopping td.m { font-size: 19px; font-weight: 700; }
+  .staff-tt td.note { font-size: 13px; white-space: nowrap; }
+  .staff-tt td.note small { font-size: 10px; }
+  .staff-tt b.trk { font-size: 15px; margin-right: 4px; }
+  .staff-tt td.act { font-family: var(--mono); font-size: 11px; color: var(--done); text-align: center; border-left: 2px solid var(--rule); width: 14%; }
+  .staff-tt td.act.late { color: var(--late); font-weight: 700; }
+  .staff-tt tr.done td.m, .staff-tt tr.done td.s { color: var(--done); }
+  .staff-tt tr.now td:not(.st):not(.h) { background: var(--now); }
+  .staff-foot { border-top: 2px solid var(--rule); padding: 4px 10px; font-size: 12px; font-weight: 700; }
+
+  /* 行路 */
+  .duty-list { display: grid; gap: 3px; font-size: 12px; }
+  .duty-item { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); gap: 6px; padding: 3px 6px; border-radius: 4px; }
+  .duty-item .k { color: var(--muted); }
+  .duty-item.cur { background: var(--info); color: #fff; }
+  .duty-item.cur .k { color: #dfe9f7; }
+  .mono { font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+  // 乗務タブレット。?train=列番 でその列車を表示する（クライアントの「乗務タブレット」ボタンは、自分の列番を付けて開く）。
+  // 列番がなければ、走っている列車と行路の一覧から選ぶ。2秒ごとに /api/tid/tablet を読み直す
+  const params = new URLSearchParams(location.search);
+  let train = params.get("train") || "";
+  let layout = null, data = null, lastOk = 0, error = "";
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const circled = (n) => n >= 1 && n <= 20 ? String.fromCharCode(0x2460 + n - 1) : (n ?? "");
+  const sec = (t) => { if (!t) return null; const p = t.split(":").map(Number); return p[0] * 3600 + p[1] * 60 + (p[2] || 0); };
+  const typeColor = { "特急": "#c62828", "快急": "#7b3fb5", "急行": "#d9731f", "区急": "#2e8b57", "準急": "#1e88f0", "普通": "#607089", "回送": "#ffffff" };
+
+  function bind(name) {
+    if (!data) return "";
+    switch (name) {
+      case "train.number": return data.train;
+      case "train.type": return data.type;
+      case "train.label": return data.label;
+      case "train.dest": return data.dest;
+      case "train.unyo": return data.unyo ?? "";
+      case "duty.id": return data.duty ? data.duty.id : "";
+      case "duty.handle": return data.duty ? fmtMin(data.duty.handleMinutes) : "";
+      case "delay": return data.delay ?? "";
+      case "gameTime": return data.gameTime;
+      default: return "";
+    }
+  }
+  const fmtMin = (m) => `${Math.floor(m / 60)}時間${String(m % 60).padStart(2, "0")}分`;
+
+  // ---- 部品 ----
+  const parts = {
+    Tablet: (el) => children(el),
+    Header: (el) => `<div class="header">${children(el)}</div>`,
+    Grid: (el) => {
+      const cols = (el.getAttribute("Columns") || "1*").split(",").map((c) => c.trim().endsWith("*") ? `minmax(0, ${c.trim().slice(0, -1) || 1}fr)` : c.trim());
+      const gap = el.getAttribute("Gap") || "8";
+      const kids = [...el.children].map((c, i) => ({ c, col: Number(c.getAttribute("Grid.Column") ?? i) })).sort((a, b) => a.col - b.col);
+      return `<div class="grid" style="grid-template-columns:${cols.join(" ")};gap:${gap}px">${kids.map((k) => render(k.c)).join("")}</div>`;
+    },
+    Stack: (el) => `<div class="stack" style="gap:${el.getAttribute("Gap") || 8}px">${children(el)}</div>`,
+    Spacer: () => `<span class="spacer"></span>`,
+    Text: (el) => {
+      const v = bind(el.getAttribute("Bind"));
+      if (v === "" || v == null) return "";
+      const style = el.getAttribute("Style");
+      return `<span class="${style === "Large" ? "t-large" : style === "Muted" ? "t-muted" : ""}">${esc((el.getAttribute("Prefix") || "") + v + (el.getAttribute("Suffix") || ""))}</span>`;
+    },
+    Badge: (el) => {
+      const v = bind(el.getAttribute("Bind") || "train.type");
+      if (!v) return "";
+      const bg = typeColor[v] || "#607089";
+      return `<span class="badge" style="background:${bg};color:${v === "回送" ? "#d32f2f" : "#fff"};${v === "回送" ? "border:1px solid #111" : ""}">${esc(data.label || v)}</span>`;
+    },
+    Delay: () => data && data.delay ? `<span class="delay">+${data.delay}分</span>` : "",
+    Clock: () => data ? `<span class="clock">${esc(data.gameTime)}</span>` : "",
+    Staff: (el) => staff(el.getAttribute("Actual") !== "false"),
+    NextStation: () => nextStation(),
+    Duty: () => duty(),
+    TrainNext: () => trainNext(),
+    StatusBar: () => {
+      const age = lastOk ? Math.round((Date.now() - lastOk) / 1000) : null;
+      const ok = age != null && age < 6;
+      return `<div class="status"><span><span class="dot ${ok ? "ok" : "ng"}"></span>サーバー${ok ? "" : "（更新が止まっています）"}</span>
+        <span>${data && data.running ? "走行中" : "まだ走っていない（ダイヤを表示）"}</span>
+        <span>最終更新 ${age == null ? "-" : age + "秒前"}</span>
+        <span><a href="tablet.html" style="color:var(--muted)">列車を選び直す</a></span>${error ? `<span class="err">${esc(error)}</span>` : ""}</div>`;
+    }
+  };
+  const children = (el) => [...el.children].map(render).join("");
+  const render = (el) => (parts[el.tagName] || (() => ""))(el);
+
+  // スタフ: 停車駅は着（上の行・小さく）と発（下の行・太く）。通過は1行。時は変わる所だけ。右端に番線と記事、実績
+  function staff(actual) {
+    if (!data) return "";
+    let lastHour = null;
+    const rows = [];
+    data.stops.forEach((s, i) => {
+      const stopping = s.stop !== "通";
+      const isNow = i === data.next;
+      const cls = (s.passed ? "done " : "") + (isNow ? "now " : "");
+      const name = stopping ? esc(s.name) : `（${esc(s.name)}）`;
+      const stCls = `st ${stopping ? "stop" : "pass"} ${s.control ? "" : "off"}`;
+      const trk = s.track ? `<b class="trk">${circled(s.track)}</b>` : "";
+      const memo = s.note ? `<small>${esc(s.note.replace(/;/g, "　"))}</small>` : "";
+      const lines = [];
+      if (stopping && s.arr && s.dep && s.arr !== s.dep) {
+        lines.push({ kind: "arr", t: s.arr, act: s.actArr }, { kind: "dep", t: s.dep, act: s.actDep });
+      } else {
+        lines.push({ kind: "dep", t: s.dep || s.arr, act: s.actDep || s.actArr });
+      }
+      lines.forEach((ln, j) => {
+        const p = (ln.t || "").split(":");
+        const hour = p[0] || "";
+        const showHour = hour && hour !== lastHour;
+        if (hour) lastHour = hour;
+        const late = ln.act && ln.t && sec(ln.act) - sec(ln.t) >= 60;
+        const act = actual ? `<td class="act ${late ? "late" : ""}">${ln.act ? esc(ln.act.slice(3)) : (isNow && j === 0 ? "<b style='color:#111;font-size:10px'>次</b>" : "")}</td>` : "";
+        const first = j === 0;
+        const span = lines.length;
+        rows.push(`<tr class="${cls}${ln.kind}${stopping ? " stopping" : ""}">
+          ${first ? `<td class="${stCls}" rowspan="${span}">${name}</td>` : ""}
+          <td class="h">${showHour ? esc(Number(hour)) : ""}</td>
+          <td class="m">${esc(p[1] || "")}</td><td class="s">${esc(p[2] || "")}</td>
+          <td class="note">${span === 1 ? trk + memo : first ? trk : memo}</td>${act}</tr>`);
+      });
+    });
+    return `<div class="staff"><div class="staff-scroll"><table class="staff-tt">
+      <thead><tr><th>駅</th><th>時</th><th>分</th><th>秒</th><th>番線・記事</th>${actual ? "<th>実績</th>" : ""}</tr></thead>
+      <tbody>${rows.join("")}</tbody></table></div></div>`;
+  }
+
+  function trainNext() {
+    if (!data) return "";
+    const out = [];
+    if (data.renumber) out.push(`▼ ${esc(data.renumber.station)}から ${esc(data.renumber.number)} に列番変更`);
+    if (data.turn) {
+      const t = data.turn;
+      out.push(t.kind === "折返" ? `折返：${esc(t.number)}（${esc(t.time)}${esc(t.how || "")}）` : esc(t.kind) + (t.number ? `：${esc(t.number)}` : ""));
+    }
+    return out.length ? `<div class="staff"><div class="staff-foot">${out.join("<br>")}</div></div>` : "";
+  }
+
+  function nextStation() {
+    if (!data) return "";
+    const s = data.next >= 0 ? data.stops[data.next] : data.stops.find((x) => x.control && !x.passed);
+    if (!s) return `<div class="pane"><h5>次の駅</h5>この先に駅はありません</div>`;
+    const stopping = s.stop !== "通";
+    const chip = (r) => !r ? "" : r === "進路確定" ? `<span class="route ok">進路確定</span>` : r.includes("要求待ち") ? `<span class="route req">${esc(r)}</span>` : `<span class="route wait">${esc(r)}</span>`;
+    return `<div class="pane"><h5>次の駅</h5>
+      <div class="big">${esc(s.name)}${s.track ? ` ${s.track}番線` : ""}${stopping ? "" : "（通過）"}</div>
+      <div>${s.arr && stopping ? `着 ${esc(s.arr)}　` : ""}${s.dep ? `${stopping ? "発" : "通過"} ${esc(s.dep)}` : ""}</div>
+      ${s.route ? `<div style="margin-top:6px">進路 ${chip(s.route)}</div>` : ""}</div>`;
+  }
+
+  function duty() {
+    if (!data || !data.duty) return "";
+    const d = data.duty;
+    const items = d.items.map((x) => `<div class="duty-item ${x.current ? "cur" : ""}"><span class="k">${esc(x.kind)}</span>
+      <span>${x.kind === "休憩" ? esc((x.from || "") + " " + (x.note || "")) : `<b class="mono">${esc(x.train)}</b>　${esc(x.from || "")} ${esc((x.dep || "").slice(0, 5))} → ${esc(x.to || "")} ${esc((x.arr || "").slice(0, 5))}${x.note ? "　" + esc(x.note) : ""}`}</span></div>`).join("");
+    return `<div class="pane"><h5>行路 ${esc(d.id)}　ハンドルタイム ${fmtMin(d.handleMinutes)}</h5><div class="duty-list">${items}</div></div>`;
+  }
+
+  // ---- 列車を選ぶ画面 ----
+  async function pickScreen() {
+    let trains = [], duties = [];
+    try { trains = (await (await fetch("/api/tid/state", { cache: "no-store" })).json()).tid.trains.map((t) => t.train); } catch (e) {}
+    try { duties = (await (await fetch("/api/tid/duties", { cache: "no-store" })).json()).duties; } catch (e) {}
+    const go = (t) => `<button data-train="${esc(t)}">${esc(t)}</button>`;
+    document.getElementById("app").innerHTML = `<div class="pick">
+      <div class="pane"><h5>列番を入れて開く</h5><div class="row"><input id="no" placeholder="例: 995C" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"><button id="open">開く</button></div></div>
+      <div class="pane"><h5>走っている列車</h5><div class="row">${trains.length ? trains.map(go).join("") : "<span class='t-muted'>いません</span>"}</div></div>
+      <div class="pane"><h5>行路</h5>${duties.length ? duties.map((d) => `<div><b class="mono">${esc(d.id)}</b>　<span class="row" style="display:inline-flex">${d.trains.map(go).join("")}</span></div>`).join("") : "<span class='t-muted'>行路表（Duties.csv）はまだありません</span>"}</div></div>`;
+    document.querySelectorAll("button[data-train]").forEach((b) => b.onclick = () => { location.search = "?train=" + encodeURIComponent(b.dataset.train); });
+    document.getElementById("open").onclick = () => { const v = document.getElementById("no").value.trim(); if (v) location.search = "?train=" + encodeURIComponent(v); };
+  }
+
+  async function refresh() {
+    try {
+      const res = await fetch("/api/tid/tablet?train=" + encodeURIComponent(train), { cache: "no-store" });
+      if (!res.ok) { error = res.status === 404 ? `${train} のダイヤはありません` : "読み込めませんでした"; data = null; }
+      else { data = await res.json(); error = ""; lastOk = Date.now(); }
+    } catch (e) { error = "サーバーにつながりません"; }
+    document.title = data ? `${data.train} 乗務タブレット` : "乗務タブレット";
+    document.getElementById("app").innerHTML = data ? render(layout) : `<div class="pick"><div class="pane err">${esc(error)}</div><a href="tablet.html" style="color:var(--muted)">列車を選び直す</a></div>`;
+  }
+
+  (async () => {
+    if (!train) { await pickScreen(); return; }
+    try {
+      const xml = await (await fetch("tablet-layout.xml", { cache: "no-store" })).text();
+      layout = new DOMParser().parseFromString(xml, "application/xml").documentElement;
+      if (layout.getAttribute("FontSize")) document.body.style.fontSize = layout.getAttribute("FontSize") + "px";
+    } catch (e) { document.getElementById("app").textContent = "配置ファイル（tablet-layout.xml）を読めませんでした"; return; }
+    await refresh();
+    setInterval(refresh, 2000);
+  })();
+</script>
+</body>
+</html>

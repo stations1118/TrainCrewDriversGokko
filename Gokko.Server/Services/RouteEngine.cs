@@ -2998,6 +2998,96 @@ public sealed class RouteEngine
     /// 列車の時刻表（在線位置の画面で、列番を押したときに出す）。全駅（進路を扱わない駅も含む）の着・発（通過）時刻。
     /// ダイヤにある列車はダイヤの時刻。ない列車は、ロープレ時刻（なければ今の時刻）に始発駅を発車したとして、標準運転時分で見込む。
     /// </summary>
+    /// <summary>
+    /// 乗務タブレット用のデータ。スタフと同じ並び（ダイヤの全駅。時刻・番線・記事）に、実際の着発・通過済みか・進路の状態（運転士に見せる3段階）、
+    /// 次の駅、遅れ、終点のあと（折返・列番変更）、受け持つ行路（Data/Duties.csv）を付ける。ダイヤにない列車は null。
+    /// </summary>
+    public object? TabletView(string train, DutyRoster roster)
+    {
+        lock (_lock)
+        {
+            var key = RailData.NormalizeTrain(train);
+            var run = _runs.Values.FirstOrDefault(r => r.Train == key) ?? _runs.Values.FirstOrDefault(r => RailData.NormalizeTrain(r.GameTrain) == key);
+            var dia = run?.Dia ?? _data.DiaOf(key);
+            if (dia == null) return null;
+
+            // どこまで通ったか（実際に出た駅、または列車がもう先にいる駅）
+            var stepD = run?.Dir.Step() ?? 0;
+            var lastPassed = -1;
+            if (run is { HasPosition: true })
+                for (var i = 0; i < dia.Stops.Count; i++)
+                {
+                    if (dia.Stops[i].StationId is not { } sid) continue;
+                    var z = _data.Line.ZoneOfStation(sid);
+                    if (run.ActualDep.ContainsKey(sid) || z >= 0 && (run.Front - z) * stepD > 0 && (run.Rear - z) * stepD > 0) lastPassed = i;
+                }
+
+            var nextIndex = -1;
+            var stops = dia.Stops.Select((s, i) =>
+            {
+                var control = s.StationId != null && _data.Stations.TryGetValue(s.StationId, out var sd) && sd.RouteControl;
+                var st = run != null && s.StationId != null ? run.Stations.FirstOrDefault(x => x.St.Id == s.StationId && !x.Done) : null;
+                var passed = i <= lastPassed;
+                if (!passed && nextIndex < 0 && run is { HasPosition: true } && s.StationId != null && _data.Line.ZoneOfStation(s.StationId) >= 0) nextIndex = i;
+                return new
+                {
+                    name = s.Name,
+                    control,
+                    stop = s.Stop,
+                    arr = s.Arr,
+                    dep = s.Dep,
+                    track = s.Track ?? (s.StationId != null && dia.Stations.TryGetValue(s.StationId, out var ds) ? ds.Track : null),
+                    note = s.Note ?? "",
+                    actArr = s.StationId != null && run != null && run.ActualArr.TryGetValue(s.StationId, out var aa) ? FormatDiaTime(aa) : null,
+                    actDep = s.StationId != null && run != null && run.ActualDep.TryGetValue(s.StationId, out var ad) ? FormatDiaTime(ad) : null,
+                    passed,
+                    route = st != null && control ? ClientStatus(run!, st) : null
+                };
+            }).ToList();
+
+            // 行路: その列車を受け持つ行路の項目を、ダイヤの時刻つきで並べる（ハンドルタイム＝乗務・入換・便乗の時間の合計）
+            object? duty = null;
+            if (roster.DutyOfTrain(dia.Number) is { } d)
+            {
+                (string? From, string? Dep, string? To, string? Arr) Span(DutyItem x)
+                {
+                    if (_data.DiaOf(x.Train) is not { } td) return (x.From, null, x.To, null);
+                    var inLine = td.Stops.Where(s => s.StationId != null && _data.Line.ZoneOfStation(s.StationId) >= 0).ToList();
+                    if (inLine.Count == 0) inLine = td.Stops;
+                    var a = x.From != null ? td.Stops.FirstOrDefault(s => s.Name == x.From) ?? inLine[0] : inLine[0];
+                    var b = x.To != null ? td.Stops.LastOrDefault(s => s.Name == x.To) ?? inLine[^1] : inLine[^1];
+                    return (a.Name, a.Dep ?? a.Arr, b.Name, b.Arr ?? b.Dep);
+                }
+
+                double handle = 0;
+                var items = d.Items.Select(x =>
+                {
+                    (string? From, string? Dep, string? To, string? Arr) sp = x.Kind == "休憩" ? (x.From, null, x.To, null) : Span(x);
+                    if (x.Kind != "休憩" && ParseDiaTime(sp.Dep) is { } t1 && ParseDiaTime(sp.Arr) is { } t2 && t2 > t1) handle += t2 - t1;
+                    return new { kind = x.Kind, train = x.Train, from = sp.From, dep = sp.Dep, to = sp.To, arr = sp.Arr, note = x.Note, current = x.Train == dia.Number };
+                }).ToList();
+                duty = new { id = d.Id, items, handleMinutes = (int)Math.Round(handle / 60) };
+            }
+
+            return new
+            {
+                train = dia.Number,
+                type = dia.Type,
+                label = dia.TypeLabel,
+                dest = dia.Stops.Count > 0 ? dia.Stops[^1].Name : "",
+                unyo = dia.Unyo,
+                running = run is { HasPosition: true },
+                delay = run?.Delay is { } dl && dl >= 60 ? (int)(dl / 60) : (int?)null,
+                gameTime = FormatDiaTime(NowSec()),
+                next = nextIndex,
+                renumber = dia.Next is { } nx ? new { number = nx.Number, station = _data.Line.StationName(nx.StationId) } : null,
+                turn = dia.Turn is { } tn ? new { kind = tn.Kind, number = tn.Number, time = tn.Time, how = tn.How } : null,
+                stops,
+                duty
+            };
+        }
+    }
+
     public object? Timetable(string train, TimeSpan? clock)
     {
         lock (_lock)
