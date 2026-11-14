@@ -952,7 +952,7 @@ public sealed class RouteEngine
 
         // ダイヤグラム用の実績（駅のゾーンを目盛りにした位置）
         var now = DateTime.UtcNow;
-        var pos = PlotY(run);
+        var pos = DiagramY(run);
         var row = SidingRow(run);
         if (run.History.Count == 0 || Math.Abs(run.History[^1].Y - pos) > 0.05 || run.History[^1].Row != row || (now - run.History[^1].Utc).TotalSeconds > 20)
             run.History.Add((now, pos, row));
@@ -960,10 +960,27 @@ public sealed class RouteEngine
     }
 
     /// <summary>ダイヤグラムの縦の位置（駅＝偶数のゾーン。駅間は、進んだ割合で按分）。</summary>
+    /// <summary>
+    /// ダイヤグラムの縦の位置。踏んでいる回路がすべて1つの駅の構内の回路（駅IDで始まる回路）なら、その駅にいるものとする
+    /// （大道寺の 44T のような分岐の回路は駅間のゾーンに入っているが、入換で通るときに線が駅の外へ跳ねないように）。それ以外は PlotY。
+    /// </summary>
+    private double DiagramY(TrainRun run)
+    {
+        var circuits = run.Player.TrackCircuits;
+        if (circuits.Count > 0 && circuits[0].IndexOf('_') is var i and > 0)
+        {
+            var sid = circuits[0][..i];
+            var zone = _data.Line.ZoneOfStation(sid);
+            if (zone >= 0 && circuits.All(c => c.StartsWith(sid + "_", StringComparison.Ordinal))) return zone;
+        }
+
+        return PlotY(run);
+    }
+
     /// <summary>ダイヤグラムの段: 駅で、入換線など（Stations.json の diagramRows で軌道回路を書いた段）にいれば、その段の名前。</summary>
     private string? SidingRow(TrainRun run)
     {
-        if (run.Front % 2 != 0 || _data.Line.StationAtZone(run.Front) is not { } sid || !_data.Stations.TryGetValue(sid, out var st)) return null;
+        if (DiagramY(run) is var y && y % 2 != 0 || _data.Line.StationAtZone((int)y) is not { } sid || !_data.Stations.TryGetValue(sid, out var st)) return null;
         return st.DiagramRows.FirstOrDefault(r => r.Circuit != null && run.Player.TrackCircuits.Contains(r.Circuit)).Label;
     }
 
@@ -2681,7 +2698,7 @@ public sealed class RouteEngine
         // 行き止まりの番線に入る駅・終着（列車別設定の打ち切りを含む）があれば、線はその駅で切る
         if (r.Stations.FirstOrDefault(s => !s.Done && (IsTurnbackTrack(r, s) || s.Terminal)) is { } cut) terminalZone = cut.Zone;
 
-        var points = new List<object> { new { t = now, y = PlotY(r), row = SidingRow(r) } };
+        var points = new List<object> { new { t = now, y = DiagramY(r), row = SidingRow(r) } };
         var arrAt = new Dictionary<int, DateTime>();
         var depAt = new Dictionary<int, DateTime>();
         double extra = 0;
@@ -2767,7 +2784,7 @@ public sealed class RouteEngine
             }
         }
 
-        var points = new List<object> { new { t = now, y = PlotY(r), row = SidingRow(r) } };
+        var points = new List<object> { new { t = now, y = DiagramY(r), row = SidingRow(r) } };
         var arrAt = new Dictionary<int, DateTime>();
         var depAt = new Dictionary<int, DateTime>();
         var first = r.Front % 2 == 0 ? r.Front : r.Front + step;

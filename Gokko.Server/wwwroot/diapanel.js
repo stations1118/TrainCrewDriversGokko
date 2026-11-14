@@ -584,13 +584,14 @@
       const nx = L.x(L.now);
       parts.push(`<line x1="${nx}" x2="${nx}" y1="${TOP - 10}" y2="${L.height - 18}" stroke="var(--danger)" stroke-width="1.2"/>`);
 
-      // 番線の競合（番線ごとに分けたときは、その番線の段に赤い帯）
+      // 番線の競合（詳細表示のとき、その番線の段に赤い枠つきの帯。短い重なりでも見えるように前後を少し広げ、線と◆の上に描く）
       const found = view.split ? conflicts(d).filter((c) => c.end >= L.t0) : [];
+      const marks = [];
       for (const c of found) {
         if (c.start > L.t1) continue;
-        const x1 = Math.max(L.left, L.x(c.start)), x2 = Math.min(L.w - RIGHT, L.x(c.end));
-        const cy = L.y(c.y, c.track), h = view.split ? Math.max(6, view.trackPx - 2) : 10;
-        parts.push(`<rect x="${Math.min(x1, x2 - 4)}" y="${cy - h / 2}" width="${Math.max(4, x2 - x1)}" height="${h}" fill="#e53935" opacity="0.35"><title>番線の競合</title></rect>`);
+        const x1 = Math.max(L.left, L.x(c.start) - 8), x2 = Math.min(L.w - RIGHT, L.x(c.end) + 8);
+        const cy = L.y(c.y, c.track), h = Math.max(10, cur().trackPx);
+        marks.push(`<rect x="${x1}" y="${cy - h / 2}" width="${Math.max(4, x2 - x1)}" height="${h}" rx="3" fill="rgba(229,57,53,.25)" stroke="#e53935" stroke-width="1.5" pointer-events="none"/>`);
       }
 
       d.trains.forEach((tr, ti) => {
@@ -616,12 +617,13 @@
             data-x="${x}" data-tip="${esc(tipText)}" style="cursor:${m.draggable ? "ew-resize" : "pointer"}"/>`);
         });
       });
+      parts.push(...marks);
       parts.push(`</svg>`);
       if (!d.trains.some(visible)) parts.push(`<div class="muted">表示する列車はいません</div>`);
       if (found.length > 0) {
         const name = (y) => (L.band[y] ? L.band[y].s.name : y);
         parts.push(`<div style="color:var(--danger); margin-top:4px"><b>番線の競合</b> ` + found.map((c) =>
-          `${esc(name(c.y))} ${esc(rowName(c.track))}: ${esc(c.trains.join("・"))}（${hhmm(c.start)}〜${hhmm(c.end)}）`).join("／") + `</div>`);
+          `${esc(name(c.y))} ${esc(rowName(c.track))}: ${esc(c.trains.join("・"))}（${hhmm(c.start, true)}〜${hhmm(c.end, true)}）`).join("／") + `</div>`);
       }
       const html = parts.join("");
       if (box.dataset.html !== html) { box.innerHTML = html; box.dataset.html = html; }
